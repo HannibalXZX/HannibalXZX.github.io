@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="git," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="前言本文[2]简要介绍了git代码提交的规范，以及使用emoji表情的方法和注意事项。 提交效果图图1的右边向我们展示了提交时的emoji表情，是不是很有意思？  说明 git提交建议的文字描述来自alibaba的开源项目egg.js，git-commit规范；   符号部分来自github里部分项目的emoji表情提交建议。  文字提交规范commit一共由五部分组成，具体内容如下： （1）ty">
+<meta property="og:type" content="article">
+<meta property="og:title" content="git支持emoji了！快来更换你的提交风格吧！">
+<meta property="og:url" content="http://yoursite.com/2020/07/24/git%E6%94%AF%E6%8C%81emoji%E4%BA%86%EF%BC%81%E5%BF%AB%E6%9D%A5%E6%9B%B4%E6%8D%A2%E4%BD%A0%E7%9A%84%E6%8F%90%E4%BA%A4%E9%A3%8E%E6%A0%BC%E5%90%A7%EF%BC%81/index.html">
+<meta property="og:site_name" content="徐子潇的技术博客">
+<meta property="og:description" content="前言本文[2]简要介绍了git代码提交的规范，以及使用emoji表情的方法和注意事项。 提交效果图图1的右边向我们展示了提交时的emoji表情，是不是很有意思？  说明 git提交建议的文字描述来自alibaba的开源项目egg.js，git-commit规范；   符号部分来自github里部分项目的emoji表情提交建议。  文字提交规范commit一共由五部分组成，具体内容如下： （1）ty">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/60/1.jpg">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/60/2.jpg">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/60/3.png">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/60/4.png">
+<meta property="article:published_time" content="2020-07-24T07:05:00.000Z">
+<meta property="article:modified_time" content="2020-07-24T07:10:35.503Z">
+<meta property="article:author" content="Shaw">
+<meta property="article:tag" content="git">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/60/1.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/07/24/git支持emoji了！快来更换你的提交风格吧！/"/>
+
+
+
+
+
+  <title>git支持emoji了！快来更换你的提交风格吧！ | 徐子潇的技术博客</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">徐子潇的技术博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/24/git%E6%94%AF%E6%8C%81emoji%E4%BA%86%EF%BC%81%E5%BF%AB%E6%9D%A5%E6%9B%B4%E6%8D%A2%E4%BD%A0%E7%9A%84%E6%8F%90%E4%BA%A4%E9%A3%8E%E6%A0%BC%E5%90%A7%EF%BC%81/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Shaw">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/xzx.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="徐子潇的技术博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">git支持emoji了！快来更换你的提交风格吧！</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-07-24T07:05:00+00:00">
+                2020-07-24
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/git/" itemprop="url" rel="index">
+                    <span itemprop="name">git</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本文[2]简要介绍了git代码提交的规范，以及使用emoji表情的方法和注意事项。</p>
+<h2 id="提交效果图"><a href="#提交效果图" class="headerlink" title="提交效果图"></a>提交效果图</h2><p>图1的右边向我们展示了提交时的emoji表情，是不是很有意思？</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/60/1.jpg" alt="图1. 提交展示图"></p>
+<h2 id="说明"><a href="#说明" class="headerlink" title="说明"></a>说明</h2><ul>
+<li>git提交建议的文字描述来自alibaba的开源项目egg.js，git-commit规范；</li>
+</ul>
+<ul>
+<li>符号部分来自github里部分项目的emoji表情提交建议。</li>
+</ul>
+<h2 id="文字提交规范"><a href="#文字提交规范" class="headerlink" title="文字提交规范"></a>文字提交规范</h2><p>commit一共由五部分组成，具体内容如下：</p>
+<h4 id="（1）type"><a href="#（1）type" class="headerlink" title="（1）type"></a>（1）type</h4><p>提交 commit 的类型，包括以下几种：</p>
+<ul>
+<li><strong>feat</strong>: 新功能</li>
+<li><strong>fix</strong>: 修复问题</li>
+<li><strong>docs</strong>: 修改文档</li>
+<li><strong>style</strong>: 修改代码格式，不影响代码逻辑</li>
+<li><strong>refactor</strong>: 重构代码，理论上不影响现有功能</li>
+<li><strong>perf</strong>: 提升性能</li>
+<li><strong>test</strong>: 增加修改测试用例</li>
+<li><strong>chore</strong>: 修改工具相关（包括但不限于文档、代码生成等）</li>
+<li><strong>deps</strong>: 升级依赖</li>
+</ul>
+<h4 id="（2）scope"><a href="#（2）scope" class="headerlink" title="（2）scope"></a>（2）scope</h4><p>修改文件的范围, 包括但不限于:</p>
+<ul>
+<li>doc </li>
+<li>middleware </li>
+<li>core </li>
+<li>config </li>
+<li>plugin</li>
+</ul>
+<h4 id="（3）subject"><a href="#（3）subject" class="headerlink" title="（3）subject"></a>（3）subject</h4><p>用一句话清楚的描述这次提交做了什么。</p>
+<h4 id="（4）body"><a href="#（4）body" class="headerlink" title="（4）body"></a>（4）body</h4><p>补充 subject，适当增加原因、目的等相关因素，也可不写。</p>
+<h4 id="（5）footer"><a href="#（5）footer" class="headerlink" title="（5）footer"></a>（5）footer</h4><ul>
+<li>当有非兼容修改(Breaking Change)时必须在这里描述清楚</li>
+<li>关联相关 issue，如 Closes #1, Closes #2, #3</li>
+<li>如果功能点有新增或修改的，还需要关联文档 doc .</li>
+</ul>
+<h2 id="加入emoji表情"><a href="#加入emoji表情" class="headerlink" title="加入emoji表情"></a>加入emoji表情</h2><p>有了emoji提交代码注释，预览信息就会十分形象生动。</p>
+<h3 id="获取emoji表情"><a href="#获取emoji表情" class="headerlink" title="获取emoji表情"></a>获取emoji表情</h3><p>那么，哪里能获取丰富的emoji表情呢？只要访问下面这个网站即可：</p>
+<p><code>https://gitmoji.carloscuesta.me/</code></p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/60/2.jpg" alt="图2. 表情列表"></p>
+<p>如图2，该网站展示了所有的emoji表情。</p>
+<p>值得注意的是，在每个emoji表情下面注明了规则和使用场景。比如图3，在提交时，只需要拼写<code>:tada:</code>，就能生成这样一个emoji表情。同时，在图片的下方写了：</p>
+<p>“Begin a project”</p>
+<p>表示新项目的开启。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/60/3.png" alt="图3. 新项目开始"></p>
+<p>而图4的锤子就表示增加或者更新了代码片段。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/60/4.png" alt="图4. 锤子"></p>
+<p>完整的使用例子如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git commit -m &quot;:bug: fix a bug writtten by pig teammate&quot;</span><br></pre></td></tr></table></figure>
+
+<p>这表示修复一个bug。</p>
+<h3 id="emoji表情对应举例"><a href="#emoji表情对应举例" class="headerlink" title="emoji表情对应举例"></a>emoji表情对应举例</h3><p>下面列举了部分，关于更全面的信息请参考上面给的网站。</p>
+<table>
+<thead>
+<tr>
+<th>emoji</th>
+<th>emoji代码</th>
+<th>commit说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>🎨 (调色板)</td>
+<td>:art:</td>
+<td>改进代码结构/代码格式</td>
+</tr>
+<tr>
+<td>🚚(卡车)</td>
+<td>:truck:</td>
+<td>移动或重命名文件</td>
+</tr>
+<tr>
+<td>💩(大便)</td>
+<td>:poop:</td>
+<td>写了很差的代码，后期需要改善</td>
+</tr>
+<tr>
+<td>⚡️ (闪电)</td>
+<td>:zap:</td>
+<td>提升性能</td>
+</tr>
+<tr>
+<td>🐎 (赛马)</td>
+<td>:racehorse:</td>
+<td>提升性能</td>
+</tr>
+<tr>
+<td>🔥 (火焰)</td>
+<td>:fire:</td>
+<td>移除代码或文件</td>
+</tr>
+<tr>
+<td>🐛 (bug)</td>
+<td>:bug:</td>
+<td>修复 bug</td>
+</tr>
+<tr>
+<td>🚑 (急救车)</td>
+<td>:ambulance:</td>
+<td>重要补丁</td>
+</tr>
+<tr>
+<td>✨ (火花)</td>
+<td>:sparkles:</td>
+<td>引入新功能</td>
+</tr>
+<tr>
+<td>📝 (铅笔)</td>
+<td>:pencil:</td>
+<td>撰写文档</td>
+</tr>
+<tr>
+<td>🚀 (火箭)</td>
+<td>:rocket:</td>
+<td>部署功能</td>
+</tr>
+<tr>
+<td>💄 (口红)</td>
+<td>:lipstick:</td>
+<td>更新 UI 和样式文件</td>
+</tr>
+<tr>
+<td>🎉 (庆祝)</td>
+<td>:tada:</td>
+<td>初次提交</td>
+</tr>
+<tr>
+<td>✅ (白色复选框)</td>
+<td>:white_check_mark:</td>
+<td>增加测试</td>
+</tr>
+<tr>
+<td>🔒 (锁)</td>
+<td>:lock:</td>
+<td>修复安全问题</td>
+</tr>
+<tr>
+<td>🍎 (苹果)</td>
+<td>:apple:</td>
+<td>修复 macOS 下的问题</td>
+</tr>
+<tr>
+<td>🐧 (企鹅)</td>
+<td>:penguin:</td>
+<td>修复 Linux 下的问题</td>
+</tr>
+<tr>
+<td>🏁 (旗帜)</td>
+<td>:checked_flag:</td>
+<td>修复 Windows 下的问题</td>
+</tr>
+<tr>
+<td>🔖 (书签)</td>
+<td>:bookmark:</td>
+<td>发行/版本标签</td>
+</tr>
+<tr>
+<td>🚨 (警车灯)</td>
+<td>:rotating_light:</td>
+<td>移除 linter 警告</td>
+</tr>
+<tr>
+<td>🚧 (施工)</td>
+<td>:construction:</td>
+<td>工作进行中</td>
+</tr>
+<tr>
+<td>💚 (绿心)</td>
+<td>:green_heart:</td>
+<td>修复 CI 构建问题</td>
+</tr>
+<tr>
+<td>⬇️ (下降箭头)</td>
+<td>:arrow_down:</td>
+<td>降级依赖</td>
+</tr>
+<tr>
+<td>⬆️ (上升箭头)</td>
+<td>:arrow_up:</td>
+<td>升级依赖</td>
+</tr>
+<tr>
+<td>👷 (工人)</td>
+<td>:construction_worker:</td>
+<td>添加 CI 构建系统</td>
+</tr>
+<tr>
+<td>📈 (上升趋势图)</td>
+<td>:chart_with_upwards_trend:</td>
+<td>添加分析或跟踪代码</td>
+</tr>
+<tr>
+<td>🔨 (锤子)</td>
+<td>:hammer:</td>
+<td>重大重构</td>
+</tr>
+<tr>
+<td>➖ (减号)</td>
+<td>:heavy_minus_sign:</td>
+<td>减少一个依赖</td>
+</tr>
+<tr>
+<td>🐳 (鲸鱼)</td>
+<td>:whale:</td>
+<td>相关工作</td>
+</tr>
+<tr>
+<td>➕ (加号)</td>
+<td>:heavy_plus_sign:</td>
+<td>增加一个依赖</td>
+</tr>
+<tr>
+<td>🔧 (扳手)</td>
+<td>:wrench:</td>
+<td>修改配置文件</td>
+</tr>
+<tr>
+<td>🌐 (地球)</td>
+<td>:globe_with_meridians:</td>
+<td>国际化与本地化</td>
+</tr>
+<tr>
+<td>✏️ (铅笔)</td>
+<td>:pencil2:</td>
+<td>修复 typo</td>
+</tr>
+</tbody></table>
+<p>另外，在README.md文件里也可以使用Emoji表情哦，最后希望提交代码的时候，不要都是大便💩哈。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p>[1] <a href="https://www.jianshu.com/p/33e5743de965" target="_blank" rel="noopener">Git提交代码时emoji表情的建议</a></p>
+<p>[2] <a href="https://zhuanlan.zhihu.com/p/29764863?utm_source=wechat_session" target="_blank" rel="noopener">git commit 时使用 Emoji ?</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/git/" rel="tag"># git</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/07/20/%E5%9F%BA%E4%BA%8E%E9%98%BF%E9%87%8C%E4%BA%91%E7%9A%84Docker%E9%95%9C%E5%83%8F%E5%8A%A0%E9%80%9F%E5%99%A8/" rel="next" title="基于阿里云的Docker镜像加速器">
+                <i class="fa fa-chevron-left"></i> 基于阿里云的Docker镜像加速器
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/xzx.jpg"
+                alt="Shaw" />
+            
+              <p class="site-author-name" itemprop="name">Shaw</p>
+              <p class="site-description motion-element" itemprop="description">桃李春风一杯酒，江湖夜雨十年灯</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#提交效果图"><span class="nav-number">2.</span> <span class="nav-text">提交效果图</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#说明"><span class="nav-number">3.</span> <span class="nav-text">说明</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#文字提交规范"><span class="nav-number">4.</span> <span class="nav-text">文字提交规范</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#（1）type"><span class="nav-number">4.0.1.</span> <span class="nav-text">（1）type</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#（2）scope"><span class="nav-number">4.0.2.</span> <span class="nav-text">（2）scope</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#（3）subject"><span class="nav-number">4.0.3.</span> <span class="nav-text">（3）subject</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#（4）body"><span class="nav-number">4.0.4.</span> <span class="nav-text">（4）body</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#（5）footer"><span class="nav-number">4.0.5.</span> <span class="nav-text">（5）footer</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#加入emoji表情"><span class="nav-number">5.</span> <span class="nav-text">加入emoji表情</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#获取emoji表情"><span class="nav-number">5.1.</span> <span class="nav-text">获取emoji表情</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#emoji表情对应举例"><span class="nav-number">5.2.</span> <span class="nav-text">emoji表情对应举例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">6.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Shaw</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

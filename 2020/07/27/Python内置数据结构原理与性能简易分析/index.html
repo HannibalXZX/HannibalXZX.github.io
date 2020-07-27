@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="python," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="前言对于一些算法题，可以使用Python自带的内置函数解决。但很多时候用就用了，根本不知道内部的细节。这样的话，算时间复杂度**和空间复杂度就很有问题。 因此，我最近几天查阅了网上相关资料，并进行归纳和整理。开始我以为复制粘贴就行了，但是呢，我发现有很多东西都没解释得清楚与透彻，在研读的过程中，我经常很懵逼，更有时候，我都怀疑自己智商了。 最后不得不逼得自己还读了相关源码。越看源码，越发现有很多可">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Python内置数据结构原理与性能简易分析">
+<meta property="og:url" content="http://yoursite.com/2020/07/27/Python%E5%86%85%E7%BD%AE%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%8E%9F%E7%90%86%E4%B8%8E%E6%80%A7%E8%83%BD%E7%AE%80%E6%98%93%E5%88%86%E6%9E%90/index.html">
+<meta property="og:site_name" content="徐子潇的技术博客">
+<meta property="og:description" content="前言对于一些算法题，可以使用Python自带的内置函数解决。但很多时候用就用了，根本不知道内部的细节。这样的话，算时间复杂度**和空间复杂度就很有问题。 因此，我最近几天查阅了网上相关资料，并进行归纳和整理。开始我以为复制粘贴就行了，但是呢，我发现有很多东西都没解释得清楚与透彻，在研读的过程中，我经常很懵逼，更有时候，我都怀疑自己智商了。 最后不得不逼得自己还读了相关源码。越看源码，越发现有很多可">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/1.png">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/2.png">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/3.png">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/4.png">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/5.png">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/6.png">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/7.png">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/8.png">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/9.png">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/10.png">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/11.png">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/12.png">
+<meta property="article:published_time" content="2020-07-27T15:27:00.000Z">
+<meta property="article:modified_time" content="2020-07-27T15:28:43.151Z">
+<meta property="article:author" content="Shaw">
+<meta property="article:tag" content="python">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/1.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/07/27/Python内置数据结构原理与性能简易分析/"/>
+
+
+
+
+
+  <title>Python内置数据结构原理与性能简易分析 | 徐子潇的技术博客</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">徐子潇的技术博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/27/Python%E5%86%85%E7%BD%AE%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%8E%9F%E7%90%86%E4%B8%8E%E6%80%A7%E8%83%BD%E7%AE%80%E6%98%93%E5%88%86%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Shaw">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/xzx.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="徐子潇的技术博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Python内置数据结构原理与性能简易分析</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-07-27T15:27:00+00:00">
+                2020-07-27
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" itemprop="url" rel="index">
+                    <span itemprop="name">数据结构</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/python/" itemprop="url" rel="index">
+                    <span itemprop="name">python</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                  4,257 字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                  17 分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>对于一些算法题，可以使用Python自带的内置函数解决。但很多时候用就用了，根本不知道内部的细节。这样的话，算时间复杂度**和空间复杂度就很有问题。</p>
+<p>因此，我最近几天查阅了网上相关资料，并进行归纳和整理。开始我以为复制粘贴就行了，但是呢，我发现有很多东西都没解释得清楚与透彻，在研读的过程中，我经常很懵逼，更有时候，我都怀疑自己智商了。</p>
+<p>最后不得不逼得自己还读了相关源码。越看源码，越发现有很多可以分析的，但是考虑到篇幅和时间，就先打住，以后再整个进阶版。</p>
+<p>整理完这个以后，我认为呀，不管什么东西还是得追本溯源，这样才靠谱。</p>
+<h2 id="前提说明"><a href="#前提说明" class="headerlink" title="前提说明"></a>前提说明</h2><p>时间复杂度是参考官网:<br><a href="https://wiki.python.org/moin/TimeComplexity" target="_blank" rel="noopener">https://wiki.python.org/moin/TimeComplexity</a></p>
+<p>此页面记录了当前CPython中各种操作的时间复杂度（又名“Big O”或“大欧”）。其他Python实现（或CPython的旧版本或仍在开发版本）可能具有略微不同的性能特征。但是, 通常可以安全地假设它们的速度不超过<code>O(log n)</code>。 </p>
+<p>在所有即将介绍的表格中，<code>n</code>是容器中当前元素的数量，<code>k</code>是参数的值或参数中的元素数。</p>
+<p>本文先上结论再进行分析，有助于带着问题去思考答案。</p>
+<h2 id="性能总结"><a href="#性能总结" class="headerlink" title="性能总结"></a>性能总结</h2><p>1、Python 字典中使用了 hash table，因此查找操作的复杂度为 O(1)，而 list 实际是个数组，在 list 中，查找需要遍历整个 list，其复杂度为 O(n)，因此对成员的查找访问等操作字典要比 list 更快。<br>2、set 的 union， intersection，difference 操作要比 list 的迭代要快。因此如果涉及到求 list 交集，并集或者差的问题可以转换为 set 来操作。<br>3、需要频繁在两端插入或者删除元素，可以选择双端队列。</p>
+<h2 id="1、列表-list"><a href="#1、列表-list" class="headerlink" title="1、列表(list)"></a>1、列表(list)</h2><p>可直接使用，无须调用。</p>
+<h3 id="列表实现原理"><a href="#列表实现原理" class="headerlink" title="列表实现原理"></a>列表实现原理</h3><p>列表是以<strong>数组</strong>（Array）实现的，这个数组是 <strong>over-allocate</strong> 数组。顾名思义，当底层数组容量满了而需要扩充的时候，python依据规则会扩充多个位置出来。比如初始化列表array=[1, 2, 3, 4]，向其中添加元素23，此时array对应的底层数组，扩充后的容量不是5，而是8。这就是over-allocate的意义，即扩充容量的时候会多分配一些存储空间。如图1，展示了<code>l.insert(1,5)</code> 的操作。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/1.png" alt="图1. insert操作"></p>
+<p>这里说下，列表的增长模式为：0，4，8，16，25，35，46，58，72，88…</p>
+<h3 id="列表函数的时间复杂度"><a href="#列表函数的时间复杂度" class="headerlink" title="列表函数的时间复杂度"></a>列表函数的时间复杂度</h3><p>如果要更好地理解列表，就必须熟悉<strong>数组</strong>这种数据结构。如图 2所示，为列表相关函数的时间复杂度。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/2.png" alt="图2. 列表函数的时间复杂度"></p>
+<h3 id="列表函数讲解"><a href="#列表函数讲解" class="headerlink" title="列表函数讲解"></a>列表函数讲解</h3><ul>
+<li>append()方法是指在列表末尾增加一个数据项，这里的表强调的是插入1个元素，即没有扩容。</li>
+<li>extend()方法是指在列表末尾增加一个数据集合；</li>
+<li>insert()方法是指在某个特定位置前面增加一个数据项，需要移动其他元素位置；</li>
+<li>len()方法获取列表内元素的个数，因为在列表实现中，其内部维护了一个 <code>Py_ssize_t</code> 类型的变量表示列表内元素的个数，因此时间复杂度为O(1)；</li>
+<li>sort()方法是排序，网上有原理讲解，使用的是 <strong>Timesort</strong> 排序，该排序结合了合并排序（merge sort）和插入排序（insertion sort）而得出的排序算法，它在现实中有很好的效率。空间复杂度为O(n)。其排序的过程大致为，对输入的数字进行分区，然后再进行合并；</li>
+</ul>
+<h3 id="性能分析"><a href="#性能分析" class="headerlink" title="性能分析"></a>性能分析</h3><p>通过对上表的分析可以发现，列表不太适合做元素的<strong>查找</strong>、<strong>删除</strong>、<strong>插入</strong>等操作，因为这些都要遍历列表，对应的时间复杂度为O(n)。</p>
+<p>访问某个<strong>索引</strong>的元素、<strong>尾部</strong>添加元素(append)或删除(pop last)元素这些操作比较适合用列表做，对应的时间复杂度为O(1)。</p>
+<p>根据官方上说，列表最大的开销发生在<strong>超过了当前所分配的列表大小</strong>，这是因为，所有元素都需要移动；或者是在起始位置附近插入或者删除元素，这种情况下所有在该位置后面的元素都需要移动。如果你需要在一个队列的两端进行增删的操作，应当使用<code>collections.deque</code>。</p>
+<p>如果我们要在业务开发中，判断一个value是否在一个数据集中，如果数据集用列表存储，那此时的判断操作就很耗时，如果我们用hash table（set or dict）来存储，则比较轻松。</p>
+<h2 id="2、双端队列-collections-deque"><a href="#2、双端队列-collections-deque" class="headerlink" title="2、双端队列(collections.deque)"></a>2、双端队列(collections.deque)</h2><p>使用时，需要导入：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">from collection import deque</span><br></pre></td></tr></table></figure>
+
+<h3 id="双端队列实现原理"><a href="#双端队列实现原理" class="headerlink" title="双端队列实现原理"></a>双端队列实现原理</h3><p>deque（双端队列）是以<strong>双向链表</strong>的形式实现的。（好吧, 一个数组列表而不是对象, 以提高效率）。</p>
+<p>为了更好地理解这种结构，可以参照 GitHub 上 CPython collections 模块的第二个 commit 的源码。注释在文末的附录下面。</p>
+<p>这里根据注释，我画了一个不太准确的图，其实leftblock和rightblock都是要存储数据的。但在下图，没有标明。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/3.png" alt="图3. 存储图"></p>
+<p>参考资料4，单个block的结构体示意图如下：</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/4.png" alt="图4. block"></p>
+<p>总结来说，deque 内部将一组内存块组织成<strong>双向链表</strong>的形式，每个内存块可以看成一个 Python 对象的数组， 这个数组与普通数据不同，它是从数组中部往头尾两边填充数据，而平常所见数组大都是从头往后。 正因为这个特性，所以叫双端队列。</p>
+<h3 id="双端队列时间复杂度"><a href="#双端队列时间复杂度" class="headerlink" title="双端队列时间复杂度"></a>双端队列时间复杂度</h3><p>如图所示，为双端队列的相关函数的时间复杂度。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/5.png" alt="图5. 双端队列时间复杂度"></p>
+<h3 id="双端队列函数讲解"><a href="#双端队列函数讲解" class="headerlink" title="双端队列函数讲解"></a>双端队列函数讲解</h3><p>在这种数据结构下，append方法是怎么实现的呢？</p>
+<ol>
+<li>如果 rightblock 可以容纳更多的元素，则放在 rightblock 中</li>
+<li>如果不能，就新建一个 block，然后更新若干指针，将元素放在更新后的 rightblock 中。</li>
+</ol>
+<h3 id="性能分析-1"><a href="#性能分析-1" class="headerlink" title="性能分析"></a>性能分析</h3><p>得益于 deque 这样的结构，它的 pop/popleft/append/appendleft 四种操作的时间复杂度均是 O(1), 用它来实现队列、栈会非常方便和高效。</p>
+<p>虽然双端队列中的元素可以从两端弹出，并且队列任意一端都可以入队和出队，但其限定<strong>插入和删除操作在表的两端进行</strong>。 由于这样，查找双端队列中间的元素较为缓慢, 增删元素就更慢了。</p>
+<h2 id="3、字典-dict"><a href="#3、字典-dict" class="headerlink" title="3、字典(dict)"></a>3、字典(dict)</h2><p>可直接使用，无须调用。</p>
+<h3 id="字典实现原理"><a href="#字典实现原理" class="headerlink" title="字典实现原理"></a>字典实现原理</h3><p>　在Python中，字典是通过<strong>哈希表</strong>实现的。也就是说，字典是一个数组，而数组的<strong>索引</strong>是经过哈希函数处理后得到的。要理解字典，必须对哈希表这种数据结构比较熟悉。下图6为哈希表的一个逻辑判断：</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/6.png" alt="图6. 哈希表判断"></p>
+<p>这里要注意几点：</p>
+<ul>
+<li>使用散列值的一部分进行定位</li>
+<li>散列冲突时，使用散列值的另一部分，如果这一部分是包含原始Key的信息，那么不同的Key通过比较就能区分出来。</li>
+</ul>
+<p>你可能会问，取哈希值的一部分是怎么取得呢？下图7给了一个种方式，就是将计算得到哈希值 &amp; 数组的长度。</p>
+<p>同时，由这张图，我们可以发现Python的哈希函数在键彼此连续的时候表现得很理想，这主要是考虑到通常情况下处理的都是这类形式的数据。然而，一旦我们添加了键’z’就会出现冲突，因为这个键值并不毗邻其他键，且相距较远。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/7.png" alt="图7. 哈希映射"></p>
+<p>先要声明的是，针对python的不同版本，dict的实现还有所不同，较为详细的介绍请参考资料[6]。老字典只使用一张hash，而新字典还使用了一张Indices表来辅助。这里的indices才是真正的散列表哦，下来列出新的结构：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">indices &#x3D; [None, None, index, None, index, None, index]</span><br><span class="line"></span><br><span class="line">enteies &#x3D; [ [hash0, key0, value0],  [hash1, key1, value1],  [hash2, key2, value2]]</span><br></pre></td></tr></table></figure>
+
+<h4 id="字典存储过程："><a href="#字典存储过程：" class="headerlink" title="字典存储过程："></a>字典存储过程：</h4><ul>
+<li>计算key的hash值 ( <code>hash(key)</code> )，再和mask做与操作 ( <code>mask=字典最小长度（IndicesDictMinSize）- 1</code> )，运算后会得到一个数字index，这个index就是要插入的indices的下标位置（注：具体算法与Python版本相关，并不一定一样）；</li>
+<li>得到index后，会找到indices的位置，但是此位置不是存的hash值，而是存的<code>len(enteies)</code>，表示该值在enteies中的位置；</li>
+<li>如果出现hash冲突，则会继续向下寻找空位置（略有变化的开放寻址），一直到找到剩余空位为止。</li>
+</ul>
+<h4 id="字典查找过程："><a href="#字典查找过程：" class="headerlink" title="字典查找过程："></a>字典查找过程：</h4><ul>
+<li>计算 hash(key)，得到hash_value ;</li>
+<li>计算 <code>hash_value &amp; ( len(indices) - 1)</code>，得到一个数字index ;</li>
+<li>计算 indices[index] 的值，得到 entry_index ;</li>
+<li>计算 enteies[entey_index] 的值 ，为最终值。</li>
+</ul>
+<p>为方便理解，这里我做了一个图，可以看到 <strong>indices</strong> 起到一个桥梁的作用。画完这个图，再感叹一句，设计还是挺巧妙的。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/8.png" alt="图8. 字典示意图"></p>
+<p>这里补充下，关于哈希冲突，是怎么寻找下一个数组位置的。源码中用到的是以下公式：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">j &#x3D; ((5*j) + 1) mod 2**i</span><br></pre></td></tr></table></figure>
+
+<p>这里的 <code>j</code> 有两层含义，赋值号左边的为数组的下一个下标，赋值号右边的是当前发生冲突的下标。而 <code>2 ** i</code>可以理解数组长度。举例说明，对于要给size大小为<code>2 ** 3</code>来说：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">j_prev &#x3D; 0 ; j_next &#x3D; ((5 * 0) + 1) mod 8 &#x3D; 1  </span><br><span class="line">j_prev &#x3D; 1 ; j_next &#x3D; ((5 * 1) + 1) mod 8  &#x3D; 6</span><br><span class="line">j_prev &#x3D; 6 ; j_next &#x3D; ((5 * 6) + 1) mod 8  &#x3D; 7</span><br><span class="line">j_prev &#x3D; 7 ; j_next &#x3D; ((5 * 7) + 1) mod  8 &#x3D; 4</span><br><span class="line">j_prev &#x3D; 4 ; j_next &#x3D; ((5 * 4 ) + 1) mod 8 &#x3D; 5</span><br></pre></td></tr></table></figure>
+
+<p>以此类推，最后回到起点为0。以下就是哈希冲突的轨迹</p>
+<p>0 -&gt; 1 -&gt; 6 -&gt; 7 -&gt; 4 -&gt; 5 -&gt; 2 -&gt; 3 -&gt; 0 [and here it’s repeating]</p>
+<h3 id="字典函数的时间复杂度"><a href="#字典函数的时间复杂度" class="headerlink" title="字典函数的时间复杂度"></a>字典函数的时间复杂度</h3><p>下列字典的平均情况基于以下假设：</p>
+<ol>
+<li>对象的散列函数足够撸棒（robust）, 不会发生冲突。</li>
+<li>字典的键是从所有可能的键的集合中随机选择的。</li>
+</ol>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/9.png" alt="图9. 字典函数的时间复杂度"></p>
+<p>小窍门：只使用字符串作为字典的键。这么做虽然不会影响算法的时间复杂度, 但会对常数项产生显著的影响, 这决定了你的一段程序能多快跑完。</p>
+<h3 id="字典函数说明"><a href="#字典函数说明" class="headerlink" title="字典函数说明"></a>字典函数说明</h3><ol>
+<li>这些操作依赖于“摊销最坏情况”的“摊销”部分。根据容器的历史, 个别动作可能需要很长时间。</li>
+<li>对于这些操作, 最坏的情况n是<strong>容器达到的最大尺寸</strong>, 而不仅仅是当前的大小。例如, 如果一个N个元素的字典, 然后删除N-1个元素, 这个字典会重新为N个元素调整大小, 而不是当前的一个元素, 所以时间复杂度是O(n)。</li>
+</ol>
+<h3 id="字典性能分析"><a href="#字典性能分析" class="headerlink" title="字典性能分析"></a>字典性能分析</h3><p>字典的查询、添加、删除的平均时间复杂度都是O(1)，相比列表与元祖，性能更优。但是，如果发生散列冲突，或者容器需要扩充，那么时间复杂度就要考虑最差的情况 O(n)。所以说字典及其依赖哈希算法，真正要灵活运用词典时，还需要查看底层的哈希算法。</p>
+<h2 id="4、集合-set"><a href="#4、集合-set" class="headerlink" title="4、集合(set)"></a>4、集合(set)</h2><p>dict与set实现原理是一样的，都是将实际的值放到list中。唯一不同的在于hash函数操作的对象，对于dict，hash函数操作的是其key，而对于set是直接操作的它的元素。</p>
+<p>假设操作内容为x，其作为因变量，放入hash函数，通过运算后取list的余数，转化为一个list的下标，此下标位置对于set而言用来放其本身。</p>
+<p>而对于dict则是创建了两个list，一个listf存储哈希表对应的下标，另一个list中存储哈希表具体对应的值。</p>
+<p>这里为了更好地理解，对比上面字典那个图，我尝试画一个图。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/10.png" alt="图10. 集合映射"></p>
+<h3 id="集合函数的时间复杂度"><a href="#集合函数的时间复杂度" class="headerlink" title="集合函数的时间复杂度"></a>集合函数的时间复杂度</h3><p>下图是函数的时间复杂度：</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/11.png" alt="图11. 集合时间复杂度"></p>
+<h3 id="集合性能分析"><a href="#集合性能分析" class="headerlink" title="集合性能分析"></a>集合性能分析</h3><p>由源码得知, 求差集（s-t, 或s.difference(t)）运算与更新为差集（s.difference_uptate(t)）运算的时间复杂度并不相同！</p>
+<ul>
+<li>第一个是O(len(s))（对于s中的每个元素, 如果不在t中, 将它添加到新集合中）。</li>
+<li>第二个是O(len(t))（对于t中的每个元素, 将其从s中删除）。</li>
+</ul>
+<p>因此, 必须注意哪个是首选, 取决于哪一个是最长的集合以及是否需要新的集合。</p>
+<p>集合的s-t运算中, s和t都要是set类型。如果t不是set类型, 但是是可迭代的, 你可以使用等价的方法达到目的, 比如 s.difference(l), l是个list类型。</p>
+<p>另外，列表的一些集合运算，可以转成集合类型来操作，速度更快。</p>
+<h2 id="给自己留一个坑"><a href="#给自己留一个坑" class="headerlink" title="给自己留一个坑"></a>给自己留一个坑</h2><p>自己也尝试读了一下一些数据结构的源码，虽然很多看不懂，但是抓到一些关键信息。比如下面的代码和图片。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">static Py_ssize_t</span><br><span class="line">list_length(PyListObject *a)</span><br><span class="line">&#123;</span><br><span class="line">return Py_SIZE(a);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>下图12为dictobject.c里的一个函数：<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/12.png" alt="图12. 集合时间复杂度"></p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p>[1]  <a href="https://zhuanlan.zhihu.com/p/64841133" target="_blank" rel="noopener">Python内置方法的时间复杂度</a> </p>
+<p>[2] <a href="https://wiki.python.org/moin/TimeComplexity" target="_blank" rel="noopener">TimeComplexity</a></p>
+<p>[3] <a href="https://www.jianshu.com/p/a2c98df9cfae" target="_blank" rel="noopener">python list 之时间复杂度分析</a></p>
+<p>[4] <a href="https://www.cnblogs.com/bonelee/p/11433743.html" target="_blank" rel="noopener">How collections.deque works?</a>，</p>
+<p>[5] <a href="https://zhuanlan.zhihu.com/p/45871870" target="_blank" rel="noopener">深入 Python 列表的内部实现</a>；</p>
+<p>[6] <a href="https://zhuanlan.zhihu.com/p/74003719" target="_blank" rel="noopener">Python字典dict实现原理</a></p>
+<h2 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h2><h3 id="Cpython-list-部分源码注释"><a href="#Cpython-list-部分源码注释" class="headerlink" title="Cpython list 部分源码注释"></a>Cpython list 部分源码注释</h3><p>源码地址传送门：<br><a href="https://github.com/python/cpython/blob/master/Objects/listobject.c" target="_blank" rel="noopener">https://github.com/python/cpython/blob/master/Objects/listobject.c</a></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;* This over-allocates proportional to the list size, making room</span><br><span class="line">* for additional growth. The over-allocation is mild, but is</span><br><span class="line">* enough to give linear-time amortized behavior over a long</span><br><span class="line">* sequence of appends() in the presence of a poorly-performing</span><br><span class="line">* system realloc().</span><br><span class="line">* Add padding to make the allocated size multiple of 4.</span><br><span class="line">* The growth pattern is: 0, 4, 8, 16, 24, 32, 40, 52, 64, 76, ...</span><br><span class="line">* Note: new_allocated won&#39;t overflow because the largest possible value</span><br><span class="line">* is PY_SSIZE_T_MAX * (9 &#x2F; 8) + 6 which always fits in a size_t.</span><br><span class="line">*&#x2F;</span><br></pre></td></tr></table></figure>
+<h3 id="Cpython-collections-部分源码注释"><a href="#Cpython-collections-部分源码注释" class="headerlink" title="Cpython collections 部分源码注释"></a>Cpython collections 部分源码注释</h3><p>源码地址传送门：<br><a href="https://github.com/python/cpython/blob/master/Modules/_collectionsmodule.c" target="_blank" rel="noopener">https://github.com/python/cpython/blob/master/Modules/_collectionsmodule.c</a></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;* The block length may be set to any number over 1.  Larger numbers</span><br><span class="line">* reduce the number of calls to the memory allocator but take more</span><br><span class="line">* memory.  Ideally, BLOCKLEN should be set with an eye to the</span><br><span class="line">* length of a cache line.</span><br><span class="line">*&#x2F;</span><br><span class="line"></span><br><span class="line">#define BLOCKLEN 62</span><br><span class="line">#define CENTER ((BLOCKLEN - 1) &#x2F; 2)</span><br><span class="line">&#x2F;* A &#96;dequeobject&#96; is composed of a doubly-linked list of &#96;block&#96; nodes.</span><br><span class="line">* This list is not circular (the leftmost block has leftlink&#x3D;&#x3D;NULL,</span><br><span class="line">* and the rightmost block has rightlink&#x3D;&#x3D;NULL).  A deque d&#39;s first</span><br><span class="line">* element is at d.leftblock[leftindex] and its last element is at</span><br><span class="line">* d.rightblock[rightindex]; note that, unlike as for Python slice</span><br><span class="line">* indices, these indices are inclusive on both ends.  By being inclusive</span><br><span class="line">* on both ends, algorithms for left and right operations become</span><br><span class="line">* symmetrical which simplifies the design.</span><br><span class="line">* The list of blocks is never empty, so d.leftblock and d.rightblock</span><br><span class="line">* are never equal to NULL.</span><br><span class="line">* The indices, d.leftindex and d.rightindex are always in the range</span><br><span class="line">*     0 &lt;&#x3D; index &lt; BLOCKLEN.</span><br><span class="line">* Their exact relationship is:</span><br><span class="line">*     (d.leftindex + d.len - 1) % BLOCKLEN &#x3D;&#x3D; d.rightindex.</span><br><span class="line">* Empty deques have d.len &#x3D;&#x3D; 0; d.leftblock&#x3D;&#x3D;d.rightblock;</span><br><span class="line">* d.leftindex &#x3D;&#x3D; CENTER+1; and d.rightindex &#x3D;&#x3D; CENTER.</span><br><span class="line">* Checking for d.len &#x3D;&#x3D; 0 is the intended way to see whether d is empty.</span><br><span class="line">* Whenever d.leftblock &#x3D;&#x3D; d.rightblock,</span><br><span class="line">*     d.leftindex + d.len - 1 &#x3D;&#x3D; d.rightindex.</span><br><span class="line">* However, when d.leftblock !&#x3D; d.rightblock, d.leftindex and d.rightindex</span><br><span class="line">* become indices into distinct blocks and either may be larger than the</span><br><span class="line">* other.</span><br><span class="line">*&#x2F;</span><br></pre></td></tr></table></figure>
+<h3 id="Cpython-dict源码部分注释"><a href="#Cpython-dict源码部分注释" class="headerlink" title="Cpython dict源码部分注释"></a>Cpython dict源码部分注释</h3><p>源码地址传送门：<br><a href="https://github.com/python/cpython/blob/master/Objects/dictobject.c" target="_blank" rel="noopener">https://github.com/python/cpython/blob/master/Objects/dictobject.c</a></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;*layout:</span><br><span class="line">+---------------+</span><br><span class="line">| dk_refcnt         |</span><br><span class="line">| dk_size            |</span><br><span class="line">| dk_lookup       |</span><br><span class="line">| dk_usable        |</span><br><span class="line">| dk_nentries      |</span><br><span class="line">+---------------+</span><br><span class="line">| dk_indices       |</span><br><span class="line">|                         |</span><br><span class="line">+---------------+</span><br><span class="line">| dk_entries       |</span><br><span class="line">|                     |</span><br><span class="line">+---------------+</span><br><span class="line"></span><br><span class="line">dk_indices is actual hashtable. It holds index in entries, or DKIX_EMPTY(-1) or</span><br><span class="line">DKIX_DUMMY(-2).</span><br><span class="line">dk_entries is array of PyDictKeyEntry. Its size is USABLE_FRACTION(dk_size).DK_ENTRIES(dk) can be used to get pointer to entries.</span><br><span class="line">The first half of collision resolution is to visit table indices via this</span><br><span class="line">recurrence:</span><br><span class="line"></span><br><span class="line">But catering to unusual cases should not slow the usual ones, so we just take the last i bits anyway. It&#39;s up to collision resolution to do the rest. If</span><br><span class="line">we *usually* find the key we&#39;re looking for on the first try (and, it turns out, we usually do -- the table load factor is kept under 2&#x2F;3, so the odds</span><br><span class="line">are solidly in our favor), then it makes best sense to keep the initial index computation dirt cheap.</span><br><span class="line"></span><br><span class="line">j &#x3D; ((5*j) + 1) mod 2**i</span><br><span class="line"></span><br><span class="line">For any initial j in range(2**i), repeating that 2**i times generates each</span><br><span class="line">int in range(2**i) exactly once (see any text on random-number generation for</span><br><span class="line">proof). By itself, this doesn&#39;t help much: like linear probing (setting</span><br><span class="line">j +&#x3D; 1, or j -&#x3D; 1, on each loop trip), it scans the table entries in a fixed</span><br><span class="line">order. This would be bad, except that&#39;s not the only thing we do, and it&#39;s</span><br><span class="line">actually *good* in the common cases where hash keys are consecutive. </span><br><span class="line"></span><br><span class="line">In an example that&#39;s really too small to make this entirely clear, for a table of</span><br><span class="line">size 2**3 the order of indices is:</span><br><span class="line">0 -&gt; 1 -&gt; 6 -&gt; 7 -&gt; 4 -&gt; 5 -&gt; 2 -&gt; 3 -&gt; 0 [and here it&#39;s repeating]</span><br><span class="line">*&#x2F;</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/python/" rel="tag"># python</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/07/24/git%E6%94%AF%E6%8C%81emoji%E4%BA%86%EF%BC%81%E5%BF%AB%E6%9D%A5%E6%9B%B4%E6%8D%A2%E4%BD%A0%E7%9A%84%E6%8F%90%E4%BA%A4%E9%A3%8E%E6%A0%BC%E5%90%A7%EF%BC%81/" rel="next" title="git支持emoji了！快来更换你的提交风格吧！">
+                <i class="fa fa-chevron-left"></i> git支持emoji了！快来更换你的提交风格吧！
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/xzx.jpg"
+                alt="Shaw" />
+            
+              <p class="site-author-name" itemprop="name">Shaw</p>
+              <p class="site-description motion-element" itemprop="description">桃李春风一杯酒，江湖夜雨十年灯</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">6</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">分类</span>
+                
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">4</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/HannibalXZX" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#前提说明"><span class="nav-number">2.</span> <span class="nav-text">前提说明</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#性能总结"><span class="nav-number">3.</span> <span class="nav-text">性能总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1、列表-list"><span class="nav-number">4.</span> <span class="nav-text">1、列表(list)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#列表实现原理"><span class="nav-number">4.1.</span> <span class="nav-text">列表实现原理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#列表函数的时间复杂度"><span class="nav-number">4.2.</span> <span class="nav-text">列表函数的时间复杂度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#列表函数讲解"><span class="nav-number">4.3.</span> <span class="nav-text">列表函数讲解</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#性能分析"><span class="nav-number">4.4.</span> <span class="nav-text">性能分析</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2、双端队列-collections-deque"><span class="nav-number">5.</span> <span class="nav-text">2、双端队列(collections.deque)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#双端队列实现原理"><span class="nav-number">5.1.</span> <span class="nav-text">双端队列实现原理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#双端队列时间复杂度"><span class="nav-number">5.2.</span> <span class="nav-text">双端队列时间复杂度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#双端队列函数讲解"><span class="nav-number">5.3.</span> <span class="nav-text">双端队列函数讲解</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#性能分析-1"><span class="nav-number">5.4.</span> <span class="nav-text">性能分析</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3、字典-dict"><span class="nav-number">6.</span> <span class="nav-text">3、字典(dict)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#字典实现原理"><span class="nav-number">6.1.</span> <span class="nav-text">字典实现原理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#字典存储过程："><span class="nav-number">6.1.1.</span> <span class="nav-text">字典存储过程：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#字典查找过程："><span class="nav-number">6.1.2.</span> <span class="nav-text">字典查找过程：</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#字典函数的时间复杂度"><span class="nav-number">6.2.</span> <span class="nav-text">字典函数的时间复杂度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#字典函数说明"><span class="nav-number">6.3.</span> <span class="nav-text">字典函数说明</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#字典性能分析"><span class="nav-number">6.4.</span> <span class="nav-text">字典性能分析</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4、集合-set"><span class="nav-number">7.</span> <span class="nav-text">4、集合(set)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#集合函数的时间复杂度"><span class="nav-number">7.1.</span> <span class="nav-text">集合函数的时间复杂度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#集合性能分析"><span class="nav-number">7.2.</span> <span class="nav-text">集合性能分析</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#给自己留一个坑"><span class="nav-number">8.</span> <span class="nav-text">给自己留一个坑</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">9.</span> <span class="nav-text">参考资料</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#附录"><span class="nav-number">10.</span> <span class="nav-text">附录</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Cpython-list-部分源码注释"><span class="nav-number">10.1.</span> <span class="nav-text">Cpython list 部分源码注释</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Cpython-collections-部分源码注释"><span class="nav-number">10.2.</span> <span class="nav-text">Cpython collections 部分源码注释</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Cpython-dict源码部分注释"><span class="nav-number">10.3.</span> <span class="nav-text">Cpython dict源码部分注释</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Shaw</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count">12.3k</span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

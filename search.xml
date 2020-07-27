@@ -1,0 +1,770 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>Python内置数据结构原理与性能简易分析</title>
+    <url>/2020/07/27/Python%E5%86%85%E7%BD%AE%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%8E%9F%E7%90%86%E4%B8%8E%E6%80%A7%E8%83%BD%E7%AE%80%E6%98%93%E5%88%86%E6%9E%90/</url>
+    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>对于一些算法题，可以使用Python自带的内置函数解决。但很多时候用就用了，根本不知道内部的细节。这样的话，算时间复杂度**和空间复杂度就很有问题。</p>
+<p>因此，我最近几天查阅了网上相关资料，并进行归纳和整理。开始我以为复制粘贴就行了，但是呢，我发现有很多东西都没解释得清楚与透彻，在研读的过程中，我经常很懵逼，更有时候，我都怀疑自己智商了。</p>
+<p>最后不得不逼得自己还读了相关源码。越看源码，越发现有很多可以分析的，但是考虑到篇幅和时间，就先打住，以后再整个进阶版。</p>
+<p>整理完这个以后，我认为呀，不管什么东西还是得追本溯源，这样才靠谱。</p>
+<h2 id="前提说明"><a href="#前提说明" class="headerlink" title="前提说明"></a>前提说明</h2><p>时间复杂度是参考官网:<br><a href="https://wiki.python.org/moin/TimeComplexity" target="_blank" rel="noopener">https://wiki.python.org/moin/TimeComplexity</a></p>
+<p>此页面记录了当前CPython中各种操作的时间复杂度（又名“Big O”或“大欧”）。其他Python实现（或CPython的旧版本或仍在开发版本）可能具有略微不同的性能特征。但是, 通常可以安全地假设它们的速度不超过<code>O(log n)</code>。 </p>
+<p>在所有即将介绍的表格中，<code>n</code>是容器中当前元素的数量，<code>k</code>是参数的值或参数中的元素数。</p>
+<p>本文先上结论再进行分析，有助于带着问题去思考答案。</p>
+<h2 id="性能总结"><a href="#性能总结" class="headerlink" title="性能总结"></a>性能总结</h2><p>1、Python 字典中使用了 hash table，因此查找操作的复杂度为 O(1)，而 list 实际是个数组，在 list 中，查找需要遍历整个 list，其复杂度为 O(n)，因此对成员的查找访问等操作字典要比 list 更快。<br>2、set 的 union， intersection，difference 操作要比 list 的迭代要快。因此如果涉及到求 list 交集，并集或者差的问题可以转换为 set 来操作。<br>3、需要频繁在两端插入或者删除元素，可以选择双端队列。</p>
+<h2 id="1、列表-list"><a href="#1、列表-list" class="headerlink" title="1、列表(list)"></a>1、列表(list)</h2><p>可直接使用，无须调用。</p>
+<h3 id="列表实现原理"><a href="#列表实现原理" class="headerlink" title="列表实现原理"></a>列表实现原理</h3><p>列表是以<strong>数组</strong>（Array）实现的，这个数组是 <strong>over-allocate</strong> 数组。顾名思义，当底层数组容量满了而需要扩充的时候，python依据规则会扩充多个位置出来。比如初始化列表array=[1, 2, 3, 4]，向其中添加元素23，此时array对应的底层数组，扩充后的容量不是5，而是8。这就是over-allocate的意义，即扩充容量的时候会多分配一些存储空间。如图1，展示了<code>l.insert(1,5)</code> 的操作。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/1.png" alt="图1. insert操作"></p>
+<p>这里说下，列表的增长模式为：0，4，8，16，25，35，46，58，72，88…</p>
+<h3 id="列表函数的时间复杂度"><a href="#列表函数的时间复杂度" class="headerlink" title="列表函数的时间复杂度"></a>列表函数的时间复杂度</h3><p>如果要更好地理解列表，就必须熟悉<strong>数组</strong>这种数据结构。如图 2所示，为列表相关函数的时间复杂度。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/2.png" alt="图2. 列表函数的时间复杂度"></p>
+<h3 id="列表函数讲解"><a href="#列表函数讲解" class="headerlink" title="列表函数讲解"></a>列表函数讲解</h3><ul>
+<li>append()方法是指在列表末尾增加一个数据项，这里的表强调的是插入1个元素，即没有扩容。</li>
+<li>extend()方法是指在列表末尾增加一个数据集合；</li>
+<li>insert()方法是指在某个特定位置前面增加一个数据项，需要移动其他元素位置；</li>
+<li>len()方法获取列表内元素的个数，因为在列表实现中，其内部维护了一个 <code>Py_ssize_t</code> 类型的变量表示列表内元素的个数，因此时间复杂度为O(1)；</li>
+<li>sort()方法是排序，网上有原理讲解，使用的是 <strong>Timesort</strong> 排序，该排序结合了合并排序（merge sort）和插入排序（insertion sort）而得出的排序算法，它在现实中有很好的效率。空间复杂度为O(n)。其排序的过程大致为，对输入的数字进行分区，然后再进行合并；</li>
+</ul>
+<h3 id="性能分析"><a href="#性能分析" class="headerlink" title="性能分析"></a>性能分析</h3><p>通过对上表的分析可以发现，列表不太适合做元素的<strong>查找</strong>、<strong>删除</strong>、<strong>插入</strong>等操作，因为这些都要遍历列表，对应的时间复杂度为O(n)。</p>
+<p>访问某个<strong>索引</strong>的元素、<strong>尾部</strong>添加元素(append)或删除(pop last)元素这些操作比较适合用列表做，对应的时间复杂度为O(1)。</p>
+<p>根据官方上说，列表最大的开销发生在<strong>超过了当前所分配的列表大小</strong>，这是因为，所有元素都需要移动；或者是在起始位置附近插入或者删除元素，这种情况下所有在该位置后面的元素都需要移动。如果你需要在一个队列的两端进行增删的操作，应当使用<code>collections.deque</code>。</p>
+<p>如果我们要在业务开发中，判断一个value是否在一个数据集中，如果数据集用列表存储，那此时的判断操作就很耗时，如果我们用hash table（set or dict）来存储，则比较轻松。</p>
+<h2 id="2、双端队列-collections-deque"><a href="#2、双端队列-collections-deque" class="headerlink" title="2、双端队列(collections.deque)"></a>2、双端队列(collections.deque)</h2><p>使用时，需要导入：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">from collection import deque</span><br></pre></td></tr></table></figure>
+
+<h3 id="双端队列实现原理"><a href="#双端队列实现原理" class="headerlink" title="双端队列实现原理"></a>双端队列实现原理</h3><p>deque（双端队列）是以<strong>双向链表</strong>的形式实现的。（好吧, 一个数组列表而不是对象, 以提高效率）。</p>
+<p>为了更好地理解这种结构，可以参照 GitHub 上 CPython collections 模块的第二个 commit 的源码。注释在文末的附录下面。</p>
+<p>这里根据注释，我画了一个不太准确的图，其实leftblock和rightblock都是要存储数据的。但在下图，没有标明。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/3.png" alt="图3. 存储图"></p>
+<p>参考资料4，单个block的结构体示意图如下：</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/4.png" alt="图4. block"></p>
+<p>总结来说，deque 内部将一组内存块组织成<strong>双向链表</strong>的形式，每个内存块可以看成一个 Python 对象的数组， 这个数组与普通数据不同，它是从数组中部往头尾两边填充数据，而平常所见数组大都是从头往后。 正因为这个特性，所以叫双端队列。</p>
+<h3 id="双端队列时间复杂度"><a href="#双端队列时间复杂度" class="headerlink" title="双端队列时间复杂度"></a>双端队列时间复杂度</h3><p>如图所示，为双端队列的相关函数的时间复杂度。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/5.png" alt="图5. 双端队列时间复杂度"></p>
+<h3 id="双端队列函数讲解"><a href="#双端队列函数讲解" class="headerlink" title="双端队列函数讲解"></a>双端队列函数讲解</h3><p>在这种数据结构下，append方法是怎么实现的呢？</p>
+<ol>
+<li>如果 rightblock 可以容纳更多的元素，则放在 rightblock 中</li>
+<li>如果不能，就新建一个 block，然后更新若干指针，将元素放在更新后的 rightblock 中。</li>
+</ol>
+<h3 id="性能分析-1"><a href="#性能分析-1" class="headerlink" title="性能分析"></a>性能分析</h3><p>得益于 deque 这样的结构，它的 pop/popleft/append/appendleft 四种操作的时间复杂度均是 O(1), 用它来实现队列、栈会非常方便和高效。</p>
+<p>虽然双端队列中的元素可以从两端弹出，并且队列任意一端都可以入队和出队，但其限定<strong>插入和删除操作在表的两端进行</strong>。 由于这样，查找双端队列中间的元素较为缓慢, 增删元素就更慢了。</p>
+<h2 id="3、字典-dict"><a href="#3、字典-dict" class="headerlink" title="3、字典(dict)"></a>3、字典(dict)</h2><p>可直接使用，无须调用。</p>
+<h3 id="字典实现原理"><a href="#字典实现原理" class="headerlink" title="字典实现原理"></a>字典实现原理</h3><p>　在Python中，字典是通过<strong>哈希表</strong>实现的。也就是说，字典是一个数组，而数组的<strong>索引</strong>是经过哈希函数处理后得到的。要理解字典，必须对哈希表这种数据结构比较熟悉。下图6为哈希表的一个逻辑判断：</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/6.png" alt="图6. 哈希表判断"></p>
+<p>这里要注意几点：</p>
+<ul>
+<li>使用散列值的一部分进行定位</li>
+<li>散列冲突时，使用散列值的另一部分，如果这一部分是包含原始Key的信息，那么不同的Key通过比较就能区分出来。</li>
+</ul>
+<p>你可能会问，取哈希值的一部分是怎么取得呢？下图7给了一个种方式，就是将计算得到哈希值 &amp; 数组的长度。</p>
+<p>同时，由这张图，我们可以发现Python的哈希函数在键彼此连续的时候表现得很理想，这主要是考虑到通常情况下处理的都是这类形式的数据。然而，一旦我们添加了键’z’就会出现冲突，因为这个键值并不毗邻其他键，且相距较远。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/7.png" alt="图7. 哈希映射"></p>
+<p>先要声明的是，针对python的不同版本，dict的实现还有所不同，较为详细的介绍请参考资料[6]。老字典只使用一张hash，而新字典还使用了一张Indices表来辅助。这里的indices才是真正的散列表哦，下来列出新的结构：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">indices &#x3D; [None, None, index, None, index, None, index]</span><br><span class="line"></span><br><span class="line">enteies &#x3D; [ [hash0, key0, value0],  [hash1, key1, value1],  [hash2, key2, value2]]</span><br></pre></td></tr></table></figure>
+
+<h4 id="字典存储过程："><a href="#字典存储过程：" class="headerlink" title="字典存储过程："></a>字典存储过程：</h4><ul>
+<li>计算key的hash值 ( <code>hash(key)</code> )，再和mask做与操作 ( <code>mask=字典最小长度（IndicesDictMinSize）- 1</code> )，运算后会得到一个数字index，这个index就是要插入的indices的下标位置（注：具体算法与Python版本相关，并不一定一样）；</li>
+<li>得到index后，会找到indices的位置，但是此位置不是存的hash值，而是存的<code>len(enteies)</code>，表示该值在enteies中的位置；</li>
+<li>如果出现hash冲突，则会继续向下寻找空位置（略有变化的开放寻址），一直到找到剩余空位为止。</li>
+</ul>
+<h4 id="字典查找过程："><a href="#字典查找过程：" class="headerlink" title="字典查找过程："></a>字典查找过程：</h4><ul>
+<li>计算 hash(key)，得到hash_value ;</li>
+<li>计算 <code>hash_value &amp; ( len(indices) - 1)</code>，得到一个数字index ;</li>
+<li>计算 indices[index] 的值，得到 entry_index ;</li>
+<li>计算 enteies[entey_index] 的值 ，为最终值。</li>
+</ul>
+<p>为方便理解，这里我做了一个图，可以看到 <strong>indices</strong> 起到一个桥梁的作用。画完这个图，再感叹一句，设计还是挺巧妙的。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/8.png" alt="图8. 字典示意图"></p>
+<p>这里补充下，关于哈希冲突，是怎么寻找下一个数组位置的。源码中用到的是以下公式：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">j &#x3D; ((5*j) + 1) mod 2**i</span><br></pre></td></tr></table></figure>
+
+<p>这里的 <code>j</code> 有两层含义，赋值号左边的为数组的下一个下标，赋值号右边的是当前发生冲突的下标。而 <code>2 ** i</code>可以理解数组长度。举例说明，对于要给size大小为<code>2 ** 3</code>来说：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">j_prev &#x3D; 0 ; j_next &#x3D; ((5 * 0) + 1) mod 8 &#x3D; 1  </span><br><span class="line">j_prev &#x3D; 1 ; j_next &#x3D; ((5 * 1) + 1) mod 8  &#x3D; 6</span><br><span class="line">j_prev &#x3D; 6 ; j_next &#x3D; ((5 * 6) + 1) mod 8  &#x3D; 7</span><br><span class="line">j_prev &#x3D; 7 ; j_next &#x3D; ((5 * 7) + 1) mod  8 &#x3D; 4</span><br><span class="line">j_prev &#x3D; 4 ; j_next &#x3D; ((5 * 4 ) + 1) mod 8 &#x3D; 5</span><br></pre></td></tr></table></figure>
+
+<p>以此类推，最后回到起点为0。以下就是哈希冲突的轨迹</p>
+<p>0 -&gt; 1 -&gt; 6 -&gt; 7 -&gt; 4 -&gt; 5 -&gt; 2 -&gt; 3 -&gt; 0 [and here it’s repeating]</p>
+<h3 id="字典函数的时间复杂度"><a href="#字典函数的时间复杂度" class="headerlink" title="字典函数的时间复杂度"></a>字典函数的时间复杂度</h3><p>下列字典的平均情况基于以下假设：</p>
+<ol>
+<li>对象的散列函数足够撸棒（robust）, 不会发生冲突。</li>
+<li>字典的键是从所有可能的键的集合中随机选择的。</li>
+</ol>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/9.png" alt="图9. 字典函数的时间复杂度"></p>
+<p>小窍门：只使用字符串作为字典的键。这么做虽然不会影响算法的时间复杂度, 但会对常数项产生显著的影响, 这决定了你的一段程序能多快跑完。</p>
+<h3 id="字典函数说明"><a href="#字典函数说明" class="headerlink" title="字典函数说明"></a>字典函数说明</h3><ol>
+<li>这些操作依赖于“摊销最坏情况”的“摊销”部分。根据容器的历史, 个别动作可能需要很长时间。</li>
+<li>对于这些操作, 最坏的情况n是<strong>容器达到的最大尺寸</strong>, 而不仅仅是当前的大小。例如, 如果一个N个元素的字典, 然后删除N-1个元素, 这个字典会重新为N个元素调整大小, 而不是当前的一个元素, 所以时间复杂度是O(n)。</li>
+</ol>
+<h3 id="字典性能分析"><a href="#字典性能分析" class="headerlink" title="字典性能分析"></a>字典性能分析</h3><p>字典的查询、添加、删除的平均时间复杂度都是O(1)，相比列表与元祖，性能更优。但是，如果发生散列冲突，或者容器需要扩充，那么时间复杂度就要考虑最差的情况 O(n)。所以说字典及其依赖哈希算法，真正要灵活运用词典时，还需要查看底层的哈希算法。</p>
+<h2 id="4、集合-set"><a href="#4、集合-set" class="headerlink" title="4、集合(set)"></a>4、集合(set)</h2><p>dict与set实现原理是一样的，都是将实际的值放到list中。唯一不同的在于hash函数操作的对象，对于dict，hash函数操作的是其key，而对于set是直接操作的它的元素。</p>
+<p>假设操作内容为x，其作为因变量，放入hash函数，通过运算后取list的余数，转化为一个list的下标，此下标位置对于set而言用来放其本身。</p>
+<p>而对于dict则是创建了两个list，一个listf存储哈希表对应的下标，另一个list中存储哈希表具体对应的值。</p>
+<p>这里为了更好地理解，对比上面字典那个图，我尝试画一个图。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/10.png" alt="图10. 集合映射"></p>
+<h3 id="集合函数的时间复杂度"><a href="#集合函数的时间复杂度" class="headerlink" title="集合函数的时间复杂度"></a>集合函数的时间复杂度</h3><p>下图是函数的时间复杂度：</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/11.png" alt="图11. 集合时间复杂度"></p>
+<h3 id="集合性能分析"><a href="#集合性能分析" class="headerlink" title="集合性能分析"></a>集合性能分析</h3><p>由源码得知, 求差集（s-t, 或s.difference(t)）运算与更新为差集（s.difference_uptate(t)）运算的时间复杂度并不相同！</p>
+<ul>
+<li>第一个是O(len(s))（对于s中的每个元素, 如果不在t中, 将它添加到新集合中）。</li>
+<li>第二个是O(len(t))（对于t中的每个元素, 将其从s中删除）。</li>
+</ul>
+<p>因此, 必须注意哪个是首选, 取决于哪一个是最长的集合以及是否需要新的集合。</p>
+<p>集合的s-t运算中, s和t都要是set类型。如果t不是set类型, 但是是可迭代的, 你可以使用等价的方法达到目的, 比如 s.difference(l), l是个list类型。</p>
+<p>另外，列表的一些集合运算，可以转成集合类型来操作，速度更快。</p>
+<h2 id="给自己留一个坑"><a href="#给自己留一个坑" class="headerlink" title="给自己留一个坑"></a>给自己留一个坑</h2><p>自己也尝试读了一下一些数据结构的源码，虽然很多看不懂，但是抓到一些关键信息。比如下面的代码和图片。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">static Py_ssize_t</span><br><span class="line">list_length(PyListObject *a)</span><br><span class="line">&#123;</span><br><span class="line">return Py_SIZE(a);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>下图12为dictobject.c里的一个函数：<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/12.png" alt="图12. 集合时间复杂度"></p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p>[1]  <a href="https://zhuanlan.zhihu.com/p/64841133" target="_blank" rel="noopener">Python内置方法的时间复杂度</a> </p>
+<p>[2] <a href="https://wiki.python.org/moin/TimeComplexity" target="_blank" rel="noopener">TimeComplexity</a></p>
+<p>[3] <a href="https://www.jianshu.com/p/a2c98df9cfae" target="_blank" rel="noopener">python list 之时间复杂度分析</a></p>
+<p>[4] <a href="https://www.cnblogs.com/bonelee/p/11433743.html" target="_blank" rel="noopener">How collections.deque works?</a>，</p>
+<p>[5] <a href="https://zhuanlan.zhihu.com/p/45871870" target="_blank" rel="noopener">深入 Python 列表的内部实现</a>；</p>
+<p>[6] <a href="https://zhuanlan.zhihu.com/p/74003719" target="_blank" rel="noopener">Python字典dict实现原理</a></p>
+<h2 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h2><h3 id="Cpython-list-部分源码注释"><a href="#Cpython-list-部分源码注释" class="headerlink" title="Cpython list 部分源码注释"></a>Cpython list 部分源码注释</h3><p>源码地址传送门：<br><a href="https://github.com/python/cpython/blob/master/Objects/listobject.c" target="_blank" rel="noopener">https://github.com/python/cpython/blob/master/Objects/listobject.c</a></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;* This over-allocates proportional to the list size, making room</span><br><span class="line">* for additional growth. The over-allocation is mild, but is</span><br><span class="line">* enough to give linear-time amortized behavior over a long</span><br><span class="line">* sequence of appends() in the presence of a poorly-performing</span><br><span class="line">* system realloc().</span><br><span class="line">* Add padding to make the allocated size multiple of 4.</span><br><span class="line">* The growth pattern is: 0, 4, 8, 16, 24, 32, 40, 52, 64, 76, ...</span><br><span class="line">* Note: new_allocated won&#39;t overflow because the largest possible value</span><br><span class="line">* is PY_SSIZE_T_MAX * (9 &#x2F; 8) + 6 which always fits in a size_t.</span><br><span class="line">*&#x2F;</span><br></pre></td></tr></table></figure>
+<h3 id="Cpython-collections-部分源码注释"><a href="#Cpython-collections-部分源码注释" class="headerlink" title="Cpython collections 部分源码注释"></a>Cpython collections 部分源码注释</h3><p>源码地址传送门：<br><a href="https://github.com/python/cpython/blob/master/Modules/_collectionsmodule.c" target="_blank" rel="noopener">https://github.com/python/cpython/blob/master/Modules/_collectionsmodule.c</a></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;* The block length may be set to any number over 1.  Larger numbers</span><br><span class="line">* reduce the number of calls to the memory allocator but take more</span><br><span class="line">* memory.  Ideally, BLOCKLEN should be set with an eye to the</span><br><span class="line">* length of a cache line.</span><br><span class="line">*&#x2F;</span><br><span class="line"></span><br><span class="line">#define BLOCKLEN 62</span><br><span class="line">#define CENTER ((BLOCKLEN - 1) &#x2F; 2)</span><br><span class="line">&#x2F;* A &#96;dequeobject&#96; is composed of a doubly-linked list of &#96;block&#96; nodes.</span><br><span class="line">* This list is not circular (the leftmost block has leftlink&#x3D;&#x3D;NULL,</span><br><span class="line">* and the rightmost block has rightlink&#x3D;&#x3D;NULL).  A deque d&#39;s first</span><br><span class="line">* element is at d.leftblock[leftindex] and its last element is at</span><br><span class="line">* d.rightblock[rightindex]; note that, unlike as for Python slice</span><br><span class="line">* indices, these indices are inclusive on both ends.  By being inclusive</span><br><span class="line">* on both ends, algorithms for left and right operations become</span><br><span class="line">* symmetrical which simplifies the design.</span><br><span class="line">* The list of blocks is never empty, so d.leftblock and d.rightblock</span><br><span class="line">* are never equal to NULL.</span><br><span class="line">* The indices, d.leftindex and d.rightindex are always in the range</span><br><span class="line">*     0 &lt;&#x3D; index &lt; BLOCKLEN.</span><br><span class="line">* Their exact relationship is:</span><br><span class="line">*     (d.leftindex + d.len - 1) % BLOCKLEN &#x3D;&#x3D; d.rightindex.</span><br><span class="line">* Empty deques have d.len &#x3D;&#x3D; 0; d.leftblock&#x3D;&#x3D;d.rightblock;</span><br><span class="line">* d.leftindex &#x3D;&#x3D; CENTER+1; and d.rightindex &#x3D;&#x3D; CENTER.</span><br><span class="line">* Checking for d.len &#x3D;&#x3D; 0 is the intended way to see whether d is empty.</span><br><span class="line">* Whenever d.leftblock &#x3D;&#x3D; d.rightblock,</span><br><span class="line">*     d.leftindex + d.len - 1 &#x3D;&#x3D; d.rightindex.</span><br><span class="line">* However, when d.leftblock !&#x3D; d.rightblock, d.leftindex and d.rightindex</span><br><span class="line">* become indices into distinct blocks and either may be larger than the</span><br><span class="line">* other.</span><br><span class="line">*&#x2F;</span><br></pre></td></tr></table></figure>
+<h3 id="Cpython-dict源码部分注释"><a href="#Cpython-dict源码部分注释" class="headerlink" title="Cpython dict源码部分注释"></a>Cpython dict源码部分注释</h3><p>源码地址传送门：<br><a href="https://github.com/python/cpython/blob/master/Objects/dictobject.c" target="_blank" rel="noopener">https://github.com/python/cpython/blob/master/Objects/dictobject.c</a></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;*layout:</span><br><span class="line">+---------------+</span><br><span class="line">| dk_refcnt         |</span><br><span class="line">| dk_size            |</span><br><span class="line">| dk_lookup       |</span><br><span class="line">| dk_usable        |</span><br><span class="line">| dk_nentries      |</span><br><span class="line">+---------------+</span><br><span class="line">| dk_indices       |</span><br><span class="line">|                         |</span><br><span class="line">+---------------+</span><br><span class="line">| dk_entries       |</span><br><span class="line">|                     |</span><br><span class="line">+---------------+</span><br><span class="line"></span><br><span class="line">dk_indices is actual hashtable. It holds index in entries, or DKIX_EMPTY(-1) or</span><br><span class="line">DKIX_DUMMY(-2).</span><br><span class="line">dk_entries is array of PyDictKeyEntry. Its size is USABLE_FRACTION(dk_size).DK_ENTRIES(dk) can be used to get pointer to entries.</span><br><span class="line">The first half of collision resolution is to visit table indices via this</span><br><span class="line">recurrence:</span><br><span class="line"></span><br><span class="line">But catering to unusual cases should not slow the usual ones, so we just take the last i bits anyway. It&#39;s up to collision resolution to do the rest. If</span><br><span class="line">we *usually* find the key we&#39;re looking for on the first try (and, it turns out, we usually do -- the table load factor is kept under 2&#x2F;3, so the odds</span><br><span class="line">are solidly in our favor), then it makes best sense to keep the initial index computation dirt cheap.</span><br><span class="line"></span><br><span class="line">j &#x3D; ((5*j) + 1) mod 2**i</span><br><span class="line"></span><br><span class="line">For any initial j in range(2**i), repeating that 2**i times generates each</span><br><span class="line">int in range(2**i) exactly once (see any text on random-number generation for</span><br><span class="line">proof). By itself, this doesn&#39;t help much: like linear probing (setting</span><br><span class="line">j +&#x3D; 1, or j -&#x3D; 1, on each loop trip), it scans the table entries in a fixed</span><br><span class="line">order. This would be bad, except that&#39;s not the only thing we do, and it&#39;s</span><br><span class="line">actually *good* in the common cases where hash keys are consecutive. </span><br><span class="line"></span><br><span class="line">In an example that&#39;s really too small to make this entirely clear, for a table of</span><br><span class="line">size 2**3 the order of indices is:</span><br><span class="line">0 -&gt; 1 -&gt; 6 -&gt; 7 -&gt; 4 -&gt; 5 -&gt; 2 -&gt; 3 -&gt; 0 [and here it&#39;s repeating]</span><br><span class="line">*&#x2F;</span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>数据结构</category>
+        <category>python</category>
+      </categories>
+      <tags>
+        <tag>python</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Hello World</title>
+    <url>/2020/07/18/hello-world/</url>
+    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
+<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
+<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
+<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
+<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html" target="_blank" rel="noopener">Deployment</a></p>
+]]></content>
+  </entry>
+  <entry>
+    <title>基于阿里云的Docker镜像加速器</title>
+    <url>/2020/07/20/%E5%9F%BA%E4%BA%8E%E9%98%BF%E9%87%8C%E4%BA%91%E7%9A%84Docker%E9%95%9C%E5%83%8F%E5%8A%A0%E9%80%9F%E5%99%A8/</url>
+    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本文旨在通过免费获取阿里云容器加速地址来提高<code>Docker</code>镜像的下载速度，由此减少相关服务的部署时间。</p>
+<h2 id="快速了解Docker"><a href="#快速了解Docker" class="headerlink" title="快速了解Docker"></a>快速了解Docker</h2><p><code>Docker</code>可以让开发者打包他们的应用以及依赖包到一个轻量级、可移植的容器中，然后发布到任何流行的<code>Linux</code>机器上，也可以实现虚拟化。<br>容器是完全使用<strong>沙箱机制</strong>，相互之间不会有任何接口（类似<code>iPhone</code>的<code>app</code>）,更重要的是容器性能开销极低。<br>如图1，展示了<code>Docker</code>与<strong>虚拟机</strong>的对比。<br><img src="https://imgkr.cn-bj.ufileos.com/402c39a9-0e78-4b12-89cb-cf01c6936b56.png" alt="图1.Docker与虚拟机的对比"></p>
+<h2 id="快速了解Docker镜像"><a href="#快速了解Docker镜像" class="headerlink" title="快速了解Docker镜像"></a>快速了解Docker镜像</h2><p><code>Docker</code>镜像，可以理解为一个特殊的文件系统。它除了提供容器运行时所需的程序、库、资源、配置等文件外，还包含了一些为运行时准备的一些配置参数（例如环境变量）。<br><strong>镜像不包含任何动态数据</strong>，其内容在构建之后也不会被改变。</p>
+<h2 id="使用阿里云服务加速"><a href="#使用阿里云服务加速" class="headerlink" title="使用阿里云服务加速"></a>使用阿里云服务加速</h2><h3 id="获取阿里云加速器地址"><a href="#获取阿里云加速器地址" class="headerlink" title="获取阿里云加速器地址"></a>获取阿里云加速器地址</h3><p>登陆阿里云网站，选择「容器镜像服务」下的「镜像加速器」。阿里云每个账户配置了不同的「加速器地址」。<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/53/2.png" alt="图2.阿里云操作界面"></p>
+<h3 id="写入文件"><a href="#写入文件" class="headerlink" title="写入文件"></a>写入文件</h3><p>按照图2第四步的「操作文档」，选择相应的系统进行配置即可。<br>我这边是<code>Centos</code>的服务器，执行以下4步命令即可。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo mkdir -p &#x2F;etc&#x2F;docker</span><br><span class="line">echo &#39;&#123; &quot;registry-mirrors&quot;: [&quot;https:&#x2F;&#x2F;yourID.mirror.aliyuncs.com&quot;]&#125; &#39; | tee &#x2F;etc&#x2F;docker&#x2F;daemon.json</span><br><span class="line">sudo systemctl daemon-reload</span><br><span class="line">sudo systemctl restart docker</span><br></pre></td></tr></table></figure>
+<p>如果输入命令出现问题，在<code>/etc/docker/</code>目录下创建<code>daemon.json</code>文件，然后追加「加速器地址」。<br><code>{ &quot;registry-mirrors&quot;: [&quot;https://yourID.mirror.aliyuncs.com&quot;] }</code></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo mkdir -p &#x2F;etc&#x2F;docker</span><br><span class="line">echo  &#39;&#123; &quot;registry-mirrors&quot;: [&quot;https:&#x2F;&#x2F;segd1s4m.mirror.aliyuncs.com”]&#125;&#39; | tee &#x2F;etc&#x2F;docker&#x2F;daemon.json</span><br><span class="line">sudo systemctl daemon-reload</span><br><span class="line">sudo systemctl restart docker</span><br></pre></td></tr></table></figure>
+<h3 id="命令讲解"><a href="#命令讲解" class="headerlink" title="命令讲解"></a>命令讲解</h3><p><code>tee</code>指令会从标准输入设备读取数据，将其内容输出到标准输出设备，同时保存成文件。<br>例如：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">ping baidu.com | tee ping-baidu.log</span><br></pre></td></tr></table></figure>
+<p>该命令输出到控制台的同时，还将内容保存到<code>ping-baidu.log</code>文件当中。<br><code>systemctl</code>是守护进程<code>Systemd</code>的主命令，用于管理系统。<br>关于<code>Systemd</code>的详细介绍，可以查看「参考资料」的第三篇文章。<br><code>sudo systemctl daemon-reload</code>表示重载所有修改过的配置文件。</p>
+<h3 id="部署多个源"><a href="#部署多个源" class="headerlink" title="部署多个源"></a>部署多个源</h3><p>除了阿里云，还有其他源，如下：<br>中国区官方镜像：<code>https://registry.docker-cn.com</code><br>网易：<code>https://hub-mirror.c.163.com/</code><br>七牛云加速器：<code>https://reg-mirror.qiniu.com</code><br>同上步骤一样，在<code>/etc/docker/daemon.json</code>文件加入如下内容。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#123; &quot;registry-mirrors&quot;: [</span><br><span class="line">&quot;https:&#x2F;&#x2F;hub-mirror.c.163.com&#x2F;&quot;,</span><br><span class="line">&quot;https:&#x2F;&#x2F;registry.docker-cn.com&quot;</span><br><span class="line">] &#125;</span><br></pre></td></tr></table></figure>
+<h2 id="检查加速器是否生效"><a href="#检查加速器是否生效" class="headerlink" title="检查加速器是否生效"></a>检查加速器是否生效</h2><p>配置加速器之后，如果拉取镜像仍然十分缓慢，请手动检查加速器配置是否生效。<br>在命令行执行<code>docker info</code>，如果从结果中看到了如下内容，说明配置成功。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Registry Mirrors:</span><br><span class="line">https:&#x2F;&#x2F;&lt;yourID&gt;.aliyuncs.com</span><br></pre></td></tr></table></figure>
+<p>尝试下载<code>mysql</code>的官方镜像。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">docker pull mysql:latest</span><br></pre></td></tr></table></figure>
+<p>约10s就完成了。</p>
+<h2 id="可能存在的问题"><a href="#可能存在的问题" class="headerlink" title="可能存在的问题"></a>可能存在的问题</h2><p>当配置某一个加速器地址之后，若发现拉取不到镜像，请切换到另一个加速器地址。国内各大云服务商均提供了<code>Docker</code>镜像加速服务，建议根据运行<code>Docker</code>的云平台选择对应的镜像加速服务。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p>[1] <a href="https://www.runoob.com/docker/docker-mirror-acceleration.html" target="_blank" rel="noopener">Docker 镜像加速</a></p>
+<p>[2] <a href="https://www.zhihu.com/question/28300645" target="_blank" rel="noopener">如何通俗解释Docker是什么？</a></p>
+<p>[3] <a href="http://www.ruanyifeng.com/blog/2016/03/systemd-tutorial-commands.html" target="_blank" rel="noopener">Systemd 入门教程：命令篇</a></p>
+]]></content>
+      <categories>
+        <category>技术</category>
+      </categories>
+      <tags>
+        <tag>Docker</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>在Centos系统上安装Docker社区版</title>
+    <url>/2020/07/20/%E5%9C%A8Centos%E7%B3%BB%E7%BB%9F%E4%B8%8A%E5%AE%89%E8%A3%85Docker%E7%A4%BE%E5%8C%BA%E7%89%88/</url>
+    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本文详细介绍了如在Centos系统上安装Docker的社区版本，为后面搭建学习和测试环境提供了基础。</p>
+<h2 id="什么是Centos"><a href="#什么是Centos" class="headerlink" title="什么是Centos"></a>什么是Centos</h2><p>CentOS（Community Enterprise Operating System，社区企业操作系统）是Linux发行版之一，它是来自于 Red Hat Enterprise Linux 依照开放源代码规定释出的源代码所编译而成。<br>由于出自同样的源代码，因此有些要求<strong>高度稳定性</strong>的服务器以CentOS替代商业版的Red Hat Enterprise Linux使用。两者的不同，在于CentOS完全开源。</p>
+<h2 id="什么是Docker"><a href="#什么是Docker" class="headerlink" title="什么是Docker"></a>什么是Docker</h2><p>Docker类似虚拟机，是一个开源的引擎，可以轻松的为任何应用创建一个轻量级的、可移植的、自给自足的容器。让开发者可以打包他们的应用以及依赖包到一个可移植的容器中，然后发布到任何流行的Linux机器上。<br>Docker分两个版本：</p>
+<ul>
+<li>CE(Community Edition)</li>
+<li>EE(Enterprise Edition)<br>CE版本是免费的，如果我们学习或者一般应用，CE足够。EE版本在<strong>安全性</strong>上有很大提升，是<strong>收费</strong>版本，可以试用一定时间。<br>Docker容器和虚拟机的主要区别在于，虚拟机管理程序对<strong>整个设备</strong>进行抽象处理，而容器只是对<strong>操作系统内核</strong>进行抽象处理。相对于虚拟机，容器可以“丢弃没有用的99.9%的虚拟机垃圾，剩下一个小巧简洁的胶囊式容器，里面含有你的应用程序”。<h2 id="安装流程"><a href="#安装流程" class="headerlink" title="安装流程"></a>安装流程</h2>下面将介绍使用yum安装Docker。<h3 id="yum介绍"><a href="#yum介绍" class="headerlink" title="yum介绍"></a>yum介绍</h3>Yum（全称为 Yellow dog Updater, Modified）是一个在 Fedora和RedHat以及CentOS中的Shell前端软件包管理器。<br>基于RPM包管理，能够从指定的服务器自动下载RPM包并且安装，可以<strong>自动处理依赖性关系</strong>，并且一次安装所有依赖的软件包，无须繁琐地一次次下载、安装。<h3 id="卸载旧版本"><a href="#卸载旧版本" class="headerlink" title="卸载旧版本"></a>卸载旧版本</h3>较旧的Docker版本称为<code>docker</code>或<code>docker-engine</code>。如果已安装这些程序，请卸载它们以及相关的依赖项。<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo yum docker, docker-client, docker-common</span><br><span class="line">sudo yum remove docker, docker-client, docker-client-latest, docker-common, docker-latest , docker-latest-logrotate, docker-logrotate , docker-engine</span><br></pre></td></tr></table></figure>
+<h3 id="更新yum"><a href="#更新yum" class="headerlink" title="更新yum"></a>更新yum</h3>此条命令升级所有包还有内核<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum -y update</span><br></pre></td></tr></table></figure>
+若不升级内核，可输入<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum -y upgrade</span><br></pre></td></tr></table></figure>
+<h3 id="Centos7装Docker的坑"><a href="#Centos7装Docker的坑" class="headerlink" title="Centos7装Docker的坑"></a>Centos7装Docker的坑</h3>如果你的版本选择的是Centos7，恭喜你只要一步就可以安装完毕.<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum -y install docker</span><br></pre></td></tr></table></figure>
+安装完毕后，直接跳到验证步骤吧。<br>别急别急，先别跳，这个默认安装的docker版本号为1.13.1。<br>查阅相关资料，Docker是在1.13.1后正式推出企业版（2017年），版本号也从此发生了变化，由原来的1.13.1升级到了17.03（即表示17年3月），从此Docker有了<code>docker-ee</code>和<code>docker-ce</code>之分。<br>前者为企业版，后者为社区版。社区版是免费提供给个人开发者和小型团体使用的，企业版会提供额外的收费服务，比如经过官方测试认证过的基础设施、容器、插件等。<br>再回头来看，这个1.13.1这个版本已经比较老了，2017年出的，现在都2020年了。所以装了此版本的，执行上面的卸载命令，装免费的社区版本吧。要不然遇到一些版本bug，让你哭死！<br>好了，Centos8的用户等着不耐烦了，开始安装社区版本了。<h3 id="安装必备依赖项"><a href="#安装必备依赖项" class="headerlink" title="安装必备依赖项"></a>安装必备依赖项</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum install -y yum-utils device-mapper-persistent-data lvm2</span><br></pre></td></tr></table></figure>
+yum-util提供<code>yum-config-manager</code>功能，另外两个是<code>devicemapper</code>驱动依赖的包。<h3 id="添加yum的源"><a href="#添加yum的源" class="headerlink" title="添加yum的源"></a>添加yum的源</h3>为了安装docker的社区版本，需要给yum添加源，这里提供两种方式：</li>
+</ul>
+<p>1.添加国内源：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum-config-manager --add-repo http:&#x2F;&#x2F;mirrors.aliyun.com&#x2F;docker-ce&#x2F;linux&#x2F;centos&#x2F;docker-ce.repo</span><br></pre></td></tr></table></figure>
+<p>2.添加官方源：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum-config-manager --add-repo https:&#x2F;&#x2F;download.docker.com&#x2F;linux&#x2F;centos&#x2F;docker-ce.repo</span><br></pre></td></tr></table></figure>
+<p>这两个源下载的<code>docker-ce.repo</code>是一样的，执行上述其中一条命令后，就生成了 <code>/ect/yum.repos.d/docker-ce.repo</code> 这个文件，查看里面的内容，如图1所示。<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/56/1.png" alt="图1. 文件内容"><br>可以看到只有 [docker-ce-stable] 是启用的，即<code>enabled=1</code>，其他诸如 docker-ce-edge、docker-ce-test 都是禁用的。<br>在这里说明一下，stable是Docker的一个版本意思，社区版按照stable和edge两种方式发布，每个季度更新stable版本，每个月份更新edge版本。<br>另外，test版本是预发布版本，也就是下一个大版本的测试作品。</p>
+<p>如果需要启动docker-ce-edge，需要执行以下命令：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo yum-config-manager --enable docker-ce-edge</span><br></pre></td></tr></table></figure>
+<p>执行完后，再打开文件，可以看到 <code>docker-ce-edge的enabled=1</code> 了。<br>如果要禁用，通过命令：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo yum-config-manager --disable docker-ce-edge</span><br></pre></td></tr></table></figure>
+<h3 id="安装Docker-CE"><a href="#安装Docker-CE" class="headerlink" title="安装Docker CE"></a>安装Docker CE</h3><p>确保成功添加源以后，可以愉快地安装Docker了。<br>可以选择直接安装最新的Docker社区版本：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo yum -y install docker-ce --nobest</span><br></pre></td></tr></table></figure>
+<p><code>--nobest： use not only best candidate packages</code><br>如果在生产环境，往往不是安装最新版本，而是安装指定版本，那么可以先通过如下命令查看版本：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum list docker-ce --showduplicates|sort -r</span><br></pre></td></tr></table></figure>
+<p>可以看到如下结果：<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/56/2.png" alt="图2. 版本列表"><br>由图2，可以看到，截止2020年7月15日，最新版本为<code>19.03.12</code>。<br>安装生产环境指定需要的版本：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo yum install docker-ce-19.03.12</span><br></pre></td></tr></table></figure>
+<h3 id="启动docker"><a href="#启动docker" class="headerlink" title="启动docker"></a>启动docker</h3><p>安装好后，启动docker服务</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo systemctl start  docker</span><br></pre></td></tr></table></figure>
+<h2 id="检测流程"><a href="#检测流程" class="headerlink" title="检测流程"></a>检测流程</h2><h3 id="查看Docker版本"><a href="#查看Docker版本" class="headerlink" title="查看Docker版本"></a>查看Docker版本</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">docker -v</span><br></pre></td></tr></table></figure>
+<p><code>Docker version 19.03.12, build 48a66213fe</code></p>
+<h3 id="启动测试应用"><a href="#启动测试应用" class="headerlink" title="启动测试应用"></a>启动测试应用</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo docker run hello-world</span><br></pre></td></tr></table></figure>
+<p>该命令会下载一个test镜像，并在容器中运行。输出如下，表示已正确安装：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Unable to find image &#39;hello-world:latest&#39; locally</span><br><span class="line">...</span><br><span class="line">Hello from Docker!</span><br><span class="line">This message shows that your installation appears to be working correctly.</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<h3 id="设置Docker的开机自启"><a href="#设置Docker的开机自启" class="headerlink" title="设置Docker的开机自启"></a>设置Docker的开机自启</h3><p>设置为开机自动激活单元并现在立刻启动</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">systemctl enable --now docker</span><br></pre></td></tr></table></figure>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p>[1] <a href="https://www.runoob.com/docker/centos-docker-install.htmll" target="_blank" rel="noopener">docker安装_菜鸟教程</a><br>[2] <a href="https://segmentfault.com/a/1190000012986950" target="_blank" rel="noopener">Docker入门学习</a><br>[3] <a href="https://www.cnblogs.com/wangxiayun/p/10064421.html" target="_blank" rel="noopener">CentOS7安装docker以及错误解决</a><br>[4] <a href="https://baijiahao.baidu.com/s?id=1627776276982932844&wfr=spider&for=pc" target="_blank" rel="noopener">Centos7默认安装的docker版本说明</a></p>
+]]></content>
+  </entry>
+  <entry>
+    <title>git支持emoji了！快来更换你的提交风格吧！</title>
+    <url>/2020/07/24/git%E6%94%AF%E6%8C%81emoji%E4%BA%86%EF%BC%81%E5%BF%AB%E6%9D%A5%E6%9B%B4%E6%8D%A2%E4%BD%A0%E7%9A%84%E6%8F%90%E4%BA%A4%E9%A3%8E%E6%A0%BC%E5%90%A7%EF%BC%81/</url>
+    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本文[2]简要介绍了git代码提交的规范，以及使用emoji表情的方法和注意事项。</p>
+<h2 id="提交效果图"><a href="#提交效果图" class="headerlink" title="提交效果图"></a>提交效果图</h2><p>图1的右边向我们展示了提交时的emoji表情，是不是很有意思？</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/60/1.jpg" alt="图1. 提交展示图"></p>
+<h2 id="说明"><a href="#说明" class="headerlink" title="说明"></a>说明</h2><ul>
+<li>git提交建议的文字描述来自alibaba的开源项目egg.js，git-commit规范；</li>
+</ul>
+<ul>
+<li>符号部分来自github里部分项目的emoji表情提交建议。</li>
+</ul>
+<h2 id="文字提交规范"><a href="#文字提交规范" class="headerlink" title="文字提交规范"></a>文字提交规范</h2><p>commit一共由五部分组成，具体内容如下：</p>
+<h4 id="（1）type"><a href="#（1）type" class="headerlink" title="（1）type"></a>（1）type</h4><p>提交 commit 的类型，包括以下几种：</p>
+<ul>
+<li><strong>feat</strong>: 新功能</li>
+<li><strong>fix</strong>: 修复问题</li>
+<li><strong>docs</strong>: 修改文档</li>
+<li><strong>style</strong>: 修改代码格式，不影响代码逻辑</li>
+<li><strong>refactor</strong>: 重构代码，理论上不影响现有功能</li>
+<li><strong>perf</strong>: 提升性能</li>
+<li><strong>test</strong>: 增加修改测试用例</li>
+<li><strong>chore</strong>: 修改工具相关（包括但不限于文档、代码生成等）</li>
+<li><strong>deps</strong>: 升级依赖</li>
+</ul>
+<h4 id="（2）scope"><a href="#（2）scope" class="headerlink" title="（2）scope"></a>（2）scope</h4><p>修改文件的范围, 包括但不限于:</p>
+<ul>
+<li>doc </li>
+<li>middleware </li>
+<li>core </li>
+<li>config </li>
+<li>plugin</li>
+</ul>
+<h4 id="（3）subject"><a href="#（3）subject" class="headerlink" title="（3）subject"></a>（3）subject</h4><p>用一句话清楚的描述这次提交做了什么。</p>
+<h4 id="（4）body"><a href="#（4）body" class="headerlink" title="（4）body"></a>（4）body</h4><p>补充 subject，适当增加原因、目的等相关因素，也可不写。</p>
+<h4 id="（5）footer"><a href="#（5）footer" class="headerlink" title="（5）footer"></a>（5）footer</h4><ul>
+<li>当有非兼容修改(Breaking Change)时必须在这里描述清楚</li>
+<li>关联相关 issue，如 Closes #1, Closes #2, #3</li>
+<li>如果功能点有新增或修改的，还需要关联文档 doc .</li>
+</ul>
+<h2 id="加入emoji表情"><a href="#加入emoji表情" class="headerlink" title="加入emoji表情"></a>加入emoji表情</h2><p>有了emoji提交代码注释，预览信息就会十分形象生动。</p>
+<h3 id="获取emoji表情"><a href="#获取emoji表情" class="headerlink" title="获取emoji表情"></a>获取emoji表情</h3><p>那么，哪里能获取丰富的emoji表情呢？只要访问下面这个网站即可：</p>
+<p><code>https://gitmoji.carloscuesta.me/</code></p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/60/2.jpg" alt="图2. 表情列表"></p>
+<p>如图2，该网站展示了所有的emoji表情。</p>
+<p>值得注意的是，在每个emoji表情下面注明了规则和使用场景。比如图3，在提交时，只需要拼写<code>:tada:</code>，就能生成这样一个emoji表情。同时，在图片的下方写了：</p>
+<p>“Begin a project”</p>
+<p>表示新项目的开启。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/60/3.png" alt="图3. 新项目开始"></p>
+<p>而图4的锤子就表示增加或者更新了代码片段。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/60/4.png" alt="图4. 锤子"></p>
+<p>完整的使用例子如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git commit -m &quot;:bug: fix a bug writtten by pig teammate&quot;</span><br></pre></td></tr></table></figure>
+
+<p>这表示修复一个bug。</p>
+<h3 id="emoji表情对应举例"><a href="#emoji表情对应举例" class="headerlink" title="emoji表情对应举例"></a>emoji表情对应举例</h3><p>下面列举了部分，关于更全面的信息请参考上面给的网站。</p>
+<table>
+<thead>
+<tr>
+<th>emoji</th>
+<th>emoji代码</th>
+<th>commit说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>🎨 (调色板)</td>
+<td>:art:</td>
+<td>改进代码结构/代码格式</td>
+</tr>
+<tr>
+<td>🚚(卡车)</td>
+<td>:truck:</td>
+<td>移动或重命名文件</td>
+</tr>
+<tr>
+<td>💩(大便)</td>
+<td>:poop:</td>
+<td>写了很差的代码，后期需要改善</td>
+</tr>
+<tr>
+<td>⚡️ (闪电)</td>
+<td>:zap:</td>
+<td>提升性能</td>
+</tr>
+<tr>
+<td>🐎 (赛马)</td>
+<td>:racehorse:</td>
+<td>提升性能</td>
+</tr>
+<tr>
+<td>🔥 (火焰)</td>
+<td>:fire:</td>
+<td>移除代码或文件</td>
+</tr>
+<tr>
+<td>🐛 (bug)</td>
+<td>:bug:</td>
+<td>修复 bug</td>
+</tr>
+<tr>
+<td>🚑 (急救车)</td>
+<td>:ambulance:</td>
+<td>重要补丁</td>
+</tr>
+<tr>
+<td>✨ (火花)</td>
+<td>:sparkles:</td>
+<td>引入新功能</td>
+</tr>
+<tr>
+<td>📝 (铅笔)</td>
+<td>:pencil:</td>
+<td>撰写文档</td>
+</tr>
+<tr>
+<td>🚀 (火箭)</td>
+<td>:rocket:</td>
+<td>部署功能</td>
+</tr>
+<tr>
+<td>💄 (口红)</td>
+<td>:lipstick:</td>
+<td>更新 UI 和样式文件</td>
+</tr>
+<tr>
+<td>🎉 (庆祝)</td>
+<td>:tada:</td>
+<td>初次提交</td>
+</tr>
+<tr>
+<td>✅ (白色复选框)</td>
+<td>:white_check_mark:</td>
+<td>增加测试</td>
+</tr>
+<tr>
+<td>🔒 (锁)</td>
+<td>:lock:</td>
+<td>修复安全问题</td>
+</tr>
+<tr>
+<td>🍎 (苹果)</td>
+<td>:apple:</td>
+<td>修复 macOS 下的问题</td>
+</tr>
+<tr>
+<td>🐧 (企鹅)</td>
+<td>:penguin:</td>
+<td>修复 Linux 下的问题</td>
+</tr>
+<tr>
+<td>🏁 (旗帜)</td>
+<td>:checked_flag:</td>
+<td>修复 Windows 下的问题</td>
+</tr>
+<tr>
+<td>🔖 (书签)</td>
+<td>:bookmark:</td>
+<td>发行/版本标签</td>
+</tr>
+<tr>
+<td>🚨 (警车灯)</td>
+<td>:rotating_light:</td>
+<td>移除 linter 警告</td>
+</tr>
+<tr>
+<td>🚧 (施工)</td>
+<td>:construction:</td>
+<td>工作进行中</td>
+</tr>
+<tr>
+<td>💚 (绿心)</td>
+<td>:green_heart:</td>
+<td>修复 CI 构建问题</td>
+</tr>
+<tr>
+<td>⬇️ (下降箭头)</td>
+<td>:arrow_down:</td>
+<td>降级依赖</td>
+</tr>
+<tr>
+<td>⬆️ (上升箭头)</td>
+<td>:arrow_up:</td>
+<td>升级依赖</td>
+</tr>
+<tr>
+<td>👷 (工人)</td>
+<td>:construction_worker:</td>
+<td>添加 CI 构建系统</td>
+</tr>
+<tr>
+<td>📈 (上升趋势图)</td>
+<td>:chart_with_upwards_trend:</td>
+<td>添加分析或跟踪代码</td>
+</tr>
+<tr>
+<td>🔨 (锤子)</td>
+<td>:hammer:</td>
+<td>重大重构</td>
+</tr>
+<tr>
+<td>➖ (减号)</td>
+<td>:heavy_minus_sign:</td>
+<td>减少一个依赖</td>
+</tr>
+<tr>
+<td>🐳 (鲸鱼)</td>
+<td>:whale:</td>
+<td>相关工作</td>
+</tr>
+<tr>
+<td>➕ (加号)</td>
+<td>:heavy_plus_sign:</td>
+<td>增加一个依赖</td>
+</tr>
+<tr>
+<td>🔧 (扳手)</td>
+<td>:wrench:</td>
+<td>修改配置文件</td>
+</tr>
+<tr>
+<td>🌐 (地球)</td>
+<td>:globe_with_meridians:</td>
+<td>国际化与本地化</td>
+</tr>
+<tr>
+<td>✏️ (铅笔)</td>
+<td>:pencil2:</td>
+<td>修复 typo</td>
+</tr>
+</tbody></table>
+<p>另外，在README.md文件里也可以使用Emoji表情哦，最后希望提交代码的时候，不要都是大便💩哈。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p>[1] <a href="https://www.jianshu.com/p/33e5743de965" target="_blank" rel="noopener">Git提交代码时emoji表情的建议</a></p>
+<p>[2] <a href="https://zhuanlan.zhihu.com/p/29764863?utm_source=wechat_session" target="_blank" rel="noopener">git commit 时使用 Emoji ?</a></p>
+]]></content>
+      <categories>
+        <category>git</category>
+      </categories>
+      <tags>
+        <tag>git</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>学习正则表达式的简单方法</title>
+    <url>/2020/07/20/%E5%AD%A6%E4%B9%A0%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F%E7%9A%84%E7%AE%80%E5%8D%95%E6%96%B9%E6%B3%95/</url>
+    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>分析数据的前提是要准确提炼数据，而正则表达式就是很好的提炼数据工具。</p>
+<p>本文旨在让读者快速地了解正则表达式的基本规则和特性。本文虽说简单，但其实也不简单，需要反复观看记忆。</p>
+<p>本文转载于资料[1]，每个例子我基本都测试了一遍。也加了一些内容和标记，方便更好理解。</p>
+<h2 id="什么是正则表达式-？"><a href="#什么是正则表达式-？" class="headerlink" title="什么是正则表达式 ？"></a>什么是正则表达式 ？</h2><blockquote>
+<p>正则表达式是一种被用于从文本中检索符合某些特定模式的文本。</p>
+</blockquote>
+<p>正则表达式是从左到右来匹配一个字符串的。由于”Regular Expression” 这个词太长了，我们通常使用它的缩写 “regex” 或者 “regexp”。</p>
+<p>正则表达式可以被用来替换字符串中的文本、验证表单、基于模式匹配从一个字符串中提取字符串等等。  </p>
+<p>想象一下，您正在编写应用程序，并且您希望在用户选择用户名时设置规则。我们希望用户名可以包含字母，数字，下划线和连字符。为了让它看起来不丑，我们还想限制用户名中的字符数量。我们可以使用以下正则表达式来验证用户名:</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/59/1.png" alt="正则表达式"></p>
+<p>上面这个正则表达式可以匹配 <code>john_doe</code>，<code>jo-hn_doe</code> 和 <code>john12_as</code>。但是它不能匹配 <code>Jo</code>，因为该字符串里面包含了大写字符，并且它太短了。</p>
+<p>注：以下大部分例子为<strong>全局搜索</strong>，什么是全局搜索，请参考目录5.2。</p>
+<h2 id="1-基本匹配"><a href="#1-基本匹配" class="headerlink" title="1. 基本匹配"></a>1. 基本匹配</h2><p>正则表达式只是我们用于在文本中检索字母和数字的模式。例如正则表达式 <code>cat</code>，表示: 字母 <code>c</code> 后面跟着一个字母 <code>a</code>，再后面跟着一个字母 <code>t</code>。</p>
+<p><code>cat</code> =&gt; The <strong>cat</strong>  sat on the mat</p>
+<p>正则表达式 <code>123</code> 会匹配字符串 “123”。通过将正则表达式中的每个字符逐个与要匹配的字符串中的每个字符进行比较，来完成正则匹配。</p>
+<p>正则表达式通常<strong>区分大小写</strong>，因此正则表达式 <code>Cat</code> 与字符串 “cat” 不匹配。</p>
+<p><code>Cat</code> =&gt; The cat sat on the <strong>Cat</strong></p>
+<h2 id="2-元字符"><a href="#2-元字符" class="headerlink" title="2. 元字符"></a>2. 元字符</h2><p>元字符是正则表达式的<strong>基本组成元素</strong>。元字符在这里跟它通常表达的意思不一样，而是以某种特殊的含义去解释。有些元字符写在方括号内的时候有特殊含义。</p>
+<p>元字符如下:</p>
+<table>
+<thead>
+<tr>
+<th align="center">元字符</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">.</td>
+<td>匹配除<strong>换行符</strong>以外的任意字符。</td>
+</tr>
+<tr>
+<td align="center">[ ]</td>
+<td><strong>字符</strong>类，匹配方括号中包含的任意字符。</td>
+</tr>
+<tr>
+<td align="center">[^ ]</td>
+<td>否定字符类。匹配方括号中不包含的任意字符</td>
+</tr>
+<tr>
+<td align="center">*</td>
+<td>匹配前面的子表达式<strong>零次</strong>或多次</td>
+</tr>
+<tr>
+<td align="center">+</td>
+<td>匹配前面的子表达式<strong>一次</strong>或多次</td>
+</tr>
+<tr>
+<td align="center">?</td>
+<td>匹配前面的子表达式零次或<strong>一次</strong>，或指明一个<strong>非贪婪限定符</strong>。</td>
+</tr>
+<tr>
+<td align="center">{n,m}</td>
+<td>花括号，匹配前面字符至少 n 次，但是不超过 m 次。</td>
+</tr>
+<tr>
+<td align="center">(xyz)</td>
+<td>字符组，按照<strong>确切的顺序</strong>匹配字符xyz。</td>
+</tr>
+<tr>
+<td align="center">&#124;</td>
+<td>分支结构，匹配符号之前的字符<strong>或</strong>后面的字符。</td>
+</tr>
+<tr>
+<td align="center">&#92;</td>
+<td>转义符，它可以<strong>还原</strong>元字符原来的含义，允许你匹配保留字符 <code>[ ] ( ) { } . * + ? ^ $ \ &amp;#124;</code></td>
+</tr>
+<tr>
+<td align="center">^</td>
+<td>匹配行的开始</td>
+</tr>
+<tr>
+<td align="center">$</td>
+<td>匹配行的结束</td>
+</tr>
+</tbody></table>
+<h2 id="2-1-英文句号"><a href="#2-1-英文句号" class="headerlink" title="2.1 英文句号"></a>2.1 英文句号</h2><p>英文句号 <code>.</code> 是元字符的最简单的例子。元字符 <code>.</code> 可以匹配任意<strong>单个字符</strong>。它<strong>不会匹配换行符</strong>和新行的字符。例如正则表达式 <code>.ar</code>，表示: </p>
+<p>任意字符后面跟着一个字母 <code>a</code>，再后面跟着一个字母 <code>r</code>。</p>
+<p><code>.ar</code> =&gt; The <strong>car</strong> <strong>par</strong>ked in the <strong>gar</strong>age.</p>
+<h2 id="2-2-字符集"><a href="#2-2-字符集" class="headerlink" title="2.2 字符集"></a>2.2 字符集</h2><p>字符集也称为字符类。方括号被用于指定字符集。使用字符集内的连字符来指定字符范围。方括号内的字符范围的<strong>顺序并不重要</strong>。</p>
+<p>例如正则表达式 <code>[Tt]he</code>，表示: 大写 <code>T</code> <strong>或</strong>小写 <code>t</code> ，后跟字母 <code>h</code>，再后跟字母 <code>e</code>。</p>
+<p><code>[Tt]he</code> =&gt; <strong>The</strong> car parked in <strong>the</strong> garage.</p>
+<p>然而，字符集中的英文句号表示它字面的含义。正则表达式 <code>ar[.]</code>，表示小写字母 <code>a</code>，后面跟着一个字母 <code>r</code>，再后面跟着一个英文句号 <code>.</code> 字符。</p>
+<p><code>ar[.]</code> =&gt; A garage is a good place to park a <strong>car.</strong></p>
+<h3 id="2-2-1-否定字符集"><a href="#2-2-1-否定字符集" class="headerlink" title="2.2.1 否定字符集"></a>2.2.1 否定字符集</h3><p>一般来说插入字符 <code>^</code> 表示一个字符串的开始，但是当它在方括号内出现时，它会<strong>取消字符集</strong>。例如正则表达式 <code>[^c]ar</code>，表示: 除了字母 <code>c</code> 以外的任意字符，后面跟着字符 <code>a</code>，再后面跟着一个字母 <code>r</code>。</p>
+<p><code>[^c]ar</code> =&gt; The car <strong>par</strong>ked in the <strong>gar</strong>age.</p>
+<h2 id="2-3-重复"><a href="#2-3-重复" class="headerlink" title="2.3 重复"></a>2.3 重复</h2><p>以下元字符 <code>+</code>，<code>*</code> 或 <code>?</code> 用于指定子模式可以出现多少次。这些元字符在不同情况下的作用不同。</p>
+<h3 id="2-3-1-星号"><a href="#2-3-1-星号" class="headerlink" title="2.3.1 星号"></a>2.3.1 星号</h3><p>该符号 <code>*</code> 表示匹配<strong>上一个</strong>匹配规则的<strong>零次</strong>或多次。正则表达式 <code>a*</code> 表示小写字母 <code>a</code> 可以重复零次或者多次。但是它如果出现在字符集或者字符类之后，它表示<strong>整个字符集的重复</strong>。</p>
+<p>例如正则表达式 <code>[a-z]*</code>，表示: 一行中可以包含<strong>任意数量</strong>的小写字母。</p>
+<p><code>[a-z]*</code> =&gt; T<strong>he car parked in the garage</strong> #21 .</p>
+<p>该 <code>*</code> 符号可以与元符号 <code>.</code> 用在一起，用来匹配任意字符串 <code>.*</code>。该 <code>*</code> 符号可以与空格符 <code>\s</code> 一起使用，用来匹配一串空格字符。</p>
+<p>例如正则表达式 <code>\s*cat\s*</code>，表示: </p>
+<p>零个或多个空格，后面跟小写字母 <code>c</code>，再后面跟小写字母 <code>a</code>，再再后面跟小写字母 <code>t</code>，后面再跟零个或多个空格。</p>
+<p><code>\s*cat\s*</code> =&gt; The fat <strong>cat</strong> sat on the <strong>cat</strong>.</p>
+<p><code>\s*cat\s*</code> =&gt; The fat <strong>catcatcat</strong>.</p>
+<h3 id="2-3-2-加号"><a href="#2-3-2-加号" class="headerlink" title="2.3.2 加号"></a>2.3.2 加号</h3><p>该符号 <code>+</code> 匹配<strong>上一个</strong>字符的<strong>一次</strong>或多次。例如正则表达式 <code>c.+t</code>，表示: 一个小写字母 <code>c</code>，后跟任意数量的字符，后跟小写字母 <code>t</code>。</p>
+<p><code>c.+t</code> =&gt; The fat <strong>cat sat on the mat</strong>.</p>
+<p><code>c.+t</code> =&gt; <strong>cat ct</strong></p>
+<p><code>c.+t</code> =&gt; ct</p>
+<p>注意比较第二个和第三个例子。</p>
+<h3 id="2-3-3-问号"><a href="#2-3-3-问号" class="headerlink" title="2.3.3 问号"></a>2.3.3 问号</h3><p>在正则表达式中，元字符 <code>?</code> 用来表示前一个字符是可选的。该符号匹配前一个字符的<strong>零次或一次</strong>。</p>
+<p>例如正则表达式 <code>[T]?he</code>，表示: </p>
+<p>可选的大写字母 <code>T</code>，后面跟小写字母 <code>h</code>，后跟小写字母 <code>e</code>。    </p>
+<p><code>[T]he</code> =&gt; <strong>The</strong> car is parked in the garage.</p>
+<p><code>[T]?he</code> =&gt; <strong>The</strong> car is parked in t<strong>he</strong> garage.</p>
+<p><code>[T]?he</code> =&gt; .<strong>he</strong> a<strong>he</strong> T<strong>The</strong></p>
+<h2 id="2-4-花括号"><a href="#2-4-花括号" class="headerlink" title="2.4 花括号"></a>2.4 花括号</h2><p>在正则表达式中花括号(也被称为量词 ?)用于指定字符或一组字符可以重复的次数。例如正则表达式 <code>[0-9]{2,3}</code>，表示: 匹配至少2位数字但不超过3位(0到9范围内的字符)。</p>
+<p><code>[0-9]{2,3}</code> =&gt; The number was 9.<strong>999</strong>7 but we rounded it off to <strong>10</strong>.0.</p>
+<p>我们可以省略第二个数字。例如正则表达式 <code>[0-9]{2,}</code>，表示: </p>
+<p><strong>匹配2个或更多个数字</strong>。</p>
+<p>如果我们也删除逗号，则正则表达式 <code>[0-9]{2}</code>，表示: </p>
+<p><strong>匹配正好为2位数的数字</strong>。</p>
+<p><code>[0-9]{2,}</code>  =&gt; The number was 9.<strong>9997</strong> but we rounded it off to <strong>10</strong>.0.</p>
+<p><code>[0-9]{2}</code>  =&gt; The number was 9.<strong>9997</strong> but we rounded it off to <strong>10</strong>.0.</p>
+<p>这里因为是全局搜索，所以比较起来没有什么区别，如果我们关掉全局搜索，结果如下：</p>
+<p><code>[0-9]{2,}</code>  =&gt; The number was 9.<strong>9997</strong> but we rounded it off to 10.0.</p>
+<p><code>[0-9]{2}</code>  =&gt; The number was 9.<strong>99</strong>97 but we rounded it off to 10.0.</p>
+<p>这里再做一个对比：</p>
+<p><code>[0-9]{2,3}</code>  =&gt; <strong>233</strong>3</p>
+<p><code>[0-9]{2,3}</code>  =&gt; <strong>23333</strong></p>
+<p>这两个例子开启了全局搜索，可以发现，这是<strong>优先匹配最长的</strong>。并且每次匹配都会消耗字符串的，且消耗的是最长的。</p>
+<h2 id="2-5-字符组"><a href="#2-5-字符组" class="headerlink" title="2.5 字符组"></a>2.5 字符组</h2><p>字符组是一组写在圆括号内的子模式 <code>(...)</code>。正如我们在正则表达式中讨论的那样，如果我们把一个量词放在一个字符之后，它会重复前一个字符。</p>
+<p>但是，如果我们把量词放在一个字符组之后，它会重复整个字符组。</p>
+<p>例如正则表达式 <code>(ab)*</code> 表示匹配零个或多个的字符串 “ab”。我们还可以在字符组中使用元字符 <code>|</code>。例如正则表达式 <code>(c|g|p)ar</code>，表示: 小写字母 <code>c</code>、<code>g</code> 或 <code>p</code> 后面跟字母 <code>a</code>，后跟字母 <code>r</code>。</p>
+<p><code>(c|g|p)ar</code>  =&gt; The <strong>car</strong> is <strong>par</strong>ked in the <strong>gar</strong>age.</p>
+<p><code>(c|g|p)ar</code>  =&gt; ar <strong>par</strong></p>
+<h2 id="2-6-分支结构"><a href="#2-6-分支结构" class="headerlink" title="2.6 分支结构"></a>2.6 分支结构</h2><p>在正则表达式中垂直条 <code>|</code> 用来定义分支结构，分支结构就像多个表达式之间的条件。现在你可能认为这个字符集和分支机构的工作方式一样。</p>
+<p>但是字符集和分支结构巨大的区别是<strong>字符集只在字符级别上有作用，然而分支结构在表达式级别上依然可以使用。</strong></p>
+<p>例如正则表达式 <code>(T|t)he|car</code>，表示: 大写字母 <code>T</code> 或小写字母 <code>t</code>，后面跟小写字母 <code>h</code>，后跟小写字母 <code>e</code> 或小写字母 <code>c</code>，后跟小写字母 <code>a</code>，后跟小写字母 <code>r</code>。</p>
+<p><code>(T|t)he|car</code> =&gt; <strong>The</strong> <strong>car</strong> is parked in <strong>the</strong> garage.</p>
+<h2 id="2-7-转义特殊字符"><a href="#2-7-转义特殊字符" class="headerlink" title="2.7 转义特殊字符"></a>2.7 转义特殊字符</h2><p>正则表达式中使用反斜杠 <code>\</code> 来转义下一个字符。这将允许你使用保留字符来作为匹配字符 <code>{ } [ ] / \ + * . $ ^ | ?</code>。在特殊字符前面加 <code>\</code>，就可以使用它来做匹配字符。</p>
+<p>例如正则表达式 <code>.</code> 是用来匹配除了换行符以外的任意字符。现在要在输入字符串中匹配 <code>.</code> 字符，正则表达式 <code>(f|c|m)at\.?</code>，表示:</p>
+<p>小写字母 <code>f</code>、<code>c</code> 或者 <code>m</code> 后跟小写字母 <code>a</code>，后跟小写字母 <code>t</code>，后跟可选的 <code>.</code> 字符。</p>
+<p><code>(f|c|m)at\.?</code> =&gt; The <strong>fat</strong> <strong>cat</strong> sat on the <strong>mat.</strong></p>
+<h2 id="2-8-定位符"><a href="#2-8-定位符" class="headerlink" title="2.8 定位符"></a>2.8 定位符</h2><p>在正则表达式中，为了检查匹配符号是否是起始符号或结尾符号，我们使用定位符。</p>
+<p>定位符有两种类型: </p>
+<ul>
+<li>第一种类型是 <code>^</code> 检查匹配字符是否是起始字符；</li>
+<li>第二种类型是 <code>$</code>，它检查匹配字符是否是输入字符串的最后一个字符。</li>
+</ul>
+<h3 id="2-8-1-插入符号"><a href="#2-8-1-插入符号" class="headerlink" title="2.8.1 插入符号"></a>2.8.1 插入符号</h3><p>插入符号 <code>^</code> 符号用于检查匹配字符是否是输入字符串的第一个字符。如果我们使用正则表达式 <code>^a</code> (如果a是起始符号)匹配字符串 <code>abc</code>，它会匹配到 <code>a</code>。</p>
+<p>但是如果我们使用正则表达式 <code>^b</code>，它是匹配不到任何东西的，因为在字符串 <code>abc</code> 中 <code>b</code> 不是起始字符。</p>
+<p>让我们来看看另一个正则表达式 <code>^(T|t)he</code>，这表示: </p>
+<p>大写字母 <code>T</code> 或小写字母 <code>t</code> 是输入字符串的起始符号，后面跟着小写字母 <code>h</code>，后跟小写字母 <code>e</code>。</p>
+<p><code>(T|t)he</code> =&gt; <strong>The</strong> car is parked in <strong>the</strong> garage.</p>
+<p><code>^(T|t)he</code> =&gt; <strong>The</strong> car is parked in the garage.</p>
+<h3 id="2-8-2-美元符号"><a href="#2-8-2-美元符号" class="headerlink" title="2.8.2 美元符号"></a>2.8.2 美元符号</h3><p>美元 <code>$</code> 符号用于检查匹配字符是否是输入字符串的最后一个字符。例如正则表达式 <code>(at\.)$</code>，表示: </p>
+<p>小写字母 <code>a</code>，后跟小写字母 <code>t</code>，后跟一个 <code>.</code> 字符，且这个匹配器必须是字符串的结尾。</p>
+<p><code>(at\.)</code> =&gt; The fat c<strong>at.</strong> s<strong>at.</strong> on the m<strong>at.</strong></p>
+<p><code>(at\.)$</code> =&gt; The fat cat sat on the m<strong>at.</strong></p>
+<h2 id="3-简写字符集"><a href="#3-简写字符集" class="headerlink" title="3. 简写字符集"></a>3. 简写字符集</h2><p>正则表达式为常用的字符集和常用的正则表达式提供了简写。简写字符集如下:</p>
+<table>
+<thead>
+<tr>
+<th align="center">简写</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">.</td>
+<td>匹配除换行符以外的任意字符</td>
+</tr>
+<tr>
+<td align="center">\w</td>
+<td>匹配所有字母和数字的字符: <code>[a-zA-Z0-9_]</code></td>
+</tr>
+<tr>
+<td align="center">\W</td>
+<td>匹配非字母和数字的字符: <code>[^\w]</code></td>
+</tr>
+<tr>
+<td align="center">\d</td>
+<td>匹配数字: <code>[0-9]</code></td>
+</tr>
+<tr>
+<td align="center">\D</td>
+<td>匹配非数字: <code>[^\d]</code></td>
+</tr>
+<tr>
+<td align="center">\s</td>
+<td>匹配空格符: <code>[\t\n\f\r\p{Z}]</code></td>
+</tr>
+<tr>
+<td align="center">\S</td>
+<td>匹配非空格符: <code>[^\s]</code></td>
+</tr>
+</tbody></table>
+<h2 id="4-断言"><a href="#4-断言" class="headerlink" title="4. 断言"></a>4. 断言</h2><p>后行断言和先行断言有时候被称为断言，它们是特殊类型的 <strong>非捕获组</strong> (用于匹配模式，但不包括在匹配列表中)。当我们在一种特定模式之前或者之后有这种模式时，会优先使用断言。</p>
+<p>例如我们想获取输入字符串 <code>$4.44 and $10.88</code> 中带有前缀 <code>$</code> 的所有数字。我们可以使用这个正则表达式 <code>(?&lt;=\$)[0-9\.]*</code>，表示: </p>
+<p>获取包含 <code>.</code> 字符且前缀为 <code>$</code> 的所有数字。</p>
+<p>以下是正则表达式中使用的断言:</p>
+<table>
+<thead>
+<tr>
+<th align="center">符号</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">?=</td>
+<td>正向先行断言</td>
+</tr>
+<tr>
+<td align="center">?!</td>
+<td>负向先行断言</td>
+</tr>
+<tr>
+<td align="center">?&lt;=</td>
+<td>正向后行断言</td>
+</tr>
+<tr>
+<td align="center">?&lt;!</td>
+<td>负向后行断言</td>
+</tr>
+</tbody></table>
+<h3 id="4-1-正向先行断言"><a href="#4-1-正向先行断言" class="headerlink" title="4.1 正向先行断言"></a>4.1 正向先行断言</h3><p>正向先行断言认为第一部分的表达式必须是先行断言表达式。返回的匹配结果<strong>仅包含与第一部分表达式匹配的文本</strong>。</p>
+<p>要在一个括号内定义一个正向先行断言，在括号中问号和等号是这样使用的 <code>(?=...)</code>。先行断言表达式写在括号中的等号后面。</p>
+<p>例如正则表达式 <code>(T|t)he(?=\sfat)</code>，表示: 匹配大写字母 <code>T</code> 或小写字母 <code>t</code>，后面跟字母 <code>h</code>，后跟字母 <code>e</code>。</p>
+<p>在括号中，我们定义了正向先行断言，它会引导正则表达式引擎匹配 <code>The</code> 或 <code>the</code> 后面跟着 <code>fat</code>。</p>
+<p><code>(T|t)he(?=\sfat)</code> =&gt; <strong>The</strong> fat cat sat on the mat.</p>
+<p><code>(T|t)he(?=\sfat)</code> =&gt; The thin cat sat on the mat.</p>
+<p>从结果对比，可以看出，<code>\sfat</code> 是必须要有的，但匹配的结果不会显示它。</p>
+<h3 id="4-2-负向先行断言"><a href="#4-2-负向先行断言" class="headerlink" title="4.2 负向先行断言"></a>4.2 负向先行断言</h3><p>当我们需要从输入字符串中获取<strong>不匹配表达式</strong>的内容时，使用负向先行断言。负向先行断言的定义跟我们定义的正向先行断言一样，唯一的区别是不是等号 <code>=</code>，我们使用否定符号 <code>!</code>，例如 <code>(?!...)</code>。</p>
+<p>我们来看看下面的正则表达式 <code>(T|t)he(?!\sfat)</code>，表示: 从输入字符串中获取全部 <code>The</code> 或者 <code>the</code> 且不匹配 <code>fat</code> 前面加上一个空格字符。</p>
+<p><code>(T|t)he(?!\sfat)</code> =&gt; The fat cat sat on <strong>the</strong> mat.</p>
+<p>这里可以看出，<code>\sfat</code> 是必须不能有的，但匹配的结果不会显示它。</p>
+<h3 id="4-3-正向后行断言"><a href="#4-3-正向后行断言" class="headerlink" title="4.3 正向后行断言"></a>4.3 正向后行断言</h3><p>正向后行断言是用于获取在特定模式<strong>之前的所有匹配内容</strong>。正向后行断言表示为 <code>(?&lt;=...)</code>。例如正则表达式 <code>(?&lt;=(T|t)he\s)(fat|mat)</code>，表示:</p>
+<p>从输入字符串中获取在单词 <code>The</code> 或 <code>the</code> 之后的所有 <code>fat</code> 和 <code>mat</code> 单词。</p>
+<p><code>(?&lt;=(T|t)he\s)(fat|mat)</code> =&gt; The <strong>fat</strong> cat sat on the <strong>mat</strong>.</p>
+<p>从以上结果可以看到，<code>The</code> 和 <code>the</code> 是必须有的，但匹配的结果不会显示它。</p>
+<h3 id="4-4-负向后行断言"><a href="#4-4-负向后行断言" class="headerlink" title="4.4 负向后行断言"></a>4.4 负向后行断言</h3><p>负向后行断言是用于获取<strong>不在特定模式</strong>之前的所有匹配的内容。负向后行断言表示为 <code>(?&lt;!...)</code>。例如正则表达式 <code>(?&lt;!(T|t)he\s)(cat)</code>，表示: </p>
+<p>在输入字符中获取所有不在 <code>The</code> 或 <code>the</code> 之后的所有单词 <code>cat</code>。</p>
+<p><code>(?&lt;!(T|t)he\s)(cat)</code> =&gt; The cat sat on <strong>cat</strong>.</p>
+<p>从以上结果可以看到，<code>The</code> 和 <code>the</code> 是必须不能有的，但匹配的结果不会显示它。</p>
+<h2 id="5-标记"><a href="#5-标记" class="headerlink" title="5. 标记"></a>5. 标记</h2><p>标记也称为<strong>修饰符</strong>，因为它会修改正则表达式的输出。这些标志可以以任意顺序或组合使用，并且是正则表达式的一部分。</p>
+<table>
+<thead>
+<tr>
+<th align="center">标记</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">i</td>
+<td>不区分大小写: 将匹配设置为不区分大小写。</td>
+</tr>
+<tr>
+<td align="center">g</td>
+<td>全局搜索: 搜索整个输入字符串中的所有匹配。</td>
+</tr>
+<tr>
+<td align="center">m</td>
+<td>多行匹配: 会匹配输入字符串每一行。</td>
+</tr>
+</tbody></table>
+<h3 id="5-1-不区分大小写"><a href="#5-1-不区分大小写" class="headerlink" title="5.1 不区分大小写"></a>5.1 不区分大小写</h3><p><code>i</code> 修饰符用于执行不区分大小写匹配。例如正则表达式 <code>/The/gi</code>，表示: 大写字母 <code>T</code>，后跟小写字母 <code>h</code>，后跟字母 <code>e</code>。</p>
+<p>但是在正则匹配结束时 <code>i</code> 标记会告诉正则表达式引擎忽略这种情况。正如你所看到的，我们还使用了 <code>g</code> 标记，因为我们要在整个输入字符串中搜索匹配。</p>
+<p><code>The</code> =&gt; <strong>The</strong> fat cat sat on the mat.</p>
+<p><code>/The/gi</code> =&gt; <strong>The</strong> fat cat sat on <strong>the</strong> mat</p>
+<h3 id="5-2-全局搜索"><a href="#5-2-全局搜索" class="headerlink" title="5.2 全局搜索"></a>5.2 全局搜索</h3><p><code>g</code> 修饰符用于执行全局匹配 (会查找所有匹配，不会在查找到第一个匹配时就停止)。</p>
+<p>例如正则表达式 <code>/.(at)/g</code>，表示: 除换行符之外的任意字符，后跟小写字母 <code>a</code>，后跟小写字母 <code>t</code>。因为我们在正则表达式的末尾使用了 <code>g</code> 标记，它会从整个输入字符串中找到每个匹配项。</p>
+<p><code>.(at)</code> =&gt; The <strong>fat</strong> cat sat on the mat.</p>
+<p><code>/.(at)/g</code> =&gt; The <strong>fat</strong> <strong>cat</strong> <strong>sat</strong> on the <strong>mat</strong>.</p>
+<h3 id="5-3-多行匹配"><a href="#5-3-多行匹配" class="headerlink" title="5.3 多行匹配"></a>5.3 多行匹配</h3><p><code>m</code> 修饰符被用来执行多行的匹配。正如我们前面讨论过的 <code>(^, $)</code>，使用定位符来检查匹配字符是输入字符串开始或者结束。但是我们希望每一行都使用定位符，所以我们就使用 <code>m</code> 修饰符。</p>
+<p>例如正则表达式 <code>/at(.)?$/gm</code>，表示: </p>
+<p>小写字母 <code>a</code>，后跟小写字母 <code>t</code>，匹配除了换行符以外任意字符零次或一次。而且因为 <code>m</code> 标记，现在正则表达式引擎匹配字符串中每一行的末尾。</p>
+<p><code>/.at(.)?$/&quot;</code>=&gt; The fat<br>                cat sat<br>                on the <strong>mat.</strong></p>
+<p><code>/.at(.)?$/gm</code> =&gt; The <strong>fat</strong><br>                  cat <strong>sat</strong><br>                  on the <strong>mat</strong>.</p>
+<h2 id="常用正则表达式"><a href="#常用正则表达式" class="headerlink" title="常用正则表达式"></a>常用正则表达式</h2><ul>
+<li><strong>正整数</strong>: <code>^\d+$</code></li>
+<li><strong>负整数</strong>: <code>^-\d+$</code></li>
+<li><strong>电话号码</strong>: <code>^+?[\d\s]{3,}$</code></li>
+<li><strong>电话代码</strong>: <code>^+?[\d\s]+(?[\d\s]{10,}$</code></li>
+<li><strong>整数</strong>: <code>^-?\d+$</code></li>
+<li><strong>用户名</strong>: <code>^[\w\d_.]{4,16}$</code></li>
+<li><strong>字母数字字符</strong>: <code>^[a-zA-Z0-9]*$</code></li>
+<li><strong>带空格的字母数字字符</strong>: <code>^[a-zA-Z0-9 ]*$</code></li>
+<li><strong>密码</strong>: <code>^(?=^.{6,}$)((?=.*[A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z]))^.*$</code></li>
+<li><strong>电子邮件</strong>: <code>^([a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})*$</code></li>
+<li><strong>IPv4 地址</strong>: <code>^((?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))*$</code></li>
+<li><strong>小写字母</strong>: <code>^([a-z])*$</code></li>
+<li><strong>大写字母</strong>: <code>^([A-Z])*$</code></li>
+<li><strong>网址</strong>: <code>^(((http|https|ftp):\/\/)?([[a-zA-Z0-9]\-\.])+(\.)([[a-zA-Z0-9]]){2,4}([[a-zA-Z0-9]\/+=%&amp;_\.~?\-]*))*$</code></li>
+<li><strong>VISA 信用卡号码</strong>: <code>^(4[0-9]{12}(?:[0-9]{3})?)*$</code></li>
+<li><strong>日期 (MM/DD/YYYY)</strong>: <code>^(0?[1-9]|1[012])[- /.](0?[1-9]|[12][0-9]|3[01])[- /.](19|20)?[0-9]{2}$</code></li>
+<li><strong>日期 (YYYY/MM/DD)</strong>: <code>^(19|20)?[0-9]{2}[- /.](0?[1-9]|1[012])[- /.](0?[1-9]|[12][0-9]|3[01])$</code></li>
+<li><strong>万事达信用卡号码</strong>: <code>^(5[1-5][0-9]{14})*$</code></li>
+</ul>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p>[1] <a href="https://github.com/cdoco/learn-regex-zh" target="_blank" rel="noopener">🇨🇳 翻译: 学习正则表达式的简单方法</a></p>
+]]></content>
+      <categories>
+        <category>正则表达式</category>
+      </categories>
+      <tags>
+        <tag>正则表达式</tag>
+      </tags>
+  </entry>
+</search>

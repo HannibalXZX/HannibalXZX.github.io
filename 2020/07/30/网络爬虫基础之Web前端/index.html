@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="Docker," />
+  <meta name="keywords" content="爬虫,前端," />
 
 
 
@@ -79,20 +79,24 @@
 
 
 
-<meta name="description" content="前言本文旨在通过免费获取阿里云容器加速地址来提高Docker镜像的下载速度，由此减少相关服务的部署时间。 快速了解DockerDocker可以让开发者打包他们的应用以及依赖包到一个轻量级、可移植的容器中，然后发布到任何流行的Linux机器上，也可以实现虚拟化。容器是完全使用沙箱机制，相互之间不会有任何接口（类似iPhone的app）,更重要的是容器性能开销极低。如图1，展示了Docker与虚拟机的">
+<meta name="description" content="前言本文摘抄[1]，这部分写得太好了，我都不知道怎么补充。即使不懂Web前端的人，看完以后都能知道大体意思。 如果是要学习爬虫，这部分更有必要掌握了。不过，爬虫不需要深入了解前端，只要了解下基本的知识点就够了。 另外，俺(业余选手)觉得CSS的标签选择器不需要刻意去记，要用的时候直接查就可以了。 在文末，有一张HTML的思维导图，比较详细。 网页基础用浏览器访问网站时，页面各不相同，你有没有想过它">
 <meta property="og:type" content="article">
-<meta property="og:title" content="基于阿里云的Docker镜像加速器">
-<meta property="og:url" content="http://yoursite.com/2020/07/20/%E5%9F%BA%E4%BA%8E%E9%98%BF%E9%87%8C%E4%BA%91%E7%9A%84Docker%E9%95%9C%E5%83%8F%E5%8A%A0%E9%80%9F%E5%99%A8/index.html">
+<meta property="og:title" content="网络爬虫基础之Web前端">
+<meta property="og:url" content="http://yoursite.com/2020/07/30/%E7%BD%91%E7%BB%9C%E7%88%AC%E8%99%AB%E5%9F%BA%E7%A1%80%E4%B9%8BWeb%E5%89%8D%E7%AB%AF/index.html">
 <meta property="og:site_name" content="徐子潇的技术博客">
-<meta property="og:description" content="前言本文旨在通过免费获取阿里云容器加速地址来提高Docker镜像的下载速度，由此减少相关服务的部署时间。 快速了解DockerDocker可以让开发者打包他们的应用以及依赖包到一个轻量级、可移植的容器中，然后发布到任何流行的Linux机器上，也可以实现虚拟化。容器是完全使用沙箱机制，相互之间不会有任何接口（类似iPhone的app）,更重要的是容器性能开销极低。如图1，展示了Docker与虚拟机的">
-<meta property="og:image" content="https://imgkr.cn-bj.ufileos.com/402c39a9-0e78-4b12-89cb-cf01c6936b56.png">
-<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/53/2.png">
-<meta property="article:published_time" content="2020-07-20T23:02:00.000Z">
-<meta property="article:modified_time" content="2020-07-20T23:23:39.387Z">
+<meta property="og:description" content="前言本文摘抄[1]，这部分写得太好了，我都不知道怎么补充。即使不懂Web前端的人，看完以后都能知道大体意思。 如果是要学习爬虫，这部分更有必要掌握了。不过，爬虫不需要深入了解前端，只要了解下基本的知识点就够了。 另外，俺(业余选手)觉得CSS的标签选择器不需要刻意去记，要用的时候直接查就可以了。 在文末，有一张HTML的思维导图，比较详细。 网页基础用浏览器访问网站时，页面各不相同，你有没有想过它">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/1.png">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/2.png">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/3.jpg">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/4.jpg">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/5.png">
+<meta property="article:published_time" content="2020-07-30T13:42:00.000Z">
+<meta property="article:modified_time" content="2020-07-30T13:44:34.780Z">
 <meta property="article:author" content="Shaw">
-<meta property="article:tag" content="Docker">
+<meta property="article:tag" content="爬虫">
+<meta property="article:tag" content="前端">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://imgkr.cn-bj.ufileos.com/402c39a9-0e78-4b12-89cb-cf01c6936b56.png">
+<meta name="twitter:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/1.png">
 
 
 
@@ -122,13 +126,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2020/07/20/基于阿里云的Docker镜像加速器/"/>
+  <link rel="canonical" href="http://yoursite.com/2020/07/30/网络爬虫基础之Web前端/"/>
 
 
 
 
 
-  <title>基于阿里云的Docker镜像加速器 | 徐子潇的技术博客</title>
+  <title>网络爬虫基础之Web前端 | 徐子潇的技术博客</title>
   
 
 
@@ -289,7 +293,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/20/%E5%9F%BA%E4%BA%8E%E9%98%BF%E9%87%8C%E4%BA%91%E7%9A%84Docker%E9%95%9C%E5%83%8F%E5%8A%A0%E9%80%9F%E5%99%A8/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/30/%E7%BD%91%E7%BB%9C%E7%88%AC%E8%99%AB%E5%9F%BA%E7%A1%80%E4%B9%8BWeb%E5%89%8D%E7%AB%AF/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Shaw">
@@ -306,7 +310,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">基于阿里云的Docker镜像加速器</h1>
+          <h1 class="post-title" itemprop="name headline">网络爬虫基础之Web前端</h1>
         
 
         <div class="post-meta">
@@ -318,8 +322,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-07-20T23:02:00+00:00">
-                2020-07-20
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-07-30T13:42:00+00:00">
+                2020-07-30
               </time>
             
 
@@ -341,8 +345,19 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%8A%80%E6%9C%AF/" itemprop="url" rel="index">
-                    <span itemprop="name">技术</span>
+                  <a href="/categories/%E7%88%AC%E8%99%AB/" itemprop="url" rel="index">
+                    <span itemprop="name">爬虫</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%88%AC%E8%99%AB/%E5%89%8D%E7%AB%AF/" itemprop="url" rel="index">
+                    <span itemprop="name">前端</span>
                   </a>
                 </span>
 
@@ -372,7 +387,7 @@
                   <span class="post-meta-item-text">字数统计&#58;</span>
                 
                 <span title="字数统计">
-                  885 字
+                  3,580 字
                 </span>
               
 
@@ -388,7 +403,7 @@
                   <span class="post-meta-item-text">阅读时长 &asymp;</span>
                 
                 <span title="阅读时长">
-                  3 分钟
+                  13 分钟
                 </span>
               
             </div>
@@ -409,28 +424,312 @@
       
 
       
-        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本文旨在通过免费获取阿里云容器加速地址来提高<code>Docker</code>镜像的下载速度，由此减少相关服务的部署时间。</p>
-<h2 id="快速了解Docker"><a href="#快速了解Docker" class="headerlink" title="快速了解Docker"></a>快速了解Docker</h2><p><code>Docker</code>可以让开发者打包他们的应用以及依赖包到一个轻量级、可移植的容器中，然后发布到任何流行的<code>Linux</code>机器上，也可以实现虚拟化。<br>容器是完全使用<strong>沙箱机制</strong>，相互之间不会有任何接口（类似<code>iPhone</code>的<code>app</code>）,更重要的是容器性能开销极低。<br>如图1，展示了<code>Docker</code>与<strong>虚拟机</strong>的对比。<br><img src="https://imgkr.cn-bj.ufileos.com/402c39a9-0e78-4b12-89cb-cf01c6936b56.png" alt="图1.Docker与虚拟机的对比"></p>
-<h2 id="快速了解Docker镜像"><a href="#快速了解Docker镜像" class="headerlink" title="快速了解Docker镜像"></a>快速了解Docker镜像</h2><p><code>Docker</code>镜像，可以理解为一个特殊的文件系统。它除了提供容器运行时所需的程序、库、资源、配置等文件外，还包含了一些为运行时准备的一些配置参数（例如环境变量）。<br><strong>镜像不包含任何动态数据</strong>，其内容在构建之后也不会被改变。</p>
-<h2 id="使用阿里云服务加速"><a href="#使用阿里云服务加速" class="headerlink" title="使用阿里云服务加速"></a>使用阿里云服务加速</h2><h3 id="获取阿里云加速器地址"><a href="#获取阿里云加速器地址" class="headerlink" title="获取阿里云加速器地址"></a>获取阿里云加速器地址</h3><p>登陆阿里云网站，选择「容器镜像服务」下的「镜像加速器」。阿里云每个账户配置了不同的「加速器地址」。<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/53/2.png" alt="图2.阿里云操作界面"></p>
-<h3 id="写入文件"><a href="#写入文件" class="headerlink" title="写入文件"></a>写入文件</h3><p>按照图2第四步的「操作文档」，选择相应的系统进行配置即可。<br>我这边是<code>Centos</code>的服务器，执行以下4步命令即可。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">sudo mkdir -p &#x2F;etc&#x2F;docker</span><br><span class="line">echo &#39;&#123; &quot;registry-mirrors&quot;: [&quot;https:&#x2F;&#x2F;yourID.mirror.aliyuncs.com&quot;]&#125; &#39; | tee &#x2F;etc&#x2F;docker&#x2F;daemon.json</span><br><span class="line">sudo systemctl daemon-reload</span><br><span class="line">sudo systemctl restart docker</span><br></pre></td></tr></table></figure>
-<p>如果输入命令出现问题，在<code>/etc/docker/</code>目录下创建<code>daemon.json</code>文件，然后追加「加速器地址」。<br><code>{ &quot;registry-mirrors&quot;: [&quot;https://yourID.mirror.aliyuncs.com&quot;] }</code></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">sudo mkdir -p &#x2F;etc&#x2F;docker</span><br><span class="line">echo  &#39;&#123; &quot;registry-mirrors&quot;: [&quot;https:&#x2F;&#x2F;segd1s4m.mirror.aliyuncs.com”]&#125;&#39; | tee &#x2F;etc&#x2F;docker&#x2F;daemon.json</span><br><span class="line">sudo systemctl daemon-reload</span><br><span class="line">sudo systemctl restart docker</span><br></pre></td></tr></table></figure>
-<h3 id="命令讲解"><a href="#命令讲解" class="headerlink" title="命令讲解"></a>命令讲解</h3><p><code>tee</code>指令会从标准输入设备读取数据，将其内容输出到标准输出设备，同时保存成文件。<br>例如：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ping baidu.com | tee ping-baidu.log</span><br></pre></td></tr></table></figure>
-<p>该命令输出到控制台的同时，还将内容保存到<code>ping-baidu.log</code>文件当中。<br><code>systemctl</code>是守护进程<code>Systemd</code>的主命令，用于管理系统。<br>关于<code>Systemd</code>的详细介绍，可以查看「参考资料」的第三篇文章。<br><code>sudo systemctl daemon-reload</code>表示重载所有修改过的配置文件。</p>
-<h3 id="部署多个源"><a href="#部署多个源" class="headerlink" title="部署多个源"></a>部署多个源</h3><p>除了阿里云，还有其他源，如下：<br>中国区官方镜像：<code>https://registry.docker-cn.com</code><br>网易：<code>https://hub-mirror.c.163.com/</code><br>七牛云加速器：<code>https://reg-mirror.qiniu.com</code><br>同上步骤一样，在<code>/etc/docker/daemon.json</code>文件加入如下内容。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#123; &quot;registry-mirrors&quot;: [</span><br><span class="line">&quot;https:&#x2F;&#x2F;hub-mirror.c.163.com&#x2F;&quot;,</span><br><span class="line">&quot;https:&#x2F;&#x2F;registry.docker-cn.com&quot;</span><br><span class="line">] &#125;</span><br></pre></td></tr></table></figure>
-<h2 id="检查加速器是否生效"><a href="#检查加速器是否生效" class="headerlink" title="检查加速器是否生效"></a>检查加速器是否生效</h2><p>配置加速器之后，如果拉取镜像仍然十分缓慢，请手动检查加速器配置是否生效。<br>在命令行执行<code>docker info</code>，如果从结果中看到了如下内容，说明配置成功。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Registry Mirrors:</span><br><span class="line">https:&#x2F;&#x2F;&lt;yourID&gt;.aliyuncs.com</span><br></pre></td></tr></table></figure>
-<p>尝试下载<code>mysql</code>的官方镜像。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker pull mysql:latest</span><br></pre></td></tr></table></figure>
-<p>约10s就完成了。</p>
-<h2 id="可能存在的问题"><a href="#可能存在的问题" class="headerlink" title="可能存在的问题"></a>可能存在的问题</h2><p>当配置某一个加速器地址之后，若发现拉取不到镜像，请切换到另一个加速器地址。国内各大云服务商均提供了<code>Docker</code>镜像加速服务，建议根据运行<code>Docker</code>的云平台选择对应的镜像加速服务。</p>
-<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p>[1] <a href="https://www.runoob.com/docker/docker-mirror-acceleration.html" target="_blank" rel="noopener">Docker 镜像加速</a></p>
-<p>[2] <a href="https://www.zhihu.com/question/28300645" target="_blank" rel="noopener">如何通俗解释Docker是什么？</a></p>
-<p>[3] <a href="http://www.ruanyifeng.com/blog/2016/03/systemd-tutorial-commands.html" target="_blank" rel="noopener">Systemd 入门教程：命令篇</a></p>
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本文摘抄[1]，这部分写得太好了，我都不知道怎么补充。即使不懂Web前端的人，看完以后都能知道大体意思。</p>
+<p>如果是要学习爬虫，这部分更有必要掌握了。不过，爬虫不需要深入了解前端，只要了解下基本的知识点就够了。</p>
+<p>另外，俺(业余选手)觉得CSS的标签选择器不需要刻意去记，要用的时候直接查就可以了。</p>
+<p>在文末，有一张HTML的思维导图，比较详细。</p>
+<h2 id="网页基础"><a href="#网页基础" class="headerlink" title="网页基础"></a>网页基础</h2><p>用浏览器访问网站时，页面各不相同，你有没有想过它为何会呈现这个样子呢？本节中，我们就来了解一下网页的基本组成、结构和节点等内容。</p>
+<h3 id="网页的组成"><a href="#网页的组成" class="headerlink" title="网页的组成"></a>网页的组成</h3><p>网页可以分为三大部分 —— HTML、CSS 和 JavaScript。如果把网页比作一个人的话，HTML 相当于<strong>骨架</strong>，JavaScript 相当于<strong>肌肉</strong>，CSS 相当于<strong>皮肤</strong>，三者结合起来才能形成一个完善的网页。下面我们分别来介绍一下这三部分的功能。</p>
+<h3 id="1-HTML"><a href="#1-HTML" class="headerlink" title="1. HTML"></a>1. HTML</h3><p><strong>HTML</strong> 是用来描述网页的一种语言，其全称叫作 Hyper Text Markup Language，即<strong>超文本标记语言</strong>。网页包括文字、按钮、图片和视频等各种复杂的元素，其基础架构就是 HTML。</p>
+<p>不同类型的元素通过不同类型的标签来表示，如图片用 <code>img</code>  标签表示，视频用 <code>video</code> 标签表示，段落用 <code>p</code> 标签表示，超链接用<code>a</code>表示。</p>
+<p>它们之间的布局又常通过布局标签 <code>div</code> 嵌套组合而成，各种标签通过不同的排列和嵌套才形成了网页的框架。</p>
+<p>在 Chrome 浏览器中打开百度，右击并选择 “检查” 项（或按 F12 键），打开开发者模式，这时在 Elements 选项卡中即可看到网页的源代码，如图 1 所示。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/1.png" alt="图1. 开发者模式"></p>
+<p>这就是 HTML，整个网页就是由各种标签嵌套组合而成的。这些标签定义的节点元素相互嵌套和组合形成了复杂的层次关系，就形成了网页的架构。</p>
+<h3 id="2-CSS"><a href="#2-CSS" class="headerlink" title="2. CSS"></a>2. CSS</h3><p>HTML 定义了网页的结构，但是只有 HTML 页面的布局并不美观，可能只是简单的节点元素的排列，为了让网页看起来更好看一些，这里借助了 CSS。</p>
+<p><strong>CSS</strong>，全称叫作 Cascading Style Sheets，即层叠样式表。“层叠” 是指当在 HTML 中引用了数个样式文件，并且样式发生冲突时，浏览器能依据层叠顺序处理。“样式” 指网页中文字大小、颜色、元素间距、排列等格式。</p>
+<p>CSS 是目前<strong>唯一</strong>的网页页面排版样式标准，有了它的帮助，页面才会变得更为美观。</p>
+<p>图 1  的右侧即为 CSS，例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">#head_wrapper.s-ps-islite .s-p-top &#123;  </span><br><span class="line">    position: absolute;  </span><br><span class="line">    bottom: 40px;  </span><br><span class="line">    width: 100%;  </span><br><span class="line">    height: 181px;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>就是一个 CSS 样式。大括号前面是一个 CSS 选择器。此选择器的意思是首先选中 id 为<code>head_wrapper</code>  且 class 为<code>s-ps-islite</code> 的节点，然后再选中其内部的 class 为 <code>s-p-top</code> 的节点。</p>
+<p>大括号内部写的就是一条条样式规则，例如 position 指定了这个元素的布局方式为<strong>绝对布局</strong>，bottom 指定元素的<strong>下边距</strong>为 40 像素，width 指定了<strong>宽度</strong>为 100% 占满父元素，height 则指定了元素的<strong>高度</strong>。</p>
+<p>也就是说，我们将位置、宽度、高度等样式配置统一写成这样的形式，然后用大括号括起来，接着在开头再加上 CSS 选择器，这就代表这个样式对 CSS 选择器选中的元素生效，元素就会根据此样式来展示了。</p>
+<p>在网页中，一般会统一定义整个网页的样式规则，并写入 CSS 文件中（其后缀为 <code>css</code>）。在 HTML 中，只需要用 link 标签即可引入写好的 CSS 文件，这样整个页面就会变得美观、优雅。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;head&gt;</span><br><span class="line">&lt;link rel&#x3D;&quot;stylesheet&quot; type&#x3D;&quot;text&#x2F;css&quot; href&#x3D;&quot;style.css&quot;&gt;</span><br><span class="line">&lt;&#x2F;head&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-JavaScript"><a href="#3-JavaScript" class="headerlink" title="3. JavaScript"></a>3. JavaScript</h3><p><strong>JavaScript</strong>，简称 JS，是一种脚本语言。HTML 和 CSS 配合使用，提供给用户的只是一种静态信息，缺乏交互性。我们在网页里可能会看到一些<strong>交互</strong>和<strong>动画效果</strong>，如下载进度条、提示框、轮播图等，这通常就是 JavaScript 的功劳。</p>
+<p>它的出现使得用户与信息之间不只是一种浏览与显示的关系，而是实现了一种实时、动态、交互的页面功能。</p>
+<p>JavaScript 通常也是以单独的文件形式加载的，后缀为 js，在 HTML 中通过 script 标签即可引入，例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;script src&#x3D;&quot;jquery-2.1.0.js&quot;&gt;&lt;&#x2F;script&gt;</span><br></pre></td></tr></table></figure>
+
+<p>综上所述，<strong>HTML 定义了网页的内容和结构，CSS 描述了网页的布局，JavaScript 定义了网页的行为。</strong></p>
+<h2 id="网页的结构"><a href="#网页的结构" class="headerlink" title="网页的结构"></a>网页的结构</h2><p>我们首先用例子来感受一下 HTML 的基本结构。新建一个文本文件，名称可以自取，后缀为 html，内容如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">&lt;!DOCTYPE html&gt;</span><br><span class="line">&lt;html&gt;</span><br><span class="line">&lt;head&gt;</span><br><span class="line">&lt;meta charset&#x3D;&quot;UTF-8&quot;&gt;</span><br><span class="line">&lt;title&gt;This is a Demo&lt;&#x2F;title&gt;</span><br><span class="line">&lt;&#x2F;head&gt;</span><br><span class="line">&lt;body&gt;</span><br><span class="line">&lt;div id&#x3D;&quot;container&quot;&gt;</span><br><span class="line">&lt;div class&#x3D;&quot;wrapper&quot;&gt;</span><br><span class="line">&lt;h2 class&#x3D;&quot;title&quot;&gt;Hello World&lt;&#x2F;h2&gt;</span><br><span class="line">&lt;p class&#x3D;&quot;text&quot;&gt;Hello, this is a paragraph.&lt;&#x2F;p&gt;</span><br><span class="line">&lt;&#x2F;div&gt;</span><br><span class="line">&lt;&#x2F;div&gt;</span><br><span class="line">&lt;&#x2F;body&gt;</span><br><span class="line">&lt;&#x2F;html&gt;</span><br></pre></td></tr></table></figure>
+<p>这就是一个最简单的 HTML 实例。开头用 DOCTYPE 定义了文档类型，其次最外层是 html 标签，最后还有对应的结束标签来表示闭合，其内部是 head 标签和 body 标签，分别代表网页头和网页体，它们也需要结束标签。head 标 签内定义了一些页面的配置和引用，如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;meta charset&#x3D;&quot;UTF-8&quot;&gt;</span><br></pre></td></tr></table></figure>
+
+<p>它指定了网页的编码为 <strong>UTF-8</strong>。</p>
+<p>title 标签则定义了网页的标题，会显示在网页的选项卡中，不会显示在正文中。body 标签内则是在网页正文中显示的内容。</p>
+<p>div 标签定义了网页中的区块，它的 id 是 container，这是一个非常常用的属性，且 id 的内容在网页中是<strong>唯一</strong>的，我们可以通过它来<strong>获取这个区块</strong>。</p>
+<p>然后在此区块内又有一个 div 标签，它的 class 为 <code>wrapper</code>，这也是一个非常常用的属性，经常与 CSS 配合使用来设定样式。然后此区块内部又有一个 h2 标签，这代表一个二级标题。</p>
+<p>另外，还有一个 p 标签，这代表一个段落。在这两者中直接写入相应的内容即可在网页中呈现出来，它们也有各自的 class 属性。</p>
+<p>将代码保存后，在浏览器中打开该文件，可以看到如图 2 所示的内容。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/2.png" alt="图2. 网页内容"></p>
+<p>图 2-10　运行结果</p>
+<p>可以看到，在选项卡上显示了 <code>This is a Demo</code>  字样，这是我们在 head 中的 title 里定义的文字。而网页正文是 body 标签内部定义的各个元素生成的，可以看到这里显示了二级标题和段落。</p>
+<p>这个实例便是网页的一般结构。一个网页的标准形式是 html 标签内嵌套 head 和 body 标签，<strong>head 内定义网页的配置和引用，body 内定义网页的正文</strong>。</p>
+<h2 id="节点树及节点间的关系"><a href="#节点树及节点间的关系" class="headerlink" title="节点树及节点间的关系"></a>节点树及节点间的关系</h2><p>在 HTML 中，所有标签定义的内容都是节点，它们构成了一个 HTML DOM 树。</p>
+<p>我们先看下什么是 DOM。DOM 是 W3C（万维网联盟）的标准，其英文全称 Document Object Model，即文档对象模型。它定义了访问 HTML 和 XML 文档的标准：</p>
+<blockquote>
+<p>W3C 文档对象模型（DOM）是中立于平台和语言的接口，它允许程序和脚本动态地访问和更新文档的内容、结构和样式。</p>
+</blockquote>
+<p>W3C DOM 标准被分为 3 个不同的部分：</p>
+<ul>
+<li><strong>核心</strong> DOM - 针对任何<strong>结构化</strong>文档的标准模型</li>
+<li><strong>XML</strong> DOM - 针对 XML 文档的标准模型</li>
+<li><strong>HTML</strong> DOM - 针对 HTML 文档的标准模型</li>
+</ul>
+<p>根据 W3C 的 HTML DOM 标准，HTML 文档中的所有内容都是节点：</p>
+<ul>
+<li>整个文档是一个文档节点</li>
+<li>每个 HTML 元素是元素节点</li>
+<li>HTML 元素内的文本是文本节点</li>
+<li>每个 HTML 属性是属性节点</li>
+<li>注释是注释节点</li>
+</ul>
+<p>HTML DOM 将 HTML 文档视作树结构，这种结构被称为节点树，如图 3 所示。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/3.jpg" alt="图3. 节点树"></p>
+<p>通过 HTML DOM，树中的所有节点均可通过 JavaScript 访问，所有 HTML 节点元素均可被修改，也可以被创建或删除。</p>
+<p>节点树中的节点彼此拥有层级关系。我们常用父（parent）、子（child）和兄弟（sibling）等术语描述这些关系。父节点拥有子节点，同级的子节点被称为兄弟节点。</p>
+<p>在节点树中，顶端节点称为根（root）。除了根节点之外，每个节点都有父节点，同时可拥有任意数量的子节点或兄弟节点。图 4 展示了节点树以及节点之间的关系。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/4.jpg" alt="图4. 节点树与节点间的关系"></p>
+<p>本段参考 W3SCHOOL，链接：<a href="http://www.w3school.com.cn/htmldom/dom_nodes.asp" target="_blank" rel="noopener">http://www.w3school.com.cn/htmldom/dom_nodes.asp</a>。</p>
+<h2 id="CSS选择器（查询）"><a href="#CSS选择器（查询）" class="headerlink" title="CSS选择器（查询）"></a>CSS选择器（查询）</h2><p>我们知道网页由一个个<strong>节点</strong>组成，CSS 选择器会根据不同的节点设置不同的样式规则，那么怎样来定位节点呢？</p>
+<p>在 CSS 中，我们使用 CSS 选择器来定位节点。例如，上例中 div 节点的 id 为 container，那么就可以表示为 #container，其中 # 开头代表选择 id，其后紧跟 id 的名称。另外，如果我们想选择 class 为 wrapper 的节点，便可以使用.wrapper，这里以点（.）开头代表选择 class，其后紧跟 class 的名称。</p>
+<p>另外，还有一种选择方式，那就是根据标签名筛选，例如想选择二级标题，直接用 h2 即可。这是最常用的 3 种表示，分别是根据 id、class、标签名筛选，<strong>请牢记它们的写法</strong>。</p>
+<p>另外，CSS 选择器还支持<strong>嵌套选择</strong>，各个选择器之间加上<strong>空格分隔开</strong>便可以代表嵌套关系，如<code>#container .wrapper p</code> 则代表先选择 id 为 container 的节点，然后选中其内部的 class 为 wrapper 的节点，然后再进一步选中其内部的 p 节点。</p>
+<p>另外，如果不加空格，则代表并列关系，如 <code>div#container .wrapper p.text</code> 代表先选择 id 为 container 的 div 节点，然后选中其内部的 class 为 wrapper 的节点，再进一步选中其内部的 class 为 text 的 p 节点。这就是 CSS 选择器，其筛选功能还是非常强大的。</p>
+<p>另外，CSS 选择器还有一些其他语法规则，具体如表 1 所示。</p>
+<p><em>表 1CSS 选择器的其他语法规则</em></p>
+<table>
+<thead>
+<tr>
+<th>选　择　器</th>
+<th>例　　子</th>
+<th>例子描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>.class</td>
+<td>.intro</td>
+<td>选择 class=”intro” 的所有节点</td>
+</tr>
+<tr>
+<td>#id</td>
+<td>#firstname</td>
+<td>选择 id=”firstname” 的所有节点</td>
+</tr>
+<tr>
+<td>*</td>
+<td>*</td>
+<td>选择所有节点</td>
+</tr>
+<tr>
+<td>element</td>
+<td>p</td>
+<td>选择所有 p 节点</td>
+</tr>
+<tr>
+<td>element,element</td>
+<td>div,p</td>
+<td>选择所有 div 节点<strong>和</strong>所有 p 节点</td>
+</tr>
+<tr>
+<td>element element</td>
+<td>div p</td>
+<td>选择 div 节点内部<strong>的</strong>所有 p 节点</td>
+</tr>
+<tr>
+<td>element&gt;element</td>
+<td>div&gt;p</td>
+<td>选择父节点为 div 节点的所有 p 节点</td>
+</tr>
+<tr>
+<td>element+element</td>
+<td>div+p</td>
+<td>选择<strong>紧接</strong>在 div 节点之后的所有 p 节点</td>
+</tr>
+<tr>
+<td>[attribute]</td>
+<td>[target]</td>
+<td>选择带有 target 属性的所有节点</td>
+</tr>
+<tr>
+<td>[attribute=value]</td>
+<td>[target=blank]</td>
+<td>选择 target=”blank” 的所有节点</td>
+</tr>
+<tr>
+<td>[attribute~=value]</td>
+<td>[title~=flower]</td>
+<td>选择 title 属性包含单词 flower 的所有节点</td>
+</tr>
+<tr>
+<td>:link</td>
+<td>a:link</td>
+<td>选择所有未被访问的链接</td>
+</tr>
+<tr>
+<td>:visited</td>
+<td>a:visited</td>
+<td>选择所有已被访问的链接</td>
+</tr>
+<tr>
+<td>:active</td>
+<td>a:active</td>
+<td>选择活动链接</td>
+</tr>
+<tr>
+<td>:hover</td>
+<td>a:hover</td>
+<td>选择鼠标指针位于其上的链接</td>
+</tr>
+<tr>
+<td>:focus</td>
+<td>input:focus</td>
+<td>选择获得焦点的 input 节点</td>
+</tr>
+<tr>
+<td>:first-letter</td>
+<td>p:first-letter</td>
+<td>选择每个 p 节点的首字母</td>
+</tr>
+<tr>
+<td>:first-line</td>
+<td>p:first-line</td>
+<td>选择每个 p 节点的首行</td>
+</tr>
+<tr>
+<td>:first-child</td>
+<td>p:first-child</td>
+<td>选择属于父节点的第一个子节点的所有 p 节点</td>
+</tr>
+<tr>
+<td>:before</td>
+<td>p:before</td>
+<td>在每个 p 节点的内容之前插入内容</td>
+</tr>
+<tr>
+<td>:after</td>
+<td>p:after</td>
+<td>在每个 p 节点的内容之后插入内容</td>
+</tr>
+<tr>
+<td>:lang(language)</td>
+<td>p:lang</td>
+<td>选择带有以 it 开头的 lang 属性值的所有 p 节点</td>
+</tr>
+<tr>
+<td>element1~element2</td>
+<td>p~ul</td>
+<td>选择前面有 p 节点的所有 ul 节点</td>
+</tr>
+<tr>
+<td>[attribute^=value]</td>
+<td>a[src^=”https”]</td>
+<td>选择其 src 属性值以 https 开头的所有 a 节点</td>
+</tr>
+<tr>
+<td>[attribute$=value]</td>
+<td>a[src$=”.pdf”]</td>
+<td>选择其 src 属性以.pdf 结尾的所有 a 节点</td>
+</tr>
+<tr>
+<td>[attribute*=value]</td>
+<td>a[src*=”abc”]</td>
+<td>选择其 src 属性中包含 abc 子串的所有 a 节点</td>
+</tr>
+<tr>
+<td>:first-of-type</td>
+<td>p:first-of-type</td>
+<td>选择属于其父节点的首个 p 节点的所有 p 节点</td>
+</tr>
+<tr>
+<td>:last-of-type</td>
+<td>p:last-of-type</td>
+<td>选择属于其父节点的最后 p 节点的所有 p 节点</td>
+</tr>
+<tr>
+<td>:only-of-type</td>
+<td>p:only-of-type</td>
+<td>选择属于其父节点唯一的 p 节点的所有 p 节点</td>
+</tr>
+<tr>
+<td>:only-child</td>
+<td>p:only-child</td>
+<td>选择属于其父节点的唯一子节点的所有 p 节点</td>
+</tr>
+<tr>
+<td>:nth-child(n)</td>
+<td>p:nth-child</td>
+<td>选择属于其父节点的第二个子节点的所有 p 节点</td>
+</tr>
+<tr>
+<td>:nth-last-child(n)</td>
+<td>p:nth-last-child</td>
+<td>同上，从最后一个子节点开始计数</td>
+</tr>
+<tr>
+<td>:nth-of-type(n)</td>
+<td>p:nth-of-type</td>
+<td>选择属于其父节点第二个 p 节点的所有 p 节点</td>
+</tr>
+<tr>
+<td>:nth-last-of-type(n)</td>
+<td>p:nth-last-of-type</td>
+<td>同上，但是从最后一个子节点开始计数</td>
+</tr>
+<tr>
+<td>:last-child</td>
+<td>p:last-child</td>
+<td>选择属于其父节点最后一个子节点的所有 p 节点</td>
+</tr>
+<tr>
+<td>:root</td>
+<td>:root</td>
+<td>选择文档的根节点</td>
+</tr>
+<tr>
+<td>:empty</td>
+<td>p:empty</td>
+<td>选择没有子节点的所有 p 节点（包括文本节点）</td>
+</tr>
+<tr>
+<td>:target</td>
+<td>#news:target</td>
+<td>选择当前活动的 #news 节点</td>
+</tr>
+<tr>
+<td>:enabled</td>
+<td>input:enabled</td>
+<td>选择每个启用的 input 节点</td>
+</tr>
+<tr>
+<td>:disabled</td>
+<td>input:disabled</td>
+<td>选择每个禁用的 input 节点</td>
+</tr>
+<tr>
+<td>:checked</td>
+<td>input:checked</td>
+<td>选择每个被选中的 input 节点</td>
+</tr>
+<tr>
+<td>:not(selector)</td>
+<td>:not</td>
+<td>选择非 p 节点的所有节点</td>
+</tr>
+<tr>
+<td>::selection</td>
+<td>::selection</td>
+<td>选择被用户选取的节点部分</td>
+</tr>
+</tbody></table>
+<p>另外，还有一种比较常用的选择器是 XPath，这种选择方式后面会详细介绍。</p>
+<p>本节介绍了网页的基本结构和节点间的关系，了解了这些内容，我们才有更加清晰的思路去解析和提取网页内容。</p>
+<h2 id="HTML-图"><a href="#HTML-图" class="headerlink" title="HTML 图"></a>HTML 图</h2><p>下面这张思维导图几乎涵盖了所有HTML内容，祝你早日精通HTML！ /斜眼笑<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/5.png" alt=""></p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p>[1] <a href="https://python3webspider.cuiqingcai.com/2.1http-ji-ben-yuan-li" target="_blank" rel="noopener">Python3网络爬虫开发实战</a></p>
 
       
     </div>
@@ -448,7 +747,9 @@
       
         <div class="post-tags">
           
-            <a href="/tags/Docker/" rel="tag"># Docker</a>
+            <a href="/tags/%E7%88%AC%E8%99%AB/" rel="tag"># 爬虫</a>
+          
+            <a href="/tags/%E5%89%8D%E7%AB%AF/" rel="tag"># 前端</a>
           
         </div>
       
@@ -461,8 +762,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2020/07/20/%E5%AD%A6%E4%B9%A0%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F%E7%9A%84%E7%AE%80%E5%8D%95%E6%96%B9%E6%B3%95/" rel="next" title="学习正则表达式的简单方法">
-                <i class="fa fa-chevron-left"></i> 学习正则表达式的简单方法
+              <a href="/2020/07/30/%E7%BB%99%E4%BD%A0%E4%B8%80%E7%99%BE%E5%85%83%EF%BC%8C%E5%B8%AE%E6%88%91%E4%B9%B0100%E5%8F%AA%E9%B8%A1%E5%9B%9E%E6%9D%A5/" rel="next" title="给你一百元，帮我买100只鸡回来">
+                <i class="fa fa-chevron-left"></i> 给你一百元，帮我买100只鸡回来
               </a>
             
           </div>
@@ -470,10 +771,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2020/07/24/git%E6%94%AF%E6%8C%81emoji%E4%BA%86%EF%BC%81%E5%BF%AB%E6%9D%A5%E6%9B%B4%E6%8D%A2%E4%BD%A0%E7%9A%84%E6%8F%90%E4%BA%A4%E9%A3%8E%E6%A0%BC%E5%90%A7%EF%BC%81/" rel="prev" title="git支持emoji了！快来更换你的提交风格吧！">
-                git支持emoji了！快来更换你的提交风格吧！ <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -619,7 +916,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#快速了解Docker"><span class="nav-number">2.</span> <span class="nav-text">快速了解Docker</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#快速了解Docker镜像"><span class="nav-number">3.</span> <span class="nav-text">快速了解Docker镜像</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用阿里云服务加速"><span class="nav-number">4.</span> <span class="nav-text">使用阿里云服务加速</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#获取阿里云加速器地址"><span class="nav-number">4.1.</span> <span class="nav-text">获取阿里云加速器地址</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#写入文件"><span class="nav-number">4.2.</span> <span class="nav-text">写入文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#命令讲解"><span class="nav-number">4.3.</span> <span class="nav-text">命令讲解</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#部署多个源"><span class="nav-number">4.4.</span> <span class="nav-text">部署多个源</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#检查加速器是否生效"><span class="nav-number">5.</span> <span class="nav-text">检查加速器是否生效</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#可能存在的问题"><span class="nav-number">6.</span> <span class="nav-text">可能存在的问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">7.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#网页基础"><span class="nav-number">2.</span> <span class="nav-text">网页基础</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#网页的组成"><span class="nav-number">2.1.</span> <span class="nav-text">网页的组成</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-HTML"><span class="nav-number">2.2.</span> <span class="nav-text">1. HTML</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-CSS"><span class="nav-number">2.3.</span> <span class="nav-text">2. CSS</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-JavaScript"><span class="nav-number">2.4.</span> <span class="nav-text">3. JavaScript</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#网页的结构"><span class="nav-number">3.</span> <span class="nav-text">网页的结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#节点树及节点间的关系"><span class="nav-number">4.</span> <span class="nav-text">节点树及节点间的关系</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CSS选择器（查询）"><span class="nav-number">5.</span> <span class="nav-text">CSS选择器（查询）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HTML-图"><span class="nav-number">6.</span> <span class="nav-text">HTML 图</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">7.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
             
 
           </div>

@@ -1,140 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>Python内置数据结构原理与性能简易分析</title>
-    <url>/2020/07/27/Python%E5%86%85%E7%BD%AE%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%8E%9F%E7%90%86%E4%B8%8E%E6%80%A7%E8%83%BD%E7%AE%80%E6%98%93%E5%88%86%E6%9E%90/</url>
-    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>对于一些算法题，可以使用Python自带的内置函数解决。但很多时候用就用了，根本不知道内部的细节。这样的话，算时间复杂度**和空间复杂度就很有问题。</p>
-<p>因此，我最近几天查阅了网上相关资料，并进行归纳和整理。开始我以为复制粘贴就行了，但是呢，我发现有很多东西都没解释得清楚与透彻，在研读的过程中，我经常很懵逼，更有时候，我都怀疑自己智商了。</p>
-<p>最后不得不逼得自己还读了相关源码。越看源码，越发现有很多可以分析的，但是考虑到篇幅和时间，就先打住，以后再整个进阶版。</p>
-<p>整理完这个以后，我认为呀，不管什么东西还是得追本溯源，这样才靠谱。</p>
-<h2 id="前提说明"><a href="#前提说明" class="headerlink" title="前提说明"></a>前提说明</h2><p>时间复杂度是参考官网:<br><a href="https://wiki.python.org/moin/TimeComplexity" target="_blank" rel="noopener">https://wiki.python.org/moin/TimeComplexity</a></p>
-<p>此页面记录了当前CPython中各种操作的时间复杂度（又名“Big O”或“大欧”）。其他Python实现（或CPython的旧版本或仍在开发版本）可能具有略微不同的性能特征。但是, 通常可以安全地假设它们的速度不超过<code>O(log n)</code>。 </p>
-<p>在所有即将介绍的表格中，<code>n</code>是容器中当前元素的数量，<code>k</code>是参数的值或参数中的元素数。</p>
-<p>本文先上结论再进行分析，有助于带着问题去思考答案。</p>
-<h2 id="性能总结"><a href="#性能总结" class="headerlink" title="性能总结"></a>性能总结</h2><p>1、Python 字典中使用了 hash table，因此查找操作的复杂度为 O(1)，而 list 实际是个数组，在 list 中，查找需要遍历整个 list，其复杂度为 O(n)，因此对成员的查找访问等操作字典要比 list 更快。<br>2、set 的 union， intersection，difference 操作要比 list 的迭代要快。因此如果涉及到求 list 交集，并集或者差的问题可以转换为 set 来操作。<br>3、需要频繁在两端插入或者删除元素，可以选择双端队列。</p>
-<h2 id="1、列表-list"><a href="#1、列表-list" class="headerlink" title="1、列表(list)"></a>1、列表(list)</h2><p>可直接使用，无须调用。</p>
-<h3 id="列表实现原理"><a href="#列表实现原理" class="headerlink" title="列表实现原理"></a>列表实现原理</h3><p>列表是以<strong>数组</strong>（Array）实现的，这个数组是 <strong>over-allocate</strong> 数组。顾名思义，当底层数组容量满了而需要扩充的时候，python依据规则会扩充多个位置出来。比如初始化列表array=[1, 2, 3, 4]，向其中添加元素23，此时array对应的底层数组，扩充后的容量不是5，而是8。这就是over-allocate的意义，即扩充容量的时候会多分配一些存储空间。如图1，展示了<code>l.insert(1,5)</code> 的操作。</p>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/1.png" alt="图1. insert操作"></p>
-<p>这里说下，列表的增长模式为：0，4，8，16，25，35，46，58，72，88…</p>
-<h3 id="列表函数的时间复杂度"><a href="#列表函数的时间复杂度" class="headerlink" title="列表函数的时间复杂度"></a>列表函数的时间复杂度</h3><p>如果要更好地理解列表，就必须熟悉<strong>数组</strong>这种数据结构。如图 2所示，为列表相关函数的时间复杂度。</p>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/2.png" alt="图2. 列表函数的时间复杂度"></p>
-<h3 id="列表函数讲解"><a href="#列表函数讲解" class="headerlink" title="列表函数讲解"></a>列表函数讲解</h3><ul>
-<li>append()方法是指在列表末尾增加一个数据项，这里的表强调的是插入1个元素，即没有扩容。</li>
-<li>extend()方法是指在列表末尾增加一个数据集合；</li>
-<li>insert()方法是指在某个特定位置前面增加一个数据项，需要移动其他元素位置；</li>
-<li>len()方法获取列表内元素的个数，因为在列表实现中，其内部维护了一个 <code>Py_ssize_t</code> 类型的变量表示列表内元素的个数，因此时间复杂度为O(1)；</li>
-<li>sort()方法是排序，网上有原理讲解，使用的是 <strong>Timesort</strong> 排序，该排序结合了合并排序（merge sort）和插入排序（insertion sort）而得出的排序算法，它在现实中有很好的效率。空间复杂度为O(n)。其排序的过程大致为，对输入的数字进行分区，然后再进行合并；</li>
-</ul>
-<h3 id="性能分析"><a href="#性能分析" class="headerlink" title="性能分析"></a>性能分析</h3><p>通过对上表的分析可以发现，列表不太适合做元素的<strong>查找</strong>、<strong>删除</strong>、<strong>插入</strong>等操作，因为这些都要遍历列表，对应的时间复杂度为O(n)。</p>
-<p>访问某个<strong>索引</strong>的元素、<strong>尾部</strong>添加元素(append)或删除(pop last)元素这些操作比较适合用列表做，对应的时间复杂度为O(1)。</p>
-<p>根据官方上说，列表最大的开销发生在<strong>超过了当前所分配的列表大小</strong>，这是因为，所有元素都需要移动；或者是在起始位置附近插入或者删除元素，这种情况下所有在该位置后面的元素都需要移动。如果你需要在一个队列的两端进行增删的操作，应当使用<code>collections.deque</code>。</p>
-<p>如果我们要在业务开发中，判断一个value是否在一个数据集中，如果数据集用列表存储，那此时的判断操作就很耗时，如果我们用hash table（set or dict）来存储，则比较轻松。</p>
-<h2 id="2、双端队列-collections-deque"><a href="#2、双端队列-collections-deque" class="headerlink" title="2、双端队列(collections.deque)"></a>2、双端队列(collections.deque)</h2><p>使用时，需要导入：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">from collection import deque</span><br></pre></td></tr></table></figure>
-
-<h3 id="双端队列实现原理"><a href="#双端队列实现原理" class="headerlink" title="双端队列实现原理"></a>双端队列实现原理</h3><p>deque（双端队列）是以<strong>双向链表</strong>的形式实现的。（好吧, 一个数组列表而不是对象, 以提高效率）。</p>
-<p>为了更好地理解这种结构，可以参照 GitHub 上 CPython collections 模块的第二个 commit 的源码。注释在文末的附录下面。</p>
-<p>这里根据注释，我画了一个不太准确的图，其实leftblock和rightblock都是要存储数据的。但在下图，没有标明。</p>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/3.png" alt="图3. 存储图"></p>
-<p>参考资料4，单个block的结构体示意图如下：</p>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/4.png" alt="图4. block"></p>
-<p>总结来说，deque 内部将一组内存块组织成<strong>双向链表</strong>的形式，每个内存块可以看成一个 Python 对象的数组， 这个数组与普通数据不同，它是从数组中部往头尾两边填充数据，而平常所见数组大都是从头往后。 正因为这个特性，所以叫双端队列。</p>
-<h3 id="双端队列时间复杂度"><a href="#双端队列时间复杂度" class="headerlink" title="双端队列时间复杂度"></a>双端队列时间复杂度</h3><p>如图所示，为双端队列的相关函数的时间复杂度。</p>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/5.png" alt="图5. 双端队列时间复杂度"></p>
-<h3 id="双端队列函数讲解"><a href="#双端队列函数讲解" class="headerlink" title="双端队列函数讲解"></a>双端队列函数讲解</h3><p>在这种数据结构下，append方法是怎么实现的呢？</p>
-<ol>
-<li>如果 rightblock 可以容纳更多的元素，则放在 rightblock 中</li>
-<li>如果不能，就新建一个 block，然后更新若干指针，将元素放在更新后的 rightblock 中。</li>
-</ol>
-<h3 id="性能分析-1"><a href="#性能分析-1" class="headerlink" title="性能分析"></a>性能分析</h3><p>得益于 deque 这样的结构，它的 pop/popleft/append/appendleft 四种操作的时间复杂度均是 O(1), 用它来实现队列、栈会非常方便和高效。</p>
-<p>虽然双端队列中的元素可以从两端弹出，并且队列任意一端都可以入队和出队，但其限定<strong>插入和删除操作在表的两端进行</strong>。 由于这样，查找双端队列中间的元素较为缓慢, 增删元素就更慢了。</p>
-<h2 id="3、字典-dict"><a href="#3、字典-dict" class="headerlink" title="3、字典(dict)"></a>3、字典(dict)</h2><p>可直接使用，无须调用。</p>
-<h3 id="字典实现原理"><a href="#字典实现原理" class="headerlink" title="字典实现原理"></a>字典实现原理</h3><p>　在Python中，字典是通过<strong>哈希表</strong>实现的。也就是说，字典是一个数组，而数组的<strong>索引</strong>是经过哈希函数处理后得到的。要理解字典，必须对哈希表这种数据结构比较熟悉。下图6为哈希表的一个逻辑判断：</p>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/6.png" alt="图6. 哈希表判断"></p>
-<p>这里要注意几点：</p>
-<ul>
-<li>使用散列值的一部分进行定位</li>
-<li>散列冲突时，使用散列值的另一部分，如果这一部分是包含原始Key的信息，那么不同的Key通过比较就能区分出来。</li>
-</ul>
-<p>你可能会问，取哈希值的一部分是怎么取得呢？下图7给了一个种方式，就是将计算得到哈希值 &amp; 数组的长度。</p>
-<p>同时，由这张图，我们可以发现Python的哈希函数在键彼此连续的时候表现得很理想，这主要是考虑到通常情况下处理的都是这类形式的数据。然而，一旦我们添加了键’z’就会出现冲突，因为这个键值并不毗邻其他键，且相距较远。</p>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/7.png" alt="图7. 哈希映射"></p>
-<p>先要声明的是，针对python的不同版本，dict的实现还有所不同，较为详细的介绍请参考资料[6]。老字典只使用一张hash，而新字典还使用了一张Indices表来辅助。这里的indices才是真正的散列表哦，下来列出新的结构：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">indices &#x3D; [None, None, index, None, index, None, index]</span><br><span class="line"></span><br><span class="line">enteies &#x3D; [ [hash0, key0, value0],  [hash1, key1, value1],  [hash2, key2, value2]]</span><br></pre></td></tr></table></figure>
-
-<h4 id="字典存储过程："><a href="#字典存储过程：" class="headerlink" title="字典存储过程："></a>字典存储过程：</h4><ul>
-<li>计算key的hash值 ( <code>hash(key)</code> )，再和mask做与操作 ( <code>mask=字典最小长度（IndicesDictMinSize）- 1</code> )，运算后会得到一个数字index，这个index就是要插入的indices的下标位置（注：具体算法与Python版本相关，并不一定一样）；</li>
-<li>得到index后，会找到indices的位置，但是此位置不是存的hash值，而是存的<code>len(enteies)</code>，表示该值在enteies中的位置；</li>
-<li>如果出现hash冲突，则会继续向下寻找空位置（略有变化的开放寻址），一直到找到剩余空位为止。</li>
-</ul>
-<h4 id="字典查找过程："><a href="#字典查找过程：" class="headerlink" title="字典查找过程："></a>字典查找过程：</h4><ul>
-<li>计算 hash(key)，得到hash_value ;</li>
-<li>计算 <code>hash_value &amp; ( len(indices) - 1)</code>，得到一个数字index ;</li>
-<li>计算 indices[index] 的值，得到 entry_index ;</li>
-<li>计算 enteies[entey_index] 的值 ，为最终值。</li>
-</ul>
-<p>为方便理解，这里我做了一个图，可以看到 <strong>indices</strong> 起到一个桥梁的作用。画完这个图，再感叹一句，设计还是挺巧妙的。</p>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/8.png" alt="图8. 字典示意图"></p>
-<p>这里补充下，关于哈希冲突，是怎么寻找下一个数组位置的。源码中用到的是以下公式：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">j &#x3D; ((5*j) + 1) mod 2**i</span><br></pre></td></tr></table></figure>
-
-<p>这里的 <code>j</code> 有两层含义，赋值号左边的为数组的下一个下标，赋值号右边的是当前发生冲突的下标。而 <code>2 ** i</code>可以理解数组长度。举例说明，对于要给size大小为<code>2 ** 3</code>来说：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">j_prev &#x3D; 0 ; j_next &#x3D; ((5 * 0) + 1) mod 8 &#x3D; 1  </span><br><span class="line">j_prev &#x3D; 1 ; j_next &#x3D; ((5 * 1) + 1) mod 8  &#x3D; 6</span><br><span class="line">j_prev &#x3D; 6 ; j_next &#x3D; ((5 * 6) + 1) mod 8  &#x3D; 7</span><br><span class="line">j_prev &#x3D; 7 ; j_next &#x3D; ((5 * 7) + 1) mod  8 &#x3D; 4</span><br><span class="line">j_prev &#x3D; 4 ; j_next &#x3D; ((5 * 4 ) + 1) mod 8 &#x3D; 5</span><br></pre></td></tr></table></figure>
-
-<p>以此类推，最后回到起点为0。以下就是哈希冲突的轨迹</p>
-<p>0 -&gt; 1 -&gt; 6 -&gt; 7 -&gt; 4 -&gt; 5 -&gt; 2 -&gt; 3 -&gt; 0 [and here it’s repeating]</p>
-<h3 id="字典函数的时间复杂度"><a href="#字典函数的时间复杂度" class="headerlink" title="字典函数的时间复杂度"></a>字典函数的时间复杂度</h3><p>下列字典的平均情况基于以下假设：</p>
-<ol>
-<li>对象的散列函数足够撸棒（robust）, 不会发生冲突。</li>
-<li>字典的键是从所有可能的键的集合中随机选择的。</li>
-</ol>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/9.png" alt="图9. 字典函数的时间复杂度"></p>
-<p>小窍门：只使用字符串作为字典的键。这么做虽然不会影响算法的时间复杂度, 但会对常数项产生显著的影响, 这决定了你的一段程序能多快跑完。</p>
-<h3 id="字典函数说明"><a href="#字典函数说明" class="headerlink" title="字典函数说明"></a>字典函数说明</h3><ol>
-<li>这些操作依赖于“摊销最坏情况”的“摊销”部分。根据容器的历史, 个别动作可能需要很长时间。</li>
-<li>对于这些操作, 最坏的情况n是<strong>容器达到的最大尺寸</strong>, 而不仅仅是当前的大小。例如, 如果一个N个元素的字典, 然后删除N-1个元素, 这个字典会重新为N个元素调整大小, 而不是当前的一个元素, 所以时间复杂度是O(n)。</li>
-</ol>
-<h3 id="字典性能分析"><a href="#字典性能分析" class="headerlink" title="字典性能分析"></a>字典性能分析</h3><p>字典的查询、添加、删除的平均时间复杂度都是O(1)，相比列表与元祖，性能更优。但是，如果发生散列冲突，或者容器需要扩充，那么时间复杂度就要考虑最差的情况 O(n)。所以说字典及其依赖哈希算法，真正要灵活运用词典时，还需要查看底层的哈希算法。</p>
-<h2 id="4、集合-set"><a href="#4、集合-set" class="headerlink" title="4、集合(set)"></a>4、集合(set)</h2><p>dict与set实现原理是一样的，都是将实际的值放到list中。唯一不同的在于hash函数操作的对象，对于dict，hash函数操作的是其key，而对于set是直接操作的它的元素。</p>
-<p>假设操作内容为x，其作为因变量，放入hash函数，通过运算后取list的余数，转化为一个list的下标，此下标位置对于set而言用来放其本身。</p>
-<p>而对于dict则是创建了两个list，一个listf存储哈希表对应的下标，另一个list中存储哈希表具体对应的值。</p>
-<p>这里为了更好地理解，对比上面字典那个图，我尝试画一个图。</p>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/10.png" alt="图10. 集合映射"></p>
-<h3 id="集合函数的时间复杂度"><a href="#集合函数的时间复杂度" class="headerlink" title="集合函数的时间复杂度"></a>集合函数的时间复杂度</h3><p>下图是函数的时间复杂度：</p>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/11.png" alt="图11. 集合时间复杂度"></p>
-<h3 id="集合性能分析"><a href="#集合性能分析" class="headerlink" title="集合性能分析"></a>集合性能分析</h3><p>由源码得知, 求差集（s-t, 或s.difference(t)）运算与更新为差集（s.difference_uptate(t)）运算的时间复杂度并不相同！</p>
-<ul>
-<li>第一个是O(len(s))（对于s中的每个元素, 如果不在t中, 将它添加到新集合中）。</li>
-<li>第二个是O(len(t))（对于t中的每个元素, 将其从s中删除）。</li>
-</ul>
-<p>因此, 必须注意哪个是首选, 取决于哪一个是最长的集合以及是否需要新的集合。</p>
-<p>集合的s-t运算中, s和t都要是set类型。如果t不是set类型, 但是是可迭代的, 你可以使用等价的方法达到目的, 比如 s.difference(l), l是个list类型。</p>
-<p>另外，列表的一些集合运算，可以转成集合类型来操作，速度更快。</p>
-<h2 id="给自己留一个坑"><a href="#给自己留一个坑" class="headerlink" title="给自己留一个坑"></a>给自己留一个坑</h2><p>自己也尝试读了一下一些数据结构的源码，虽然很多看不懂，但是抓到一些关键信息。比如下面的代码和图片。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">static Py_ssize_t</span><br><span class="line">list_length(PyListObject *a)</span><br><span class="line">&#123;</span><br><span class="line">return Py_SIZE(a);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>下图12为dictobject.c里的一个函数：<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/12.png" alt="图12. 集合时间复杂度"></p>
-<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p>[1]  <a href="https://zhuanlan.zhihu.com/p/64841133" target="_blank" rel="noopener">Python内置方法的时间复杂度</a> </p>
-<p>[2] <a href="https://wiki.python.org/moin/TimeComplexity" target="_blank" rel="noopener">TimeComplexity</a></p>
-<p>[3] <a href="https://www.jianshu.com/p/a2c98df9cfae" target="_blank" rel="noopener">python list 之时间复杂度分析</a></p>
-<p>[4] <a href="https://www.cnblogs.com/bonelee/p/11433743.html" target="_blank" rel="noopener">How collections.deque works?</a>，</p>
-<p>[5] <a href="https://zhuanlan.zhihu.com/p/45871870" target="_blank" rel="noopener">深入 Python 列表的内部实现</a>；</p>
-<p>[6] <a href="https://zhuanlan.zhihu.com/p/74003719" target="_blank" rel="noopener">Python字典dict实现原理</a></p>
-<h2 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h2><h3 id="Cpython-list-部分源码注释"><a href="#Cpython-list-部分源码注释" class="headerlink" title="Cpython list 部分源码注释"></a>Cpython list 部分源码注释</h3><p>源码地址传送门：<br><a href="https://github.com/python/cpython/blob/master/Objects/listobject.c" target="_blank" rel="noopener">https://github.com/python/cpython/blob/master/Objects/listobject.c</a></p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;* This over-allocates proportional to the list size, making room</span><br><span class="line">* for additional growth. The over-allocation is mild, but is</span><br><span class="line">* enough to give linear-time amortized behavior over a long</span><br><span class="line">* sequence of appends() in the presence of a poorly-performing</span><br><span class="line">* system realloc().</span><br><span class="line">* Add padding to make the allocated size multiple of 4.</span><br><span class="line">* The growth pattern is: 0, 4, 8, 16, 24, 32, 40, 52, 64, 76, ...</span><br><span class="line">* Note: new_allocated won&#39;t overflow because the largest possible value</span><br><span class="line">* is PY_SSIZE_T_MAX * (9 &#x2F; 8) + 6 which always fits in a size_t.</span><br><span class="line">*&#x2F;</span><br></pre></td></tr></table></figure>
-<h3 id="Cpython-collections-部分源码注释"><a href="#Cpython-collections-部分源码注释" class="headerlink" title="Cpython collections 部分源码注释"></a>Cpython collections 部分源码注释</h3><p>源码地址传送门：<br><a href="https://github.com/python/cpython/blob/master/Modules/_collectionsmodule.c" target="_blank" rel="noopener">https://github.com/python/cpython/blob/master/Modules/_collectionsmodule.c</a></p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;* The block length may be set to any number over 1.  Larger numbers</span><br><span class="line">* reduce the number of calls to the memory allocator but take more</span><br><span class="line">* memory.  Ideally, BLOCKLEN should be set with an eye to the</span><br><span class="line">* length of a cache line.</span><br><span class="line">*&#x2F;</span><br><span class="line"></span><br><span class="line">#define BLOCKLEN 62</span><br><span class="line">#define CENTER ((BLOCKLEN - 1) &#x2F; 2)</span><br><span class="line">&#x2F;* A &#96;dequeobject&#96; is composed of a doubly-linked list of &#96;block&#96; nodes.</span><br><span class="line">* This list is not circular (the leftmost block has leftlink&#x3D;&#x3D;NULL,</span><br><span class="line">* and the rightmost block has rightlink&#x3D;&#x3D;NULL).  A deque d&#39;s first</span><br><span class="line">* element is at d.leftblock[leftindex] and its last element is at</span><br><span class="line">* d.rightblock[rightindex]; note that, unlike as for Python slice</span><br><span class="line">* indices, these indices are inclusive on both ends.  By being inclusive</span><br><span class="line">* on both ends, algorithms for left and right operations become</span><br><span class="line">* symmetrical which simplifies the design.</span><br><span class="line">* The list of blocks is never empty, so d.leftblock and d.rightblock</span><br><span class="line">* are never equal to NULL.</span><br><span class="line">* The indices, d.leftindex and d.rightindex are always in the range</span><br><span class="line">*     0 &lt;&#x3D; index &lt; BLOCKLEN.</span><br><span class="line">* Their exact relationship is:</span><br><span class="line">*     (d.leftindex + d.len - 1) % BLOCKLEN &#x3D;&#x3D; d.rightindex.</span><br><span class="line">* Empty deques have d.len &#x3D;&#x3D; 0; d.leftblock&#x3D;&#x3D;d.rightblock;</span><br><span class="line">* d.leftindex &#x3D;&#x3D; CENTER+1; and d.rightindex &#x3D;&#x3D; CENTER.</span><br><span class="line">* Checking for d.len &#x3D;&#x3D; 0 is the intended way to see whether d is empty.</span><br><span class="line">* Whenever d.leftblock &#x3D;&#x3D; d.rightblock,</span><br><span class="line">*     d.leftindex + d.len - 1 &#x3D;&#x3D; d.rightindex.</span><br><span class="line">* However, when d.leftblock !&#x3D; d.rightblock, d.leftindex and d.rightindex</span><br><span class="line">* become indices into distinct blocks and either may be larger than the</span><br><span class="line">* other.</span><br><span class="line">*&#x2F;</span><br></pre></td></tr></table></figure>
-<h3 id="Cpython-dict源码部分注释"><a href="#Cpython-dict源码部分注释" class="headerlink" title="Cpython dict源码部分注释"></a>Cpython dict源码部分注释</h3><p>源码地址传送门：<br><a href="https://github.com/python/cpython/blob/master/Objects/dictobject.c" target="_blank" rel="noopener">https://github.com/python/cpython/blob/master/Objects/dictobject.c</a></p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;*layout:</span><br><span class="line">+---------------+</span><br><span class="line">| dk_refcnt         |</span><br><span class="line">| dk_size            |</span><br><span class="line">| dk_lookup       |</span><br><span class="line">| dk_usable        |</span><br><span class="line">| dk_nentries      |</span><br><span class="line">+---------------+</span><br><span class="line">| dk_indices       |</span><br><span class="line">|                         |</span><br><span class="line">+---------------+</span><br><span class="line">| dk_entries       |</span><br><span class="line">|                     |</span><br><span class="line">+---------------+</span><br><span class="line"></span><br><span class="line">dk_indices is actual hashtable. It holds index in entries, or DKIX_EMPTY(-1) or</span><br><span class="line">DKIX_DUMMY(-2).</span><br><span class="line">dk_entries is array of PyDictKeyEntry. Its size is USABLE_FRACTION(dk_size).DK_ENTRIES(dk) can be used to get pointer to entries.</span><br><span class="line">The first half of collision resolution is to visit table indices via this</span><br><span class="line">recurrence:</span><br><span class="line"></span><br><span class="line">But catering to unusual cases should not slow the usual ones, so we just take the last i bits anyway. It&#39;s up to collision resolution to do the rest. If</span><br><span class="line">we *usually* find the key we&#39;re looking for on the first try (and, it turns out, we usually do -- the table load factor is kept under 2&#x2F;3, so the odds</span><br><span class="line">are solidly in our favor), then it makes best sense to keep the initial index computation dirt cheap.</span><br><span class="line"></span><br><span class="line">j &#x3D; ((5*j) + 1) mod 2**i</span><br><span class="line"></span><br><span class="line">For any initial j in range(2**i), repeating that 2**i times generates each</span><br><span class="line">int in range(2**i) exactly once (see any text on random-number generation for</span><br><span class="line">proof). By itself, this doesn&#39;t help much: like linear probing (setting</span><br><span class="line">j +&#x3D; 1, or j -&#x3D; 1, on each loop trip), it scans the table entries in a fixed</span><br><span class="line">order. This would be bad, except that&#39;s not the only thing we do, and it&#39;s</span><br><span class="line">actually *good* in the common cases where hash keys are consecutive. </span><br><span class="line"></span><br><span class="line">In an example that&#39;s really too small to make this entirely clear, for a table of</span><br><span class="line">size 2**3 the order of indices is:</span><br><span class="line">0 -&gt; 1 -&gt; 6 -&gt; 7 -&gt; 4 -&gt; 5 -&gt; 2 -&gt; 3 -&gt; 0 [and here it&#39;s repeating]</span><br><span class="line">*&#x2F;</span><br></pre></td></tr></table></figure>
-]]></content>
-      <categories>
-        <category>数据结构</category>
-        <category>python</category>
-      </categories>
-      <tags>
-        <tag>python</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Hello World</title>
     <url>/2020/07/18/hello-world/</url>
     <content><![CDATA[<p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
@@ -184,48 +50,6 @@
       <tags>
         <tag>Docker</tag>
       </tags>
-  </entry>
-  <entry>
-    <title>在Centos系统上安装Docker社区版</title>
-    <url>/2020/07/20/%E5%9C%A8Centos%E7%B3%BB%E7%BB%9F%E4%B8%8A%E5%AE%89%E8%A3%85Docker%E7%A4%BE%E5%8C%BA%E7%89%88/</url>
-    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本文详细介绍了如在Centos系统上安装Docker的社区版本，为后面搭建学习和测试环境提供了基础。</p>
-<h2 id="什么是Centos"><a href="#什么是Centos" class="headerlink" title="什么是Centos"></a>什么是Centos</h2><p>CentOS（Community Enterprise Operating System，社区企业操作系统）是Linux发行版之一，它是来自于 Red Hat Enterprise Linux 依照开放源代码规定释出的源代码所编译而成。<br>由于出自同样的源代码，因此有些要求<strong>高度稳定性</strong>的服务器以CentOS替代商业版的Red Hat Enterprise Linux使用。两者的不同，在于CentOS完全开源。</p>
-<h2 id="什么是Docker"><a href="#什么是Docker" class="headerlink" title="什么是Docker"></a>什么是Docker</h2><p>Docker类似虚拟机，是一个开源的引擎，可以轻松的为任何应用创建一个轻量级的、可移植的、自给自足的容器。让开发者可以打包他们的应用以及依赖包到一个可移植的容器中，然后发布到任何流行的Linux机器上。<br>Docker分两个版本：</p>
-<ul>
-<li>CE(Community Edition)</li>
-<li>EE(Enterprise Edition)<br>CE版本是免费的，如果我们学习或者一般应用，CE足够。EE版本在<strong>安全性</strong>上有很大提升，是<strong>收费</strong>版本，可以试用一定时间。<br>Docker容器和虚拟机的主要区别在于，虚拟机管理程序对<strong>整个设备</strong>进行抽象处理，而容器只是对<strong>操作系统内核</strong>进行抽象处理。相对于虚拟机，容器可以“丢弃没有用的99.9%的虚拟机垃圾，剩下一个小巧简洁的胶囊式容器，里面含有你的应用程序”。<h2 id="安装流程"><a href="#安装流程" class="headerlink" title="安装流程"></a>安装流程</h2>下面将介绍使用yum安装Docker。<h3 id="yum介绍"><a href="#yum介绍" class="headerlink" title="yum介绍"></a>yum介绍</h3>Yum（全称为 Yellow dog Updater, Modified）是一个在 Fedora和RedHat以及CentOS中的Shell前端软件包管理器。<br>基于RPM包管理，能够从指定的服务器自动下载RPM包并且安装，可以<strong>自动处理依赖性关系</strong>，并且一次安装所有依赖的软件包，无须繁琐地一次次下载、安装。<h3 id="卸载旧版本"><a href="#卸载旧版本" class="headerlink" title="卸载旧版本"></a>卸载旧版本</h3>较旧的Docker版本称为<code>docker</code>或<code>docker-engine</code>。如果已安装这些程序，请卸载它们以及相关的依赖项。<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo yum docker, docker-client, docker-common</span><br><span class="line">sudo yum remove docker, docker-client, docker-client-latest, docker-common, docker-latest , docker-latest-logrotate, docker-logrotate , docker-engine</span><br></pre></td></tr></table></figure>
-<h3 id="更新yum"><a href="#更新yum" class="headerlink" title="更新yum"></a>更新yum</h3>此条命令升级所有包还有内核<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum -y update</span><br></pre></td></tr></table></figure>
-若不升级内核，可输入<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum -y upgrade</span><br></pre></td></tr></table></figure>
-<h3 id="Centos7装Docker的坑"><a href="#Centos7装Docker的坑" class="headerlink" title="Centos7装Docker的坑"></a>Centos7装Docker的坑</h3>如果你的版本选择的是Centos7，恭喜你只要一步就可以安装完毕.<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum -y install docker</span><br></pre></td></tr></table></figure>
-安装完毕后，直接跳到验证步骤吧。<br>别急别急，先别跳，这个默认安装的docker版本号为1.13.1。<br>查阅相关资料，Docker是在1.13.1后正式推出企业版（2017年），版本号也从此发生了变化，由原来的1.13.1升级到了17.03（即表示17年3月），从此Docker有了<code>docker-ee</code>和<code>docker-ce</code>之分。<br>前者为企业版，后者为社区版。社区版是免费提供给个人开发者和小型团体使用的，企业版会提供额外的收费服务，比如经过官方测试认证过的基础设施、容器、插件等。<br>再回头来看，这个1.13.1这个版本已经比较老了，2017年出的，现在都2020年了。所以装了此版本的，执行上面的卸载命令，装免费的社区版本吧。要不然遇到一些版本bug，让你哭死！<br>好了，Centos8的用户等着不耐烦了，开始安装社区版本了。<h3 id="安装必备依赖项"><a href="#安装必备依赖项" class="headerlink" title="安装必备依赖项"></a>安装必备依赖项</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum install -y yum-utils device-mapper-persistent-data lvm2</span><br></pre></td></tr></table></figure>
-yum-util提供<code>yum-config-manager</code>功能，另外两个是<code>devicemapper</code>驱动依赖的包。<h3 id="添加yum的源"><a href="#添加yum的源" class="headerlink" title="添加yum的源"></a>添加yum的源</h3>为了安装docker的社区版本，需要给yum添加源，这里提供两种方式：</li>
-</ul>
-<p>1.添加国内源：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum-config-manager --add-repo http:&#x2F;&#x2F;mirrors.aliyun.com&#x2F;docker-ce&#x2F;linux&#x2F;centos&#x2F;docker-ce.repo</span><br></pre></td></tr></table></figure>
-<p>2.添加官方源：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum-config-manager --add-repo https:&#x2F;&#x2F;download.docker.com&#x2F;linux&#x2F;centos&#x2F;docker-ce.repo</span><br></pre></td></tr></table></figure>
-<p>这两个源下载的<code>docker-ce.repo</code>是一样的，执行上述其中一条命令后，就生成了 <code>/ect/yum.repos.d/docker-ce.repo</code> 这个文件，查看里面的内容，如图1所示。<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/56/1.png" alt="图1. 文件内容"><br>可以看到只有 [docker-ce-stable] 是启用的，即<code>enabled=1</code>，其他诸如 docker-ce-edge、docker-ce-test 都是禁用的。<br>在这里说明一下，stable是Docker的一个版本意思，社区版按照stable和edge两种方式发布，每个季度更新stable版本，每个月份更新edge版本。<br>另外，test版本是预发布版本，也就是下一个大版本的测试作品。</p>
-<p>如果需要启动docker-ce-edge，需要执行以下命令：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo yum-config-manager --enable docker-ce-edge</span><br></pre></td></tr></table></figure>
-<p>执行完后，再打开文件，可以看到 <code>docker-ce-edge的enabled=1</code> 了。<br>如果要禁用，通过命令：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo yum-config-manager --disable docker-ce-edge</span><br></pre></td></tr></table></figure>
-<h3 id="安装Docker-CE"><a href="#安装Docker-CE" class="headerlink" title="安装Docker CE"></a>安装Docker CE</h3><p>确保成功添加源以后，可以愉快地安装Docker了。<br>可以选择直接安装最新的Docker社区版本：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo yum -y install docker-ce --nobest</span><br></pre></td></tr></table></figure>
-<p><code>--nobest： use not only best candidate packages</code><br>如果在生产环境，往往不是安装最新版本，而是安装指定版本，那么可以先通过如下命令查看版本：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum list docker-ce --showduplicates|sort -r</span><br></pre></td></tr></table></figure>
-<p>可以看到如下结果：<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/56/2.png" alt="图2. 版本列表"><br>由图2，可以看到，截止2020年7月15日，最新版本为<code>19.03.12</code>。<br>安装生产环境指定需要的版本：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo yum install docker-ce-19.03.12</span><br></pre></td></tr></table></figure>
-<h3 id="启动docker"><a href="#启动docker" class="headerlink" title="启动docker"></a>启动docker</h3><p>安装好后，启动docker服务</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo systemctl start  docker</span><br></pre></td></tr></table></figure>
-<h2 id="检测流程"><a href="#检测流程" class="headerlink" title="检测流程"></a>检测流程</h2><h3 id="查看Docker版本"><a href="#查看Docker版本" class="headerlink" title="查看Docker版本"></a>查看Docker版本</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">docker -v</span><br></pre></td></tr></table></figure>
-<p><code>Docker version 19.03.12, build 48a66213fe</code></p>
-<h3 id="启动测试应用"><a href="#启动测试应用" class="headerlink" title="启动测试应用"></a>启动测试应用</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo docker run hello-world</span><br></pre></td></tr></table></figure>
-<p>该命令会下载一个test镜像，并在容器中运行。输出如下，表示已正确安装：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Unable to find image &#39;hello-world:latest&#39; locally</span><br><span class="line">...</span><br><span class="line">Hello from Docker!</span><br><span class="line">This message shows that your installation appears to be working correctly.</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
-<h3 id="设置Docker的开机自启"><a href="#设置Docker的开机自启" class="headerlink" title="设置Docker的开机自启"></a>设置Docker的开机自启</h3><p>设置为开机自动激活单元并现在立刻启动</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">systemctl enable --now docker</span><br></pre></td></tr></table></figure>
-<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p>[1] <a href="https://www.runoob.com/docker/centos-docker-install.htmll" target="_blank" rel="noopener">docker安装_菜鸟教程</a><br>[2] <a href="https://segmentfault.com/a/1190000012986950" target="_blank" rel="noopener">Docker入门学习</a><br>[3] <a href="https://www.cnblogs.com/wangxiayun/p/10064421.html" target="_blank" rel="noopener">CentOS7安装docker以及错误解决</a><br>[4] <a href="https://baijiahao.baidu.com/s?id=1627776276982932844&wfr=spider&for=pc" target="_blank" rel="noopener">Centos7默认安装的docker版本说明</a></p>
-]]></content>
   </entry>
   <entry>
     <title>git支持emoji了！快来更换你的提交风格吧！</title>
@@ -466,6 +290,289 @@ yum-util提供<code>yum-config-manager</code>功能，另外两个是<code>devic
       </categories>
       <tags>
         <tag>git</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>给你一百元，帮我买100只鸡回来</title>
+    <url>/2020/07/30/%E7%BB%99%E4%BD%A0%E4%B8%80%E7%99%BE%E5%85%83%EF%BC%8C%E5%B8%AE%E6%88%91%E4%B9%B0100%E5%8F%AA%E9%B8%A1%E5%9B%9E%E6%9D%A5/</url>
+    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本篇是大学《算法》课程的实验报告，这份报告包含了从原理分析到实验结果展示，有理有据地证明了好的方案会是多么地高效。</p>
+<h2 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h2><p>我国古代数学家张丘建在《算经》一书中曾提出过著名的「百钱买百鸡」问题，该问题叙述如下：鸡翁一，值钱五；鸡母一，值钱三；鸡雏三，值钱一；百钱买百鸡，则翁、母、雏各几何？</p>
+<p>翻译过来，公鸡一个五块钱，母鸡一个三块钱，小鸡三个一块钱，现在要用一百块钱买一百只鸡，问公鸡、母鸡、小鸡各多少只？</p>
+<h2 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h2><p>这里，我们先假设：</p>
+<ul>
+<li>a：鸡翁数</li>
+<li>b：鸡母数</li>
+<li>c：鸡雏数</li>
+</ul>
+<h3 id="方案一：穷举法"><a href="#方案一：穷举法" class="headerlink" title="方案一：穷举法"></a>方案一：穷举法</h3><p>三个值的范围如下，让计算机进行循环判断即可。</p>
+<p>$a \in [0,100]$</p>
+<p>$b \in [0,100]$</p>
+<p>$c \in [0,100]$</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">n&#x3D;100</span><br><span class="line">if((a+b+c &#x3D;&#x3D; n)&amp;&amp;(5*a + 3*b + c&#x2F;3 &#x3D;&#x3D; n)&amp;&amp;(c%3&#x3D;&#x3D;0))</span><br><span class="line">&#123; OK!&#125;</span><br></pre></td></tr></table></figure>
+
+<p>三层遍历循环，该方案的时间复杂度即为$O(n^3)$</p>
+<h3 id="方案二：变量代替法"><a href="#方案二：变量代替法" class="headerlink" title="方案二：变量代替法"></a>方案二：变量代替法</h3><p>在算法1的基础上，将搜索的范围和层数缩小。</p>
+<p>$c = 100 - a -b$</p>
+<p>$a \in [0,100/5]$</p>
+<p>$b \in [0,100/3]$</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">n &#x3D; 100</span><br><span class="line">c &#x3D; n -a-b;</span><br><span class="line">if(5*a + 3*b + c&#x2F;3 &#x3D;&#x3D; n &amp;&amp; c%3&#x3D;&#x3D;0)</span><br><span class="line">&#123;OK!&#125;</span><br></pre></td></tr></table></figure>
+
+<p>两层遍历循环，该方案的时间复杂度即为$O(n^2)$</p>
+<h3 id="方案三：推导法"><a href="#方案三：推导法" class="headerlink" title="方案三：推导法"></a>方案三：推导法</h3><p>这里，我们进行推导，很容易就知道要满足下面这两个条件：<br>$$<br>        \begin{cases}<br>        5 a + 3 b + \frac 13  c = 100 \<br>        a + b +  c = 100<br>        \end{cases}<br>$$<br>消除$c$后<br>$$<br>        7a + 4b = 100<br>$$<br>为了消除$b$前面的系数4，不妨令$a = 4k$ ,即$b=25-7k$ ,由$a$和$b$的范围可得：</p>
+<p>$$<br>        \begin{cases}<br>        0 \leq 4k \leq 20\<br>        0\leq 25-7k \leq \frac {100}3<br>        \end{cases}<br>$$<br>解出$k$的范围为$k\in[0,\frac {25}7]$<br>只要遍历$k$的值，即可求解，该方案的时间复杂度即为$O(n)$</p>
+<h2 id="实验对照"><a href="#实验对照" class="headerlink" title="实验对照"></a>实验对照</h2><p>下面我们将计算机得到的结果进行罗列，让我们能更好地对三种算法进行比较。</p>
+<h3 id="实验可能的解"><a href="#实验可能的解" class="headerlink" title="实验可能的解"></a>实验可能的解</h3><p>公鸡0只，母鸡25只，小鸡75只;</p>
+<p>公鸡4只，母鸡18只，小鸡78只;</p>
+<p>公鸡8只，母鸡11只，小鸡81只;</p>
+<p>公鸡12只，母鸡4只，小鸡84只;</p>
+<h3 id="实验对比："><a href="#实验对比：" class="headerlink" title="实验对比："></a>实验对比：</h3><p>这里我们为了测试三种算法到底差别多少，不妨将规模提升到n元买n鸡问题。</p>
+<p>软件：codeblocks </p>
+<p><em>表格1：三种算法对比</em></p>
+<table>
+<thead>
+<tr>
+<th>规模</th>
+<th>算法1</th>
+<th>算法2</th>
+<th>算法3</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>n=100</td>
+<td>0.01s</td>
+<td>&lt;0.0000001s</td>
+<td>&lt;0.0000001s</td>
+</tr>
+<tr>
+<td>n=6000</td>
+<td>616.14s</td>
+<td>0.31s</td>
+<td>0.14s</td>
+</tr>
+<tr>
+<td>n=50000</td>
+<td>&gt;1000s</td>
+<td>1.31s</td>
+<td>0.24s</td>
+</tr>
+<tr>
+<td>n=200000</td>
+<td>&gt;1000s</td>
+<td>10.90s</td>
+<td>1.00s</td>
+</tr>
+<tr>
+<td>n=500000</td>
+<td>&gt;1000s</td>
+<td>64.82s</td>
+<td>2.66s</td>
+</tr>
+<tr>
+<td>n=800000</td>
+<td>&gt;1000s</td>
+<td>148.63s</td>
+<td>3.61s</td>
+</tr>
+<tr>
+<td>n=2000000</td>
+<td>&gt;1000s</td>
+<td>920.05s</td>
+<td>9.86s</td>
+</tr>
+<tr>
+<td>n=5000000</td>
+<td>&gt;1000s</td>
+<td>&gt;1000s</td>
+<td>30.61s</td>
+</tr>
+<tr>
+<td>n=10000000</td>
+<td>&gt;1000s</td>
+<td>&gt;1000s</td>
+<td>59.81s</td>
+</tr>
+</tbody></table>
+<h3 id="结果分析"><a href="#结果分析" class="headerlink" title="结果分析"></a>结果分析</h3><p>当算法1到了n=6000以上的规模，就需要花费大量时间，超过1000s。</p>
+<p>算法2与算法3在n=50000开始显示出差别，随着n的提升，两个算法之间耗时差距越来越大。</p>
+<p>当n=2000000时，算法2需要消耗920s，而算法3只需要9.86s。</p>
+<p>当n=10000000时，算法3耗时59.819s，相当于算法二在n=500000时所用的时间。</p>
+<p>可见当我们的规模越大时，时间消耗的差距就会体现的越大。</p>
+<h3 id="完整代码"><a href="#完整代码" class="headerlink" title="完整代码"></a>完整代码</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">int g[1000000],m[1000000],s[1000000];</span><br><span class="line">void chicken_question(int n,int &amp;k,int g[],int m[],int s[]);</span><br><span class="line">void chicken_question2(int n,int &amp;k,int g[],int m[],int s[]);</span><br><span class="line">void chicken_question3(int n,int &amp;k,int g[],int m[],int s[]);</span><br><span class="line"></span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">int k&#x3D;0;</span><br><span class="line">int n&#x3D;15000000,c&#x3D;0;</span><br><span class="line">double  duration1,duration2,duration3;</span><br><span class="line">clock_t start, finish;</span><br><span class="line">printf(&quot;请输入n的值\n&quot;);</span><br><span class="line"></span><br><span class="line">start &#x3D; clock();</span><br><span class="line">chicken_question(n,k,g,m,s);</span><br><span class="line">finish &#x3D; clock();</span><br><span class="line">duration1 &#x3D; (double)(finish - start)&#x2F; CLOCKS_PER_SEC;  &#x2F;&#x2F;转化为秒</span><br><span class="line">printf( &quot;\n算法1运行%d次的时间为%f seconds\n&quot;,n,duration1 );</span><br><span class="line">start &#x3D; clock();</span><br><span class="line">chicken_question2(n,k,g,m,s);</span><br><span class="line">finish &#x3D; clock();</span><br><span class="line">duration2 &#x3D; (double)(finish - start)&#x2F; CLOCKS_PER_SEC;  &#x2F;&#x2F;转化为秒*&#x2F;</span><br><span class="line">start &#x3D; clock();</span><br><span class="line">chicken_question3(n,k,g,m,s);</span><br><span class="line">finish &#x3D; clock();</span><br><span class="line">duration3 &#x3D; (double)(finish - start)&#x2F; CLOCKS_PER_SEC;  &#x2F;&#x2F;转化为秒</span><br><span class="line">printf( &quot;\n算法2运行%d次的时间为%f seconds\n&quot;,n,duration2 );</span><br><span class="line">printf( &quot;\n算法3运行%d次的时间为%f seconds\n&quot;,n,duration3 );</span><br><span class="line">system(&quot;pause&quot;);&#x2F;&#x2F;</span><br><span class="line">return 0;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 公鸡 母鸡 小鸡的数目为 g[] m[] s[]  三种鸡购买的总数目为n  问题的解数目为k</span><br><span class="line">void chicken_question(int n,int &amp;k,int g[],int m[],int s[])</span><br><span class="line">&#123;</span><br><span class="line">int a,b,c;</span><br><span class="line">k &#x3D; 0;</span><br><span class="line">for (a&#x3D;0;a&lt;&#x3D;n;a++)</span><br><span class="line">&#123;</span><br><span class="line">	for(b&#x3D;0;b&lt;&#x3D;n;b++)</span><br><span class="line">	&#123;</span><br><span class="line">		for(c&#x3D;0;c&lt;&#x3D;n;c++)</span><br><span class="line">		&#123;</span><br><span class="line">			  if((a+b+c &#x3D;&#x3D; n)&amp;&amp;(5*a + 3*b + c&#x2F;3 &#x3D;&#x3D; n)&amp;&amp;(c%3&#x3D;&#x3D;0))</span><br><span class="line">			  &#123;</span><br><span class="line">			  g[k] &#x3D; a;</span><br><span class="line">			  m[k] &#x3D; b;</span><br><span class="line">			  s[k] &#x3D; c;</span><br><span class="line">            &#x2F;&#x2F;printf(&quot;g[%d]&#x3D;%d,m[%d]&#x3D;%d,s[%d]&#x3D;%d\n&quot;,k,a,k,b,k,c);</span><br><span class="line">			  k++;</span><br><span class="line"></span><br><span class="line">			  &#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">void chicken_question2(int n,int &amp;k,int g[],int m[],int s[])</span><br><span class="line">&#123;</span><br><span class="line">int i,j,a,b,c;</span><br><span class="line">k &#x3D; 0;</span><br><span class="line">i &#x3D; n&#x2F;5;</span><br><span class="line"> j &#x3D; n&#x2F;3;</span><br><span class="line">for (a&#x3D;0;a&lt;&#x3D;i;a++)</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">	for(b&#x3D;0;b&lt;&#x3D;j;b++)</span><br><span class="line">	&#123;</span><br><span class="line">	    c &#x3D; n -a-b;</span><br><span class="line"> if(5*a + 3*b + c&#x2F;3 &#x3D;&#x3D; n &amp;&amp; c%3&#x3D;&#x3D;0)</span><br><span class="line">			  &#123;</span><br><span class="line">			  g[k] &#x3D; a;</span><br><span class="line">			  m[k] &#x3D; b;</span><br><span class="line">			  s[k] &#x3D; c;</span><br><span class="line">              printf(&quot;g[%d]&#x3D;%d,m[%d]&#x3D;%d,s[%d]&#x3D;%d\n&quot;,k,a,k,b,k,c);</span><br><span class="line">			  k++;</span><br><span class="line">			  &#125;</span><br><span class="line"></span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">void chicken_question3(int n,int &amp;k,int g[],int m[],int s[])</span><br><span class="line">&#123;</span><br><span class="line">int x,y,z;</span><br><span class="line">k &#x3D; 0;</span><br><span class="line">for(int k1&#x3D;0;k1&lt;&#x3D;n&#x2F;28;k1++)</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">    x &#x3D; 4*k1;</span><br><span class="line">    y &#x3D; n&#x2F;4 -7*k1;</span><br><span class="line">    z &#x3D; (3*n)&#x2F;4+3*k1;</span><br><span class="line">       if(5*x + 3*y + z&#x2F;3 &#x3D;&#x3D; n &amp;&amp; z%3&#x3D;&#x3D;0)</span><br><span class="line">        &#123;</span><br><span class="line">            g[k] &#x3D; x;</span><br><span class="line">            m[k] &#x3D; y;</span><br><span class="line">            s[k] &#x3D; z;</span><br><span class="line">            printf(&quot;g[%d]&#x3D;%d,m[%d]&#x3D;%d,s[%d]&#x3D;%d\n&quot;,k,x,k,y,k,z);</span><br><span class="line">            k++;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>]]></content>
+  </entry>
+  <entry>
+    <title>在Centos系统上安装Docker社区版</title>
+    <url>/2020/07/20/%E5%9C%A8Centos%E7%B3%BB%E7%BB%9F%E4%B8%8A%E5%AE%89%E8%A3%85Docker%E7%A4%BE%E5%8C%BA%E7%89%88/</url>
+    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本文详细介绍了如在Centos系统上安装Docker的社区版本，为后面搭建学习和测试环境提供了基础。</p>
+<h2 id="什么是Centos"><a href="#什么是Centos" class="headerlink" title="什么是Centos"></a>什么是Centos</h2><p>CentOS（Community Enterprise Operating System，社区企业操作系统）是Linux发行版之一，它是来自于 Red Hat Enterprise Linux 依照开放源代码规定释出的源代码所编译而成。<br>由于出自同样的源代码，因此有些要求<strong>高度稳定性</strong>的服务器以CentOS替代商业版的Red Hat Enterprise Linux使用。两者的不同，在于CentOS完全开源。</p>
+<h2 id="什么是Docker"><a href="#什么是Docker" class="headerlink" title="什么是Docker"></a>什么是Docker</h2><p>Docker类似虚拟机，是一个开源的引擎，可以轻松的为任何应用创建一个轻量级的、可移植的、自给自足的容器。让开发者可以打包他们的应用以及依赖包到一个可移植的容器中，然后发布到任何流行的Linux机器上。<br>Docker分两个版本：</p>
+<ul>
+<li>CE(Community Edition)</li>
+<li>EE(Enterprise Edition)<br>CE版本是免费的，如果我们学习或者一般应用，CE足够。EE版本在<strong>安全性</strong>上有很大提升，是<strong>收费</strong>版本，可以试用一定时间。<br>Docker容器和虚拟机的主要区别在于，虚拟机管理程序对<strong>整个设备</strong>进行抽象处理，而容器只是对<strong>操作系统内核</strong>进行抽象处理。相对于虚拟机，容器可以“丢弃没有用的99.9%的虚拟机垃圾，剩下一个小巧简洁的胶囊式容器，里面含有你的应用程序”。<h2 id="安装流程"><a href="#安装流程" class="headerlink" title="安装流程"></a>安装流程</h2>下面将介绍使用yum安装Docker。<h3 id="yum介绍"><a href="#yum介绍" class="headerlink" title="yum介绍"></a>yum介绍</h3>Yum（全称为 Yellow dog Updater, Modified）是一个在 Fedora和RedHat以及CentOS中的Shell前端软件包管理器。<br>基于RPM包管理，能够从指定的服务器自动下载RPM包并且安装，可以<strong>自动处理依赖性关系</strong>，并且一次安装所有依赖的软件包，无须繁琐地一次次下载、安装。<h3 id="卸载旧版本"><a href="#卸载旧版本" class="headerlink" title="卸载旧版本"></a>卸载旧版本</h3>较旧的Docker版本称为<code>docker</code>或<code>docker-engine</code>。如果已安装这些程序，请卸载它们以及相关的依赖项。<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo yum docker, docker-client, docker-common</span><br><span class="line">sudo yum remove docker, docker-client, docker-client-latest, docker-common, docker-latest , docker-latest-logrotate, docker-logrotate , docker-engine</span><br></pre></td></tr></table></figure>
+<h3 id="更新yum"><a href="#更新yum" class="headerlink" title="更新yum"></a>更新yum</h3>此条命令升级所有包还有内核<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum -y update</span><br></pre></td></tr></table></figure>
+若不升级内核，可输入<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum -y upgrade</span><br></pre></td></tr></table></figure>
+<h3 id="Centos7装Docker的坑"><a href="#Centos7装Docker的坑" class="headerlink" title="Centos7装Docker的坑"></a>Centos7装Docker的坑</h3>如果你的版本选择的是Centos7，恭喜你只要一步就可以安装完毕.<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum -y install docker</span><br></pre></td></tr></table></figure>
+安装完毕后，直接跳到验证步骤吧。<br>别急别急，先别跳，这个默认安装的docker版本号为1.13.1。<br>查阅相关资料，Docker是在1.13.1后正式推出企业版（2017年），版本号也从此发生了变化，由原来的1.13.1升级到了17.03（即表示17年3月），从此Docker有了<code>docker-ee</code>和<code>docker-ce</code>之分。<br>前者为企业版，后者为社区版。社区版是免费提供给个人开发者和小型团体使用的，企业版会提供额外的收费服务，比如经过官方测试认证过的基础设施、容器、插件等。<br>再回头来看，这个1.13.1这个版本已经比较老了，2017年出的，现在都2020年了。所以装了此版本的，执行上面的卸载命令，装免费的社区版本吧。要不然遇到一些版本bug，让你哭死！<br>好了，Centos8的用户等着不耐烦了，开始安装社区版本了。<h3 id="安装必备依赖项"><a href="#安装必备依赖项" class="headerlink" title="安装必备依赖项"></a>安装必备依赖项</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum install -y yum-utils device-mapper-persistent-data lvm2</span><br></pre></td></tr></table></figure>
+yum-util提供<code>yum-config-manager</code>功能，另外两个是<code>devicemapper</code>驱动依赖的包。<h3 id="添加yum的源"><a href="#添加yum的源" class="headerlink" title="添加yum的源"></a>添加yum的源</h3>为了安装docker的社区版本，需要给yum添加源，这里提供两种方式：</li>
+</ul>
+<p>1.添加国内源：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum-config-manager --add-repo http:&#x2F;&#x2F;mirrors.aliyun.com&#x2F;docker-ce&#x2F;linux&#x2F;centos&#x2F;docker-ce.repo</span><br></pre></td></tr></table></figure>
+<p>2.添加官方源：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum-config-manager --add-repo https:&#x2F;&#x2F;download.docker.com&#x2F;linux&#x2F;centos&#x2F;docker-ce.repo</span><br></pre></td></tr></table></figure>
+<p>这两个源下载的<code>docker-ce.repo</code>是一样的，执行上述其中一条命令后，就生成了 <code>/ect/yum.repos.d/docker-ce.repo</code> 这个文件，查看里面的内容，如图1所示。<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/56/1.png" alt="图1. 文件内容"><br>可以看到只有 [docker-ce-stable] 是启用的，即<code>enabled=1</code>，其他诸如 docker-ce-edge、docker-ce-test 都是禁用的。<br>在这里说明一下，stable是Docker的一个版本意思，社区版按照stable和edge两种方式发布，每个季度更新stable版本，每个月份更新edge版本。<br>另外，test版本是预发布版本，也就是下一个大版本的测试作品。</p>
+<p>如果需要启动docker-ce-edge，需要执行以下命令：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo yum-config-manager --enable docker-ce-edge</span><br></pre></td></tr></table></figure>
+<p>执行完后，再打开文件，可以看到 <code>docker-ce-edge的enabled=1</code> 了。<br>如果要禁用，通过命令：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo yum-config-manager --disable docker-ce-edge</span><br></pre></td></tr></table></figure>
+<h3 id="安装Docker-CE"><a href="#安装Docker-CE" class="headerlink" title="安装Docker CE"></a>安装Docker CE</h3><p>确保成功添加源以后，可以愉快地安装Docker了。<br>可以选择直接安装最新的Docker社区版本：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo yum -y install docker-ce --nobest</span><br></pre></td></tr></table></figure>
+<p><code>--nobest： use not only best candidate packages</code><br>如果在生产环境，往往不是安装最新版本，而是安装指定版本，那么可以先通过如下命令查看版本：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum list docker-ce --showduplicates|sort -r</span><br></pre></td></tr></table></figure>
+<p>可以看到如下结果：<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/56/2.png" alt="图2. 版本列表"><br>由图2，可以看到，截止2020年7月15日，最新版本为<code>19.03.12</code>。<br>安装生产环境指定需要的版本：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo yum install docker-ce-19.03.12</span><br></pre></td></tr></table></figure>
+<h3 id="启动docker"><a href="#启动docker" class="headerlink" title="启动docker"></a>启动docker</h3><p>安装好后，启动docker服务</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo systemctl start  docker</span><br></pre></td></tr></table></figure>
+<h2 id="检测流程"><a href="#检测流程" class="headerlink" title="检测流程"></a>检测流程</h2><h3 id="查看Docker版本"><a href="#查看Docker版本" class="headerlink" title="查看Docker版本"></a>查看Docker版本</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">docker -v</span><br></pre></td></tr></table></figure>
+<p><code>Docker version 19.03.12, build 48a66213fe</code></p>
+<h3 id="启动测试应用"><a href="#启动测试应用" class="headerlink" title="启动测试应用"></a>启动测试应用</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo docker run hello-world</span><br></pre></td></tr></table></figure>
+<p>该命令会下载一个test镜像，并在容器中运行。输出如下，表示已正确安装：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Unable to find image &#39;hello-world:latest&#39; locally</span><br><span class="line">...</span><br><span class="line">Hello from Docker!</span><br><span class="line">This message shows that your installation appears to be working correctly.</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<h3 id="设置Docker的开机自启"><a href="#设置Docker的开机自启" class="headerlink" title="设置Docker的开机自启"></a>设置Docker的开机自启</h3><p>设置为开机自动激活单元并现在立刻启动</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">systemctl enable --now docker</span><br></pre></td></tr></table></figure>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p>[1] <a href="https://www.runoob.com/docker/centos-docker-install.htmll" target="_blank" rel="noopener">docker安装_菜鸟教程</a><br>[2] <a href="https://segmentfault.com/a/1190000012986950" target="_blank" rel="noopener">Docker入门学习</a><br>[3] <a href="https://www.cnblogs.com/wangxiayun/p/10064421.html" target="_blank" rel="noopener">CentOS7安装docker以及错误解决</a><br>[4] <a href="https://baijiahao.baidu.com/s?id=1627776276982932844&wfr=spider&for=pc" target="_blank" rel="noopener">Centos7默认安装的docker版本说明</a></p>
+]]></content>
+  </entry>
+  <entry>
+    <title>Python内置数据结构原理与性能简易分析</title>
+    <url>/2020/07/27/Python%E5%86%85%E7%BD%AE%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%8E%9F%E7%90%86%E4%B8%8E%E6%80%A7%E8%83%BD%E7%AE%80%E6%98%93%E5%88%86%E6%9E%90/</url>
+    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>对于一些算法题，可以使用Python自带的内置函数解决。但很多时候用就用了，根本不知道内部的细节。这样的话，算时间复杂度**和空间复杂度就很有问题。</p>
+<p>因此，我最近几天查阅了网上相关资料，并进行归纳和整理。开始我以为复制粘贴就行了，但是呢，我发现有很多东西都没解释得清楚与透彻，在研读的过程中，我经常很懵逼，更有时候，我都怀疑自己智商了。</p>
+<p>最后不得不逼得自己还读了相关源码。越看源码，越发现有很多可以分析的，但是考虑到篇幅和时间，就先打住，以后再整个进阶版。</p>
+<p>整理完这个以后，我认为呀，不管什么东西还是得追本溯源，这样才靠谱。</p>
+<h2 id="前提说明"><a href="#前提说明" class="headerlink" title="前提说明"></a>前提说明</h2><p>时间复杂度是参考官网:<br><a href="https://wiki.python.org/moin/TimeComplexity" target="_blank" rel="noopener">https://wiki.python.org/moin/TimeComplexity</a></p>
+<p>此页面记录了当前CPython中各种操作的时间复杂度（又名“Big O”或“大欧”）。其他Python实现（或CPython的旧版本或仍在开发版本）可能具有略微不同的性能特征。但是, 通常可以安全地假设它们的速度不超过<code>O(log n)</code>。 </p>
+<p>在所有即将介绍的表格中，<code>n</code>是容器中当前元素的数量，<code>k</code>是参数的值或参数中的元素数。</p>
+<p>本文先上结论再进行分析，有助于带着问题去思考答案。</p>
+<h2 id="性能总结"><a href="#性能总结" class="headerlink" title="性能总结"></a>性能总结</h2><p>1、Python 字典中使用了 hash table，因此查找操作的复杂度为 O(1)，而 list 实际是个数组，在 list 中，查找需要遍历整个 list，其复杂度为 O(n)，因此对成员的查找访问等操作字典要比 list 更快。<br>2、set 的 union， intersection，difference 操作要比 list 的迭代要快。因此如果涉及到求 list 交集，并集或者差的问题可以转换为 set 来操作。<br>3、需要频繁在两端插入或者删除元素，可以选择双端队列。</p>
+<h2 id="1、列表-list"><a href="#1、列表-list" class="headerlink" title="1、列表(list)"></a>1、列表(list)</h2><p>可直接使用，无须调用。</p>
+<h3 id="列表实现原理"><a href="#列表实现原理" class="headerlink" title="列表实现原理"></a>列表实现原理</h3><p>列表是以<strong>数组</strong>（Array）实现的，这个数组是 <strong>over-allocate</strong> 数组。顾名思义，当底层数组容量满了而需要扩充的时候，python依据规则会扩充多个位置出来。比如初始化列表array=[1, 2, 3, 4]，向其中添加元素23，此时array对应的底层数组，扩充后的容量不是5，而是8。这就是over-allocate的意义，即扩充容量的时候会多分配一些存储空间。如图1，展示了<code>l.insert(1,5)</code> 的操作。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/1.png" alt="图1. insert操作"></p>
+<p>这里说下，列表的增长模式为：0，4，8，16，25，35，46，58，72，88…</p>
+<h3 id="列表函数的时间复杂度"><a href="#列表函数的时间复杂度" class="headerlink" title="列表函数的时间复杂度"></a>列表函数的时间复杂度</h3><p>如果要更好地理解列表，就必须熟悉<strong>数组</strong>这种数据结构。如图 2所示，为列表相关函数的时间复杂度。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/2.png" alt="图2. 列表函数的时间复杂度"></p>
+<h3 id="列表函数讲解"><a href="#列表函数讲解" class="headerlink" title="列表函数讲解"></a>列表函数讲解</h3><ul>
+<li>append()方法是指在列表末尾增加一个数据项，这里的表强调的是插入1个元素，即没有扩容。</li>
+<li>extend()方法是指在列表末尾增加一个数据集合；</li>
+<li>insert()方法是指在某个特定位置前面增加一个数据项，需要移动其他元素位置；</li>
+<li>len()方法获取列表内元素的个数，因为在列表实现中，其内部维护了一个 <code>Py_ssize_t</code> 类型的变量表示列表内元素的个数，因此时间复杂度为O(1)；</li>
+<li>sort()方法是排序，网上有原理讲解，使用的是 <strong>Timesort</strong> 排序，该排序结合了合并排序（merge sort）和插入排序（insertion sort）而得出的排序算法，它在现实中有很好的效率。空间复杂度为O(n)。其排序的过程大致为，对输入的数字进行分区，然后再进行合并；</li>
+</ul>
+<h3 id="性能分析"><a href="#性能分析" class="headerlink" title="性能分析"></a>性能分析</h3><p>通过对上表的分析可以发现，列表不太适合做元素的<strong>查找</strong>、<strong>删除</strong>、<strong>插入</strong>等操作，因为这些都要遍历列表，对应的时间复杂度为O(n)。</p>
+<p>访问某个<strong>索引</strong>的元素、<strong>尾部</strong>添加元素(append)或删除(pop last)元素这些操作比较适合用列表做，对应的时间复杂度为O(1)。</p>
+<p>根据官方上说，列表最大的开销发生在<strong>超过了当前所分配的列表大小</strong>，这是因为，所有元素都需要移动；或者是在起始位置附近插入或者删除元素，这种情况下所有在该位置后面的元素都需要移动。如果你需要在一个队列的两端进行增删的操作，应当使用<code>collections.deque</code>。</p>
+<p>如果我们要在业务开发中，判断一个value是否在一个数据集中，如果数据集用列表存储，那此时的判断操作就很耗时，如果我们用hash table（set or dict）来存储，则比较轻松。</p>
+<h2 id="2、双端队列-collections-deque"><a href="#2、双端队列-collections-deque" class="headerlink" title="2、双端队列(collections.deque)"></a>2、双端队列(collections.deque)</h2><p>使用时，需要导入：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">from collection import deque</span><br></pre></td></tr></table></figure>
+
+<h3 id="双端队列实现原理"><a href="#双端队列实现原理" class="headerlink" title="双端队列实现原理"></a>双端队列实现原理</h3><p>deque（双端队列）是以<strong>双向链表</strong>的形式实现的。（好吧, 一个数组列表而不是对象, 以提高效率）。</p>
+<p>为了更好地理解这种结构，可以参照 GitHub 上 CPython collections 模块的第二个 commit 的源码。注释在文末的附录下面。</p>
+<p>这里根据注释，我画了一个不太准确的图，其实leftblock和rightblock都是要存储数据的。但在下图，没有标明。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/3.png" alt="图3. 存储图"></p>
+<p>参考资料4，单个block的结构体示意图如下：</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/4.png" alt="图4. block"></p>
+<p>总结来说，deque 内部将一组内存块组织成<strong>双向链表</strong>的形式，每个内存块可以看成一个 Python 对象的数组， 这个数组与普通数据不同，它是从数组中部往头尾两边填充数据，而平常所见数组大都是从头往后。 正因为这个特性，所以叫双端队列。</p>
+<h3 id="双端队列时间复杂度"><a href="#双端队列时间复杂度" class="headerlink" title="双端队列时间复杂度"></a>双端队列时间复杂度</h3><p>如图所示，为双端队列的相关函数的时间复杂度。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/5.png" alt="图5. 双端队列时间复杂度"></p>
+<h3 id="双端队列函数讲解"><a href="#双端队列函数讲解" class="headerlink" title="双端队列函数讲解"></a>双端队列函数讲解</h3><p>在这种数据结构下，append方法是怎么实现的呢？</p>
+<ol>
+<li>如果 rightblock 可以容纳更多的元素，则放在 rightblock 中</li>
+<li>如果不能，就新建一个 block，然后更新若干指针，将元素放在更新后的 rightblock 中。</li>
+</ol>
+<h3 id="性能分析-1"><a href="#性能分析-1" class="headerlink" title="性能分析"></a>性能分析</h3><p>得益于 deque 这样的结构，它的 pop/popleft/append/appendleft 四种操作的时间复杂度均是 O(1), 用它来实现队列、栈会非常方便和高效。</p>
+<p>虽然双端队列中的元素可以从两端弹出，并且队列任意一端都可以入队和出队，但其限定<strong>插入和删除操作在表的两端进行</strong>。 由于这样，查找双端队列中间的元素较为缓慢, 增删元素就更慢了。</p>
+<h2 id="3、字典-dict"><a href="#3、字典-dict" class="headerlink" title="3、字典(dict)"></a>3、字典(dict)</h2><p>可直接使用，无须调用。</p>
+<h3 id="字典实现原理"><a href="#字典实现原理" class="headerlink" title="字典实现原理"></a>字典实现原理</h3><p>　在Python中，字典是通过<strong>哈希表</strong>实现的。也就是说，字典是一个数组，而数组的<strong>索引</strong>是经过哈希函数处理后得到的。要理解字典，必须对哈希表这种数据结构比较熟悉。下图6为哈希表的一个逻辑判断：</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/6.png" alt="图6. 哈希表判断"></p>
+<p>这里要注意几点：</p>
+<ul>
+<li>使用散列值的一部分进行定位</li>
+<li>散列冲突时，使用散列值的另一部分，如果这一部分是包含原始Key的信息，那么不同的Key通过比较就能区分出来。</li>
+</ul>
+<p>你可能会问，取哈希值的一部分是怎么取得呢？下图7给了一个种方式，就是将计算得到哈希值 &amp; 数组的长度。</p>
+<p>同时，由这张图，我们可以发现Python的哈希函数在键彼此连续的时候表现得很理想，这主要是考虑到通常情况下处理的都是这类形式的数据。然而，一旦我们添加了键’z’就会出现冲突，因为这个键值并不毗邻其他键，且相距较远。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/7.png" alt="图7. 哈希映射"></p>
+<p>先要声明的是，针对python的不同版本，dict的实现还有所不同，较为详细的介绍请参考资料[6]。老字典只使用一张hash，而新字典还使用了一张Indices表来辅助。这里的indices才是真正的散列表哦，下来列出新的结构：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">indices &#x3D; [None, None, index, None, index, None, index]</span><br><span class="line"></span><br><span class="line">enteies &#x3D; [ [hash0, key0, value0],  [hash1, key1, value1],  [hash2, key2, value2]]</span><br></pre></td></tr></table></figure>
+
+<h4 id="字典存储过程："><a href="#字典存储过程：" class="headerlink" title="字典存储过程："></a>字典存储过程：</h4><ul>
+<li>计算key的hash值 ( <code>hash(key)</code> )，再和mask做与操作 ( <code>mask=字典最小长度（IndicesDictMinSize）- 1</code> )，运算后会得到一个数字index，这个index就是要插入的indices的下标位置（注：具体算法与Python版本相关，并不一定一样）；</li>
+<li>得到index后，会找到indices的位置，但是此位置不是存的hash值，而是存的<code>len(enteies)</code>，表示该值在enteies中的位置；</li>
+<li>如果出现hash冲突，则会继续向下寻找空位置（略有变化的开放寻址），一直到找到剩余空位为止。</li>
+</ul>
+<h4 id="字典查找过程："><a href="#字典查找过程：" class="headerlink" title="字典查找过程："></a>字典查找过程：</h4><ul>
+<li>计算 hash(key)，得到hash_value ;</li>
+<li>计算 <code>hash_value &amp; ( len(indices) - 1)</code>，得到一个数字index ;</li>
+<li>计算 indices[index] 的值，得到 entry_index ;</li>
+<li>计算 enteies[entey_index] 的值 ，为最终值。</li>
+</ul>
+<p>为方便理解，这里我做了一个图，可以看到 <strong>indices</strong> 起到一个桥梁的作用。画完这个图，再感叹一句，设计还是挺巧妙的。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/8.png" alt="图8. 字典示意图"></p>
+<p>这里补充下，关于哈希冲突，是怎么寻找下一个数组位置的。源码中用到的是以下公式：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">j &#x3D; ((5*j) + 1) mod 2**i</span><br></pre></td></tr></table></figure>
+
+<p>这里的 <code>j</code> 有两层含义，赋值号左边的为数组的下一个下标，赋值号右边的是当前发生冲突的下标。而 <code>2 ** i</code>可以理解数组长度。举例说明，对于要给size大小为<code>2 ** 3</code>来说：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">j_prev &#x3D; 0 ; j_next &#x3D; ((5 * 0) + 1) mod 8 &#x3D; 1  </span><br><span class="line">j_prev &#x3D; 1 ; j_next &#x3D; ((5 * 1) + 1) mod 8  &#x3D; 6</span><br><span class="line">j_prev &#x3D; 6 ; j_next &#x3D; ((5 * 6) + 1) mod 8  &#x3D; 7</span><br><span class="line">j_prev &#x3D; 7 ; j_next &#x3D; ((5 * 7) + 1) mod  8 &#x3D; 4</span><br><span class="line">j_prev &#x3D; 4 ; j_next &#x3D; ((5 * 4 ) + 1) mod 8 &#x3D; 5</span><br></pre></td></tr></table></figure>
+
+<p>以此类推，最后回到起点为0。以下就是哈希冲突的轨迹</p>
+<p>0 -&gt; 1 -&gt; 6 -&gt; 7 -&gt; 4 -&gt; 5 -&gt; 2 -&gt; 3 -&gt; 0 [and here it’s repeating]</p>
+<h3 id="字典函数的时间复杂度"><a href="#字典函数的时间复杂度" class="headerlink" title="字典函数的时间复杂度"></a>字典函数的时间复杂度</h3><p>下列字典的平均情况基于以下假设：</p>
+<ol>
+<li>对象的散列函数足够撸棒（robust）, 不会发生冲突。</li>
+<li>字典的键是从所有可能的键的集合中随机选择的。</li>
+</ol>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/9.png" alt="图9. 字典函数的时间复杂度"></p>
+<p>小窍门：只使用字符串作为字典的键。这么做虽然不会影响算法的时间复杂度, 但会对常数项产生显著的影响, 这决定了你的一段程序能多快跑完。</p>
+<h3 id="字典函数说明"><a href="#字典函数说明" class="headerlink" title="字典函数说明"></a>字典函数说明</h3><ol>
+<li>这些操作依赖于“摊销最坏情况”的“摊销”部分。根据容器的历史, 个别动作可能需要很长时间。</li>
+<li>对于这些操作, 最坏的情况n是<strong>容器达到的最大尺寸</strong>, 而不仅仅是当前的大小。例如, 如果一个N个元素的字典, 然后删除N-1个元素, 这个字典会重新为N个元素调整大小, 而不是当前的一个元素, 所以时间复杂度是O(n)。</li>
+</ol>
+<h3 id="字典性能分析"><a href="#字典性能分析" class="headerlink" title="字典性能分析"></a>字典性能分析</h3><p>字典的查询、添加、删除的平均时间复杂度都是O(1)，相比列表与元祖，性能更优。但是，如果发生散列冲突，或者容器需要扩充，那么时间复杂度就要考虑最差的情况 O(n)。所以说字典及其依赖哈希算法，真正要灵活运用词典时，还需要查看底层的哈希算法。</p>
+<h2 id="4、集合-set"><a href="#4、集合-set" class="headerlink" title="4、集合(set)"></a>4、集合(set)</h2><p>dict与set实现原理是一样的，都是将实际的值放到list中。唯一不同的在于hash函数操作的对象，对于dict，hash函数操作的是其key，而对于set是直接操作的它的元素。</p>
+<p>假设操作内容为x，其作为因变量，放入hash函数，通过运算后取list的余数，转化为一个list的下标，此下标位置对于set而言用来放其本身。</p>
+<p>而对于dict则是创建了两个list，一个listf存储哈希表对应的下标，另一个list中存储哈希表具体对应的值。</p>
+<p>这里为了更好地理解，对比上面字典那个图，我尝试画一个图。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/10.png" alt="图10. 集合映射"></p>
+<h3 id="集合函数的时间复杂度"><a href="#集合函数的时间复杂度" class="headerlink" title="集合函数的时间复杂度"></a>集合函数的时间复杂度</h3><p>下图是函数的时间复杂度：</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/11.png" alt="图11. 集合时间复杂度"></p>
+<h3 id="集合性能分析"><a href="#集合性能分析" class="headerlink" title="集合性能分析"></a>集合性能分析</h3><p>由源码得知, 求差集（s-t, 或s.difference(t)）运算与更新为差集（s.difference_uptate(t)）运算的时间复杂度并不相同！</p>
+<ul>
+<li>第一个是O(len(s))（对于s中的每个元素, 如果不在t中, 将它添加到新集合中）。</li>
+<li>第二个是O(len(t))（对于t中的每个元素, 将其从s中删除）。</li>
+</ul>
+<p>因此, 必须注意哪个是首选, 取决于哪一个是最长的集合以及是否需要新的集合。</p>
+<p>集合的s-t运算中, s和t都要是set类型。如果t不是set类型, 但是是可迭代的, 你可以使用等价的方法达到目的, 比如 s.difference(l), l是个list类型。</p>
+<p>另外，列表的一些集合运算，可以转成集合类型来操作，速度更快。</p>
+<h2 id="给自己留一个坑"><a href="#给自己留一个坑" class="headerlink" title="给自己留一个坑"></a>给自己留一个坑</h2><p>自己也尝试读了一下一些数据结构的源码，虽然很多看不懂，但是抓到一些关键信息。比如下面的代码和图片。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">static Py_ssize_t</span><br><span class="line">list_length(PyListObject *a)</span><br><span class="line">&#123;</span><br><span class="line">return Py_SIZE(a);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>下图12为dictobject.c里的一个函数：<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/12.png" alt="图12. 集合时间复杂度"></p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p>[1]  <a href="https://zhuanlan.zhihu.com/p/64841133" target="_blank" rel="noopener">Python内置方法的时间复杂度</a> </p>
+<p>[2] <a href="https://wiki.python.org/moin/TimeComplexity" target="_blank" rel="noopener">TimeComplexity</a></p>
+<p>[3] <a href="https://www.jianshu.com/p/a2c98df9cfae" target="_blank" rel="noopener">python list 之时间复杂度分析</a></p>
+<p>[4] <a href="https://www.cnblogs.com/bonelee/p/11433743.html" target="_blank" rel="noopener">How collections.deque works?</a>，</p>
+<p>[5] <a href="https://zhuanlan.zhihu.com/p/45871870" target="_blank" rel="noopener">深入 Python 列表的内部实现</a>；</p>
+<p>[6] <a href="https://zhuanlan.zhihu.com/p/74003719" target="_blank" rel="noopener">Python字典dict实现原理</a></p>
+<h2 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h2><h3 id="Cpython-list-部分源码注释"><a href="#Cpython-list-部分源码注释" class="headerlink" title="Cpython list 部分源码注释"></a>Cpython list 部分源码注释</h3><p>源码地址传送门：<br><a href="https://github.com/python/cpython/blob/master/Objects/listobject.c" target="_blank" rel="noopener">https://github.com/python/cpython/blob/master/Objects/listobject.c</a></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;* This over-allocates proportional to the list size, making room</span><br><span class="line">* for additional growth. The over-allocation is mild, but is</span><br><span class="line">* enough to give linear-time amortized behavior over a long</span><br><span class="line">* sequence of appends() in the presence of a poorly-performing</span><br><span class="line">* system realloc().</span><br><span class="line">* Add padding to make the allocated size multiple of 4.</span><br><span class="line">* The growth pattern is: 0, 4, 8, 16, 24, 32, 40, 52, 64, 76, ...</span><br><span class="line">* Note: new_allocated won&#39;t overflow because the largest possible value</span><br><span class="line">* is PY_SSIZE_T_MAX * (9 &#x2F; 8) + 6 which always fits in a size_t.</span><br><span class="line">*&#x2F;</span><br></pre></td></tr></table></figure>
+<h3 id="Cpython-collections-部分源码注释"><a href="#Cpython-collections-部分源码注释" class="headerlink" title="Cpython collections 部分源码注释"></a>Cpython collections 部分源码注释</h3><p>源码地址传送门：<br><a href="https://github.com/python/cpython/blob/master/Modules/_collectionsmodule.c" target="_blank" rel="noopener">https://github.com/python/cpython/blob/master/Modules/_collectionsmodule.c</a></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;* The block length may be set to any number over 1.  Larger numbers</span><br><span class="line">* reduce the number of calls to the memory allocator but take more</span><br><span class="line">* memory.  Ideally, BLOCKLEN should be set with an eye to the</span><br><span class="line">* length of a cache line.</span><br><span class="line">*&#x2F;</span><br><span class="line"></span><br><span class="line">#define BLOCKLEN 62</span><br><span class="line">#define CENTER ((BLOCKLEN - 1) &#x2F; 2)</span><br><span class="line">&#x2F;* A &#96;dequeobject&#96; is composed of a doubly-linked list of &#96;block&#96; nodes.</span><br><span class="line">* This list is not circular (the leftmost block has leftlink&#x3D;&#x3D;NULL,</span><br><span class="line">* and the rightmost block has rightlink&#x3D;&#x3D;NULL).  A deque d&#39;s first</span><br><span class="line">* element is at d.leftblock[leftindex] and its last element is at</span><br><span class="line">* d.rightblock[rightindex]; note that, unlike as for Python slice</span><br><span class="line">* indices, these indices are inclusive on both ends.  By being inclusive</span><br><span class="line">* on both ends, algorithms for left and right operations become</span><br><span class="line">* symmetrical which simplifies the design.</span><br><span class="line">* The list of blocks is never empty, so d.leftblock and d.rightblock</span><br><span class="line">* are never equal to NULL.</span><br><span class="line">* The indices, d.leftindex and d.rightindex are always in the range</span><br><span class="line">*     0 &lt;&#x3D; index &lt; BLOCKLEN.</span><br><span class="line">* Their exact relationship is:</span><br><span class="line">*     (d.leftindex + d.len - 1) % BLOCKLEN &#x3D;&#x3D; d.rightindex.</span><br><span class="line">* Empty deques have d.len &#x3D;&#x3D; 0; d.leftblock&#x3D;&#x3D;d.rightblock;</span><br><span class="line">* d.leftindex &#x3D;&#x3D; CENTER+1; and d.rightindex &#x3D;&#x3D; CENTER.</span><br><span class="line">* Checking for d.len &#x3D;&#x3D; 0 is the intended way to see whether d is empty.</span><br><span class="line">* Whenever d.leftblock &#x3D;&#x3D; d.rightblock,</span><br><span class="line">*     d.leftindex + d.len - 1 &#x3D;&#x3D; d.rightindex.</span><br><span class="line">* However, when d.leftblock !&#x3D; d.rightblock, d.leftindex and d.rightindex</span><br><span class="line">* become indices into distinct blocks and either may be larger than the</span><br><span class="line">* other.</span><br><span class="line">*&#x2F;</span><br></pre></td></tr></table></figure>
+<h3 id="Cpython-dict源码部分注释"><a href="#Cpython-dict源码部分注释" class="headerlink" title="Cpython dict源码部分注释"></a>Cpython dict源码部分注释</h3><p>源码地址传送门：<br><a href="https://github.com/python/cpython/blob/master/Objects/dictobject.c" target="_blank" rel="noopener">https://github.com/python/cpython/blob/master/Objects/dictobject.c</a></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;*layout:</span><br><span class="line">+---------------+</span><br><span class="line">| dk_refcnt         |</span><br><span class="line">| dk_size            |</span><br><span class="line">| dk_lookup       |</span><br><span class="line">| dk_usable        |</span><br><span class="line">| dk_nentries      |</span><br><span class="line">+---------------+</span><br><span class="line">| dk_indices       |</span><br><span class="line">|                         |</span><br><span class="line">+---------------+</span><br><span class="line">| dk_entries       |</span><br><span class="line">|                     |</span><br><span class="line">+---------------+</span><br><span class="line"></span><br><span class="line">dk_indices is actual hashtable. It holds index in entries, or DKIX_EMPTY(-1) or</span><br><span class="line">DKIX_DUMMY(-2).</span><br><span class="line">dk_entries is array of PyDictKeyEntry. Its size is USABLE_FRACTION(dk_size).DK_ENTRIES(dk) can be used to get pointer to entries.</span><br><span class="line">The first half of collision resolution is to visit table indices via this</span><br><span class="line">recurrence:</span><br><span class="line"></span><br><span class="line">But catering to unusual cases should not slow the usual ones, so we just take the last i bits anyway. It&#39;s up to collision resolution to do the rest. If</span><br><span class="line">we *usually* find the key we&#39;re looking for on the first try (and, it turns out, we usually do -- the table load factor is kept under 2&#x2F;3, so the odds</span><br><span class="line">are solidly in our favor), then it makes best sense to keep the initial index computation dirt cheap.</span><br><span class="line"></span><br><span class="line">j &#x3D; ((5*j) + 1) mod 2**i</span><br><span class="line"></span><br><span class="line">For any initial j in range(2**i), repeating that 2**i times generates each</span><br><span class="line">int in range(2**i) exactly once (see any text on random-number generation for</span><br><span class="line">proof). By itself, this doesn&#39;t help much: like linear probing (setting</span><br><span class="line">j +&#x3D; 1, or j -&#x3D; 1, on each loop trip), it scans the table entries in a fixed</span><br><span class="line">order. This would be bad, except that&#39;s not the only thing we do, and it&#39;s</span><br><span class="line">actually *good* in the common cases where hash keys are consecutive. </span><br><span class="line"></span><br><span class="line">In an example that&#39;s really too small to make this entirely clear, for a table of</span><br><span class="line">size 2**3 the order of indices is:</span><br><span class="line">0 -&gt; 1 -&gt; 6 -&gt; 7 -&gt; 4 -&gt; 5 -&gt; 2 -&gt; 3 -&gt; 0 [and here it&#39;s repeating]</span><br><span class="line">*&#x2F;</span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>数据结构</category>
+        <category>python</category>
+      </categories>
+      <tags>
+        <tag>python</tag>
       </tags>
   </entry>
   <entry>

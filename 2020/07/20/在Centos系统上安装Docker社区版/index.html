@@ -333,6 +333,16 @@
 
           
             
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2020/07/20/%E5%9C%A8Centos%E7%B3%BB%E7%BB%9F%E4%B8%8A%E5%AE%89%E8%A3%85Docker%E7%A4%BE%E5%8C%BA%E7%89%88/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2020/07/20/%E5%9C%A8Centos%E7%B3%BB%E7%BB%9F%E4%B8%8A%E5%AE%89%E8%A3%85Docker%E7%A4%BE%E5%8C%BA%E7%89%88/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
           
 
           
@@ -490,6 +500,9 @@ yum-util提供<code>yum-config-manager</code>功能，另外两个是<code>devic
 
           
 
+  
+    <div class="comments" id="comments">
+    </div>
   
 
 
@@ -811,6 +824,28 @@ yum-util提供<code>yum-config-manager</code>功能，另外两个是<code>devic
 
 
 
+
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item=>{
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'RS17cW6dWQKOFwQGTQgqc3uY-gzGzoHsz',
+        appKey: 'D2K61DImXKnERfo2rjXwLQnU',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        guest_info:guest,
+        pageSize:'10' || 10,
+    });
+  </script>
 
 
 

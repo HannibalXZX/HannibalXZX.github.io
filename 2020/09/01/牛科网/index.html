@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="数据库,SQL,面试," />
 
 
 
@@ -81,15 +81,18 @@
 
 
 
-<meta name="description" content="前言本篇是大学《算法》课程的实验报告，这份报告包含了从原理分析到实验结果展示，有理有据地证明了好的方案会是多么地高效。 问题描述我国古代数学家张丘建在《算经》一书中曾提出过著名的「百钱买百鸡」问题，该问题叙述如下：鸡翁一，值钱五；鸡母一，值钱三；鸡雏三，值钱一；百钱买百鸡，则翁、母、雏各几何？ 翻译过来，公鸡一个五块钱，母鸡一个三块钱，小鸡三个一块钱，现在要用一百块钱买一百只鸡，问公鸡、母鸡、小鸡">
+<meta name="description" content="1、前言 结构化查询语言(Structured Query Language)简称SQL，是一种特殊目的的编程语言，是一种数据库查询和程序设计语言，用于存取数据以及查询、更新和管理关系数据库系统；同时也是数据库脚本文件的扩展名。  差不多花了一周的时间做完了牛客网平台的61道SQL题，先说一说这个平台的坑:  题目含糊不清，有一些题没有准确表达意思，会让人产生误解。 OJ的答案判断比较死板，不是所">
 <meta property="og:type" content="article">
-<meta property="og:title" content="给你一百元，帮我买100只鸡回来">
-<meta property="og:url" content="http://yoursite.com/2020/07/30/%E7%BB%99%E4%BD%A0%E4%B8%80%E7%99%BE%E5%85%83%EF%BC%8C%E5%B8%AE%E6%88%91%E4%B9%B0100%E5%8F%AA%E9%B8%A1%E5%9B%9E%E6%9D%A5/index.html">
+<meta property="og:title" content="牛客网SQL题库一刷总结">
+<meta property="og:url" content="http://yoursite.com/2020/09/01/%E7%89%9B%E7%A7%91%E7%BD%91/index.html">
 <meta property="og:site_name" content="徐子潇的技术博客">
-<meta property="og:description" content="前言本篇是大学《算法》课程的实验报告，这份报告包含了从原理分析到实验结果展示，有理有据地证明了好的方案会是多么地高效。 问题描述我国古代数学家张丘建在《算经》一书中曾提出过著名的「百钱买百鸡」问题，该问题叙述如下：鸡翁一，值钱五；鸡母一，值钱三；鸡雏三，值钱一；百钱买百鸡，则翁、母、雏各几何？ 翻译过来，公鸡一个五块钱，母鸡一个三块钱，小鸡三个一块钱，现在要用一百块钱买一百只鸡，问公鸡、母鸡、小鸡">
-<meta property="article:published_time" content="2020-07-30T06:10:46.000Z">
-<meta property="article:modified_time" content="2020-07-30T06:41:59.302Z">
+<meta property="og:description" content="1、前言 结构化查询语言(Structured Query Language)简称SQL，是一种特殊目的的编程语言，是一种数据库查询和程序设计语言，用于存取数据以及查询、更新和管理关系数据库系统；同时也是数据库脚本文件的扩展名。  差不多花了一周的时间做完了牛客网平台的61道SQL题，先说一说这个平台的坑:  题目含糊不清，有一些题没有准确表达意思，会让人产生误解。 OJ的答案判断比较死板，不是所">
+<meta property="article:published_time" content="2020-09-01T05:58:00.000Z">
+<meta property="article:modified_time" content="2020-09-01T06:28:17.432Z">
 <meta property="article:author" content="Shaw">
+<meta property="article:tag" content="数据库">
+<meta property="article:tag" content="SQL">
+<meta property="article:tag" content="面试">
 <meta name="twitter:card" content="summary">
 
 
@@ -120,13 +123,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2020/07/30/给你一百元，帮我买100只鸡回来/"/>
+  <link rel="canonical" href="http://yoursite.com/2020/09/01/牛科网/"/>
 
 
 
 
 
-  <title>给你一百元，帮我买100只鸡回来 | 徐子潇的技术博客</title>
+  <title>牛客网SQL题库一刷总结 | 徐子潇的技术博客</title>
   
 
 
@@ -287,7 +290,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/30/%E7%BB%99%E4%BD%A0%E4%B8%80%E7%99%BE%E5%85%83%EF%BC%8C%E5%B8%AE%E6%88%91%E4%B9%B0100%E5%8F%AA%E9%B8%A1%E5%9B%9E%E6%9D%A5/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/09/01/%E7%89%9B%E7%A7%91%E7%BD%91/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Shaw">
@@ -304,7 +307,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">给你一百元，帮我买100只鸡回来</h1>
+          <h1 class="post-title" itemprop="name headline">牛客网SQL题库一刷总结</h1>
         
 
         <div class="post-meta">
@@ -316,8 +319,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-07-30T06:10:46+00:00">
-                2020-07-30
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-09-01T05:58:00+00:00">
+                2020-09-01
               </time>
             
 
@@ -327,6 +330,39 @@
           </span>
 
           
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" itemprop="url" rel="index">
+                    <span itemprop="name">数据库</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/%E9%9D%A2%E8%AF%95/" itemprop="url" rel="index">
+                    <span itemprop="name">面试</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
 
           
             
@@ -335,8 +371,8 @@
                 <span class="post-meta-item-icon">
                   <i class="fa fa-comment-o"></i>
                 </span>
-                <a href="/2020/07/30/%E7%BB%99%E4%BD%A0%E4%B8%80%E7%99%BE%E5%85%83%EF%BC%8C%E5%B8%AE%E6%88%91%E4%B9%B0100%E5%8F%AA%E9%B8%A1%E5%9B%9E%E6%9D%A5/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count valine-comment-count" data-xid="/2020/07/30/%E7%BB%99%E4%BD%A0%E4%B8%80%E7%99%BE%E5%85%83%EF%BC%8C%E5%B8%AE%E6%88%91%E4%B9%B0100%E5%8F%AA%E9%B8%A1%E5%9B%9E%E6%9D%A5/" itemprop="commentCount"></span>
+                <a href="/2020/09/01/%E7%89%9B%E7%A7%91%E7%BD%91/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2020/09/01/%E7%89%9B%E7%A7%91%E7%BD%91/" itemprop="commentCount"></span>
                 </a>
               </span>
             
@@ -344,7 +380,7 @@
 
           
           
-             <span id="/2020/07/30/%E7%BB%99%E4%BD%A0%E4%B8%80%E7%99%BE%E5%85%83%EF%BC%8C%E5%B8%AE%E6%88%91%E4%B9%B0100%E5%8F%AA%E9%B8%A1%E5%9B%9E%E6%9D%A5/" class="leancloud_visitors" data-flag-title="给你一百元，帮我买100只鸡回来">
+             <span id="/2020/09/01/%E7%89%9B%E7%A7%91%E7%BD%91/" class="leancloud_visitors" data-flag-title="牛客网SQL题库一刷总结">
                <span class="post-meta-divider">|</span>
                <span class="post-meta-item-icon">
                  <i class="fa fa-eye"></i>
@@ -369,7 +405,7 @@
                   <span class="post-meta-item-text">字数统计&#58;</span>
                 
                 <span title="字数统计">
-                  1,369 字
+                  1,969 字
                 </span>
               
 
@@ -385,7 +421,7 @@
                   <span class="post-meta-item-text">阅读时长 &asymp;</span>
                 
                 <span title="阅读时长">
-                  7 分钟
+                  8 分钟
                 </span>
               
             </div>
@@ -406,109 +442,89 @@
       
 
       
-        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本篇是大学《算法》课程的实验报告，这份报告包含了从原理分析到实验结果展示，有理有据地证明了好的方案会是多么地高效。</p>
-<h2 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h2><p>我国古代数学家张丘建在《算经》一书中曾提出过著名的「百钱买百鸡」问题，该问题叙述如下：鸡翁一，值钱五；鸡母一，值钱三；鸡雏三，值钱一；百钱买百鸡，则翁、母、雏各几何？</p>
-<p>翻译过来，公鸡一个五块钱，母鸡一个三块钱，小鸡三个一块钱，现在要用一百块钱买一百只鸡，问公鸡、母鸡、小鸡各多少只？</p>
-<h2 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h2><p>这里，我们先假设：</p>
-<ul>
-<li>a：鸡翁数</li>
-<li>b：鸡母数</li>
-<li>c：鸡雏数</li>
+        <h2 id="1、前言"><a href="#1、前言" class="headerlink" title="1、前言"></a>1、前言</h2><blockquote>
+<p>结构化查询语言(Structured Query Language)简称SQL，是一种特殊目的的编程语言，是一种数据库查询和程序设计语言，用于存取数据以及查询、更新和管理关系数据库系统；同时也是数据库脚本文件的扩展名。</p>
+</blockquote>
+<p>差不多花了一周的时间做完了牛客网平台的61道SQL题，先说一说这个平台的坑:</p>
+<ol>
+<li>题目含糊不清，有一些题没有准确表达意思，会让人产生误解。</li>
+<li>OJ的答案判断比较死板，不是所有正确的解法都能通过。</li>
+<li>难度不是缓慢递增，中间有的题会非常搞人。</li>
+<li>没有提供单独的测试数据，需要去有的题目下面找。</li>
+<li>只支持sqlite，不支持mysql,oracle等其他SQL语言。</li>
+</ol>
+<p>再讲一讲自己的刷题体会：</p>
+<ol>
+<li>比较坑也是一件好事，可以训练思维的全面性，努力去寻找问题的不同切入点。</li>
+<li>不要做完了就直接下一题！我个人最喜欢看评论，因为可以学习到前辈们的思路和解法。 首先，我会在脑海里形成自己的思路，然后和他们的思路进行对比。如果是一致的，哇，我就很开心。 如果不一致，则仔细进行比对，找到我的缺陷。</li>
+<li>SQL语句不是正确通过就万事大吉了，尽可能做多一题多解。分析每种解法的优化性能，找到 对应的使用场景。</li>
+<li>写法要规范，注意缩进，这样每个子语句看起来就比较清晰。</li>
+<li>在动手之前先思考一下，不要上来就急着写。</li>
+<li>了解一些函数，比如窗口函数等，这些是利器。</li>
+</ol>
+<p>如果要二刷，注意以下几点：</p>
+<ol>
+<li>思考题目的真实使用场景，不要单纯做题。</li>
+<li>遇到比较坑的题目，直接跳过，不要多花时间。</li>
+<li>多归纳总结，必要时做一下实验。</li>
+<li>思考一些高阶用法，降维打击。</li>
+</ol>
+<p>二刷先放一下，先去刷一下LeetCode的SQL题。那里的题库更加正规，还有一些企业真题。<br>这么好吗？毕竟是付费的呀 - -。</p>
+<h2 id="2、牛客网OJ平台地址"><a href="#2、牛客网OJ平台地址" class="headerlink" title="2、牛客网OJ平台地址"></a>2、牛客网OJ平台地址</h2><p><a href="https://www.nowcoder.com/ta/sql" target="_blank" rel="noopener">https://www.nowcoder.com/ta/sql</a></p>
+<h2 id="3、详细答题记录-个人整理"><a href="#3、详细答题记录-个人整理" class="headerlink" title="3、详细答题记录(个人整理)"></a>3、详细答题记录(个人整理)</h2><p><a href="https://github.com/HannibalXZX/LearnSQL/tree/master/SQL%E5%AE%9E%E6%88%98-%E7%89%9B%E5%AE%A2%E7%BD%91" target="_blank" rel="noopener">https://github.com/HannibalXZX/LearnSQL/tree/master/SQL%E5%AE%9E%E6%88%98-%E7%89%9B%E5%AE%A2%E7%BD%91</a></p>
+<h2 id="4、-笔记"><a href="#4、-笔记" class="headerlink" title="4、 笔记"></a>4、 笔记</h2><h3 id="01-left-join中on和where的区别"><a href="#01-left-join中on和where的区别" class="headerlink" title="01. left join中on和where的区别"></a>01. left join中on和where的区别</h3><ol>
+<li><code>on</code>条件是在生成临时表时使用的条件，不管on中的条件是否为真，都会返回左边表中的记录。</li>
+<li><code>where</code>条件是在临时表生成好后，再对临时表进行过滤的条件。这时已经没有left join的含义（必须返回左边表的记录）了，条件不为真的就全部过滤掉。</li>
+</ol>
+<h3 id="02-三个连接的简单区别"><a href="#02-三个连接的简单区别" class="headerlink" title="02. 三个连接的简单区别"></a>02. 三个连接的简单区别</h3><ul>
+<li><code>INNER JOIN</code> 两边表同时有对应的数据，即任何一边缺失数据就不显示。</li>
+<li><code>LEFT JOIN</code> 会读取左边数据表的全部数据，即便右边表无对应数据。</li>
+<li><code>RIGHT JOIN</code> 会读取右边数据表的全部数据，即便左边表无对应数据</li>
 </ul>
-<h3 id="方案一：穷举法"><a href="#方案一：穷举法" class="headerlink" title="方案一：穷举法"></a>方案一：穷举法</h3><p>三个值的范围如下，让计算机进行循环判断即可。</p>
-<p>$a \in [0,100]$</p>
-<p>$b \in [0,100]$</p>
-<p>$c \in [0,100]$</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">n&#x3D;100</span><br><span class="line">if((a+b+c &#x3D;&#x3D; n)&amp;&amp;(5*a + 3*b + c&#x2F;3 &#x3D;&#x3D; n)&amp;&amp;(c%3&#x3D;&#x3D;0))</span><br><span class="line">&#123; OK!&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="03-内连和并列的区别"><a href="#03-内连和并列的区别" class="headerlink" title="03. 内连和并列的区别"></a>03. 内连和并列的区别</h3><p>并列，也是等值连接。在这个过程中，实际上是没有创建出临时的新表，只是为了方便理解，可以认为两张表合并成一张新表，然后再从该表 <code>SELECT</code>所需的字段和记录。<br>内连可以不等。推荐用内连，因为，可以将连接条件标记得比较清楚。</p>
+<h3 id="04-SQL执行顺序-重要"><a href="#04-SQL执行顺序-重要" class="headerlink" title="04. SQL执行顺序(重要)"></a>04. SQL执行顺序(重要)</h3><p><code>FROM</code>、 <code>WHERE</code>、 <code>GROUP BY</code>、 <code>HAVING</code>、 <code>SELECT</code>、 <code>DISTINCT</code>、 <code>UNION</code>、 <code>ORDER BY</code></p>
+<h3 id="05-GROUP-BY-和-DISTINCT"><a href="#05-GROUP-BY-和-DISTINCT" class="headerlink" title="05. GROUP BY 和 DISTINCT"></a>05. GROUP BY 和 DISTINCT</h3><ul>
+<li>当对系统的性能高并数据量大时使用 <code>GROUP BY</code></li>
+<li>当对系统的性能不高时使用数据量少时两者皆可</li>
+<li>尽量使用 <code>GROUP BY</code></li>
+</ul>
+<p>针对网上实验结果，还有一种结论：</p>
+<blockquote>
+<p>去重场景下，未加索引时，更偏向于使用distinct，而加索引时，distinct和group by两者都可以使用 </p>
+</blockquote>
+<p><a href="https://blog.csdn.net/NestorBian/article/details/106004840?utm_medium=distribute.pc_relevant_t0.none-task-blog-BlogCommendFromMachineLearnPai2-1.nonecase&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-BlogCommendFromMachineLearnPai2-1.nonecase" target="_blank" rel="noopener">实验过程原文链接</a></p>
+<h4 id="06-LEFT-JOIN-和-IN"><a href="#06-LEFT-JOIN-和-IN" class="headerlink" title="06. LEFT JOIN 和 IN"></a>06. LEFT JOIN 和 IN</h4><p>MySQL官方文档有说明， <code>IN</code>关键字适合<strong>确定数量</strong>的情况，一般效率较低，不推荐使用。能用 <code>IN</code>关键字的语句都可以转化为使用 <code>JOIN</code>的语句，推荐使用 <code>JOIN</code>关键字。</p>
+<h4 id="07-WHERE-和-HAVING"><a href="#07-WHERE-和-HAVING" class="headerlink" title="07. WHERE 和 HAVING"></a>07. WHERE 和 HAVING</h4><p><code>WHERE</code>和 <code>HAVING</code>的不同之处在于， <code>WHERE</code>是查找之前的限定，而 <code>HAVING</code>是查找之后。如果使用 <code>HAVING</code>，必须提前筛选字段，但 <code>WHERE</code>不需要。 <code>WHERE</code>后面不能加聚合函数， <code>HAVING</code>后可以加聚合函数。</p>
+<h4 id="08-JOIN关联表中ON-WHERE后面跟条件的区别"><a href="#08-JOIN关联表中ON-WHERE后面跟条件的区别" class="headerlink" title="08. JOIN关联表中ON,WHERE后面跟条件的区别"></a>08. JOIN关联表中ON,WHERE后面跟条件的区别</h4><p>不管 <code>ON</code>上的条件是否为真都会返回 <code>LEFT</code>或 <code>RIGHT</code>表中的记录，full则具有 <code>LEFT</code>和 <code>RIGHT</code>的特性的并集。 而 <code>INNER JOIN</code>没这个特殊性，则条件放在 <code>ON</code>中和 <code>WHERE</code>中，返回的结果集是相同的。</p>
+<p><a href="https://blog.csdn.net/wqc19920906/article/details/79785424" target="_blank" rel="noopener">参考原文链接</a> </p>
+<h4 id="09-EXPLAIN-函数作用"><a href="#09-EXPLAIN-函数作用" class="headerlink" title="09. EXPLAIN 函数作用"></a>09. EXPLAIN 函数作用</h4><ol>
+<li>表的读取顺序</li>
+<li>数据读取操作的操作类型</li>
+<li>哪些索引可以使用</li>
+<li>哪些索引被实际使用</li>
+<li>表之间的引用</li>
+<li>每张表有多少行被优化器查询</li>
+</ol>
+<h4 id="10-MySQL创建索引方法：ALTER-TABLE和CREATE-INDEX的区别"><a href="#10-MySQL创建索引方法：ALTER-TABLE和CREATE-INDEX的区别" class="headerlink" title="10. MySQL创建索引方法：ALTER TABLE和CREATE INDEX的区别"></a>10. MySQL创建索引方法：ALTER TABLE和CREATE INDEX的区别</h4><p>众所周知，MySQL创建索引有两种语法，即： </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ALTER TABLE HeadOfState ADD INDEX(LastName,FirstName);</span><br></pre></td></tr></table></figure>
 
-<p>三层遍历循环，该方案的时间复杂度即为$O(n^3)$</p>
-<h3 id="方案二：变量代替法"><a href="#方案二：变量代替法" class="headerlink" title="方案二：变量代替法"></a>方案二：变量代替法</h3><p>在算法1的基础上，将搜索的范围和层数缩小。</p>
-<p>$c = 100 - a -b$</p>
-<p>$a \in [0,100/5]$</p>
-<p>$b \in [0,100/3]$</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">n &#x3D; 100</span><br><span class="line">c &#x3D; n -a-b;</span><br><span class="line">if(5*a + 3*b + c&#x2F;3 &#x3D;&#x3D; n &amp;&amp; c%3&#x3D;&#x3D;0)</span><br><span class="line">&#123;OK!&#125;</span><br></pre></td></tr></table></figure>
-
-<p>两层遍历循环，该方案的时间复杂度即为$O(n^2)$</p>
-<h3 id="方案三：推导法"><a href="#方案三：推导法" class="headerlink" title="方案三：推导法"></a>方案三：推导法</h3><p>这里，我们进行推导，很容易就知道要满足下面这两个条件：<br>$$<br>        \begin{cases}<br>        5 a + 3 b + \frac 13  c = 100 \<br>        a + b +  c = 100<br>        \end{cases}<br>$$<br>消除$c$后<br>$$<br>        7a + 4b = 100<br>$$<br>为了消除$b$前面的系数4，不妨令$a = 4k$ ,即$b=25-7k$ ,由$a$和$b$的范围可得：</p>
-<p>$$<br>        \begin{cases}<br>        0 \leq 4k \leq 20\<br>        0\leq 25-7k \leq \frac {100}3<br>        \end{cases}<br>$$<br>解出$k$的范围为$k\in[0,\frac {25}7]$<br>只要遍历$k$的值，即可求解，该方案的时间复杂度即为$O(n)$</p>
-<h2 id="实验对照"><a href="#实验对照" class="headerlink" title="实验对照"></a>实验对照</h2><p>下面我们将计算机得到的结果进行罗列，让我们能更好地对三种算法进行比较。</p>
-<h3 id="实验可能的解"><a href="#实验可能的解" class="headerlink" title="实验可能的解"></a>实验可能的解</h3><p>公鸡0只，母鸡25只，小鸡75只;</p>
-<p>公鸡4只，母鸡18只，小鸡78只;</p>
-<p>公鸡8只，母鸡11只，小鸡81只;</p>
-<p>公鸡12只，母鸡4只，小鸡84只;</p>
-<h3 id="实验对比："><a href="#实验对比：" class="headerlink" title="实验对比："></a>实验对比：</h3><p>这里我们为了测试三种算法到底差别多少，不妨将规模提升到n元买n鸡问题。</p>
-<p>软件：codeblocks </p>
-<p><em>表格1：三种算法对比</em></p>
-<table>
-<thead>
-<tr>
-<th>规模</th>
-<th>算法1</th>
-<th>算法2</th>
-<th>算法3</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>n=100</td>
-<td>0.01s</td>
-<td>&lt;0.0000001s</td>
-<td>&lt;0.0000001s</td>
-</tr>
-<tr>
-<td>n=6000</td>
-<td>616.14s</td>
-<td>0.31s</td>
-<td>0.14s</td>
-</tr>
-<tr>
-<td>n=50000</td>
-<td>&gt;1000s</td>
-<td>1.31s</td>
-<td>0.24s</td>
-</tr>
-<tr>
-<td>n=200000</td>
-<td>&gt;1000s</td>
-<td>10.90s</td>
-<td>1.00s</td>
-</tr>
-<tr>
-<td>n=500000</td>
-<td>&gt;1000s</td>
-<td>64.82s</td>
-<td>2.66s</td>
-</tr>
-<tr>
-<td>n=800000</td>
-<td>&gt;1000s</td>
-<td>148.63s</td>
-<td>3.61s</td>
-</tr>
-<tr>
-<td>n=2000000</td>
-<td>&gt;1000s</td>
-<td>920.05s</td>
-<td>9.86s</td>
-</tr>
-<tr>
-<td>n=5000000</td>
-<td>&gt;1000s</td>
-<td>&gt;1000s</td>
-<td>30.61s</td>
-</tr>
-<tr>
-<td>n=10000000</td>
-<td>&gt;1000s</td>
-<td>&gt;1000s</td>
-<td>59.81s</td>
-</tr>
-</tbody></table>
-<h3 id="结果分析"><a href="#结果分析" class="headerlink" title="结果分析"></a>结果分析</h3><p>当算法1到了n=6000以上的规模，就需要花费大量时间，超过1000s。</p>
-<p>算法2与算法3在n=50000开始显示出差别，随着n的提升，两个算法之间耗时差距越来越大。</p>
-<p>当n=2000000时，算法2需要消耗920s，而算法3只需要9.86s。</p>
-<p>当n=10000000时，算法3耗时59.819s，相当于算法二在n=500000时所用的时间。</p>
-<p>可见当我们的规模越大时，时间消耗的差距就会体现的越大。</p>
-<h3 id="完整代码"><a href="#完整代码" class="headerlink" title="完整代码"></a>完整代码</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">int g[1000000],m[1000000],s[1000000];</span><br><span class="line">void chicken_question(int n,int &amp;k,int g[],int m[],int s[]);</span><br><span class="line">void chicken_question2(int n,int &amp;k,int g[],int m[],int s[]);</span><br><span class="line">void chicken_question3(int n,int &amp;k,int g[],int m[],int s[]);</span><br><span class="line"></span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">int k&#x3D;0;</span><br><span class="line">int n&#x3D;15000000,c&#x3D;0;</span><br><span class="line">double  duration1,duration2,duration3;</span><br><span class="line">clock_t start, finish;</span><br><span class="line">printf(&quot;请输入n的值\n&quot;);</span><br><span class="line"></span><br><span class="line">start &#x3D; clock();</span><br><span class="line">chicken_question(n,k,g,m,s);</span><br><span class="line">finish &#x3D; clock();</span><br><span class="line">duration1 &#x3D; (double)(finish - start)&#x2F; CLOCKS_PER_SEC;  &#x2F;&#x2F;转化为秒</span><br><span class="line">printf( &quot;\n算法1运行%d次的时间为%f seconds\n&quot;,n,duration1 );</span><br><span class="line">start &#x3D; clock();</span><br><span class="line">chicken_question2(n,k,g,m,s);</span><br><span class="line">finish &#x3D; clock();</span><br><span class="line">duration2 &#x3D; (double)(finish - start)&#x2F; CLOCKS_PER_SEC;  &#x2F;&#x2F;转化为秒*&#x2F;</span><br><span class="line">start &#x3D; clock();</span><br><span class="line">chicken_question3(n,k,g,m,s);</span><br><span class="line">finish &#x3D; clock();</span><br><span class="line">duration3 &#x3D; (double)(finish - start)&#x2F; CLOCKS_PER_SEC;  &#x2F;&#x2F;转化为秒</span><br><span class="line">printf( &quot;\n算法2运行%d次的时间为%f seconds\n&quot;,n,duration2 );</span><br><span class="line">printf( &quot;\n算法3运行%d次的时间为%f seconds\n&quot;,n,duration3 );</span><br><span class="line">system(&quot;pause&quot;);&#x2F;&#x2F;</span><br><span class="line">return 0;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 公鸡 母鸡 小鸡的数目为 g[] m[] s[]  三种鸡购买的总数目为n  问题的解数目为k</span><br><span class="line">void chicken_question(int n,int &amp;k,int g[],int m[],int s[])</span><br><span class="line">&#123;</span><br><span class="line">int a,b,c;</span><br><span class="line">k &#x3D; 0;</span><br><span class="line">for (a&#x3D;0;a&lt;&#x3D;n;a++)</span><br><span class="line">&#123;</span><br><span class="line">	for(b&#x3D;0;b&lt;&#x3D;n;b++)</span><br><span class="line">	&#123;</span><br><span class="line">		for(c&#x3D;0;c&lt;&#x3D;n;c++)</span><br><span class="line">		&#123;</span><br><span class="line">			  if((a+b+c &#x3D;&#x3D; n)&amp;&amp;(5*a + 3*b + c&#x2F;3 &#x3D;&#x3D; n)&amp;&amp;(c%3&#x3D;&#x3D;0))</span><br><span class="line">			  &#123;</span><br><span class="line">			  g[k] &#x3D; a;</span><br><span class="line">			  m[k] &#x3D; b;</span><br><span class="line">			  s[k] &#x3D; c;</span><br><span class="line">            &#x2F;&#x2F;printf(&quot;g[%d]&#x3D;%d,m[%d]&#x3D;%d,s[%d]&#x3D;%d\n&quot;,k,a,k,b,k,c);</span><br><span class="line">			  k++;</span><br><span class="line"></span><br><span class="line">			  &#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">void chicken_question2(int n,int &amp;k,int g[],int m[],int s[])</span><br><span class="line">&#123;</span><br><span class="line">int i,j,a,b,c;</span><br><span class="line">k &#x3D; 0;</span><br><span class="line">i &#x3D; n&#x2F;5;</span><br><span class="line"> j &#x3D; n&#x2F;3;</span><br><span class="line">for (a&#x3D;0;a&lt;&#x3D;i;a++)</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">	for(b&#x3D;0;b&lt;&#x3D;j;b++)</span><br><span class="line">	&#123;</span><br><span class="line">	    c &#x3D; n -a-b;</span><br><span class="line"> if(5*a + 3*b + c&#x2F;3 &#x3D;&#x3D; n &amp;&amp; c%3&#x3D;&#x3D;0)</span><br><span class="line">			  &#123;</span><br><span class="line">			  g[k] &#x3D; a;</span><br><span class="line">			  m[k] &#x3D; b;</span><br><span class="line">			  s[k] &#x3D; c;</span><br><span class="line">              printf(&quot;g[%d]&#x3D;%d,m[%d]&#x3D;%d,s[%d]&#x3D;%d\n&quot;,k,a,k,b,k,c);</span><br><span class="line">			  k++;</span><br><span class="line">			  &#125;</span><br><span class="line"></span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">void chicken_question3(int n,int &amp;k,int g[],int m[],int s[])</span><br><span class="line">&#123;</span><br><span class="line">int x,y,z;</span><br><span class="line">k &#x3D; 0;</span><br><span class="line">for(int k1&#x3D;0;k1&lt;&#x3D;n&#x2F;28;k1++)</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">    x &#x3D; 4*k1;</span><br><span class="line">    y &#x3D; n&#x2F;4 -7*k1;</span><br><span class="line">    z &#x3D; (3*n)&#x2F;4+3*k1;</span><br><span class="line">       if(5*x + 3*y + z&#x2F;3 &#x3D;&#x3D; n &amp;&amp; z%3&#x3D;&#x3D;0)</span><br><span class="line">        &#123;</span><br><span class="line">            g[k] &#x3D; x;</span><br><span class="line">            m[k] &#x3D; y;</span><br><span class="line">            s[k] &#x3D; z;</span><br><span class="line">            printf(&quot;g[%d]&#x3D;%d,m[%d]&#x3D;%d,s[%d]&#x3D;%d\n&quot;,k,x,k,y,k,z);</span><br><span class="line">            k++;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">CREATE INDEX index_name HeadOfState(LastName,FirstName);</span><br><span class="line">&#96;&#96;&#96; </span><br><span class="line"></span><br><span class="line">那么，这两种语法有什么区别呢？</span><br><span class="line"></span><br><span class="line">1.  &#96;CREATE INDEX&#96;必须提供索引名，对于 &#96;ALTER TABLE&#96;，如果你不提供索引名，将会自动创建；</span><br><span class="line">2.  &#96;CREATE INDEX&#96;一个语句一次只能建立一个索引， &#96;ALTER TABLE&#96;可以在一个语句建立多个，如：</span><br></pre></td></tr></table></figure>
+<p>ALTER TABLE HeadOfState ADD PRIMARY KEY(ID),ADD INDEX(LastName,FirstName);</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">3.  只有 &#96;ALTER TABLE&#96;才能创建主键，</span><br><span class="line"></span><br><span class="line">#### 11\. 强制索引</span><br><span class="line">MYSQL中强制索引查询使用：</span><br></pre></td></tr></table></figure>
+<p>SELECT * FROM table FORCE INDEX(indexname);</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">SQLite中强制索引查询使用：</span><br></pre></td></tr></table></figure>
+<p>SELECT * FROM table INDEXED BY indexname;</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">#### 12\. 严格模式</span><br><span class="line">mysql的 &#96;datetime&#96;类型无法插入&#39;0000-00-00 00:00:00&#39;,这是因为mysql开启了严格模式。</span><br><span class="line"></span><br><span class="line">输入&#96;SELECT@@sql_mode&#96; </span><br><span class="line"> </span><br><span class="line"> 得到如下结果：</span><br></pre></td></tr></table></figure>
+<p>ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">可以看到结果里面有 &#96;NO_ZERO_IN_DATE,NO_ZERO_IN_DATE&#96;。把这两个去掉，再重新设置即可。</span><br></pre></td></tr></table></figure>
+<p>SET GLOBAL sql_mode=’ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION’;</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">**玄学**：在Navicat Premium上不行，但在mysql终端上可行。</span><br><span class="line"></span><br><span class="line">#### 13\. MYSQL子查询的坑</span><br><span class="line">MySQL的 &#96;UPDATE&#96;或 &#96;DELETE&#96;中子查询不能为同一张表，可将查询结果再次 &#96;SELECT&#96;。</span><br><span class="line"></span><br><span class="line">在MySQL中还有一个坑，需要给子查询添加**别名**， 不然会抛出错误：</span><br></pre></td></tr></table></figure>
+<p>ERROR 1248 (42000): Every derived table must have its own alias</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">#### 14\. 字符长度函数</span><br><span class="line">&#96;char_length()&#96;: 统计的是字符长度，而 &#96;LENGTH()&#96;函数统计的是字符串的字节长度，所以 &#96;LENGTH(&#39;中&#39;)&#96;在utf8下的结果是3，而 &#96;char_length(&#39;中&#39;)&#96;的结果仍然是1。</span><br><span class="line"></span><br><span class="line">#### 15\. EXISTS的用法</span><br><span class="line"></span><br><span class="line">**EXISTS对外表用loop逐条查询**，每次查询都会查看 &#96;EXISTS&#96;的条件语句，当 &#96;EXISTS&#96;里的条件语句能够返回记录行时(无论记录行是的多少)，只要能返回，条件就为真。并返回当前loop到的这条记录;</span><br><span class="line"></span><br><span class="line">反之如果 &#96;EXISTS&#96;里的条件语句不能返回记录行，则当前loop到的这条记录被丢弃， &#96;EXISTS&#96;的条件就像一个bool条件，当能返回结果集则为true，不能返回结果集则为 false。</span><br><span class="line"></span><br><span class="line">简而言之，使用 &#96;EXISTS&#96;需要建立内外关联。</span><br><span class="line"></span><br><span class="line">*   没有建立内外关联，等价于：</span><br></pre></td></tr></table></figure>
+<p>SELECT b.emp_no FROM employees b<br>WHERE  EXISTS (SELECT emp_no FROM dept_emp)</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br><span class="line">*   建立内外关联，等价于:</span><br></pre></td></tr></table></figure>
+<p>SELECT b.emp_no FROM employees b<br>WHERE  EXISTS (SELECT emp_no FROM dept_emp WHERE b.emp_no=emp_no)</p>
+<pre><code></code></pre>
       
     </div>
     
@@ -523,6 +539,16 @@
 
     <footer class="post-footer">
       
+        <div class="post-tags">
+          
+            <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"># 数据库</a>
+          
+            <a href="/tags/SQL/" rel="tag"># SQL</a>
+          
+            <a href="/tags/%E9%9D%A2%E8%AF%95/" rel="tag"># 面试</a>
+          
+        </div>
+      
 
       
       
@@ -532,8 +558,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2020/07/27/Python%E5%86%85%E7%BD%AE%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%8E%9F%E7%90%86%E4%B8%8E%E6%80%A7%E8%83%BD%E7%AE%80%E6%98%93%E5%88%86%E6%9E%90/" rel="next" title="Python内置数据结构原理与性能简易分析">
-                <i class="fa fa-chevron-left"></i> Python内置数据结构原理与性能简易分析
+              <a href="/2020/08/09/%E7%BD%91%E7%BB%9C%E7%88%AC%E8%99%AB%E5%9F%BA%E7%A1%80%E4%B9%8BHTTP%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86%EF%BC%88%E9%99%84%E7%9B%B8%E5%85%B3HTTPS%E7%9F%A5%E8%AF%86%EF%BC%89/" rel="next" title="网络爬虫基础之HTTP基本原理（附相关HTTPS知识）">
+                <i class="fa fa-chevron-left"></i> 网络爬虫基础之HTTP基本原理（附相关HTTPS知识）
               </a>
             
           </div>
@@ -541,10 +567,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2020/07/30/%E7%BD%91%E7%BB%9C%E7%88%AC%E8%99%AB%E5%9F%BA%E7%A1%80%E4%B9%8BWeb%E5%89%8D%E7%AB%AF/" rel="prev" title="网络爬虫基础之Web前端">
-                网络爬虫基础之Web前端 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -700,7 +722,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#问题描述"><span class="nav-number">2.</span> <span class="nav-text">问题描述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#解决方案"><span class="nav-number">3.</span> <span class="nav-text">解决方案</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#方案一：穷举法"><span class="nav-number">3.1.</span> <span class="nav-text">方案一：穷举法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#方案二：变量代替法"><span class="nav-number">3.2.</span> <span class="nav-text">方案二：变量代替法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#方案三：推导法"><span class="nav-number">3.3.</span> <span class="nav-text">方案三：推导法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实验对照"><span class="nav-number">4.</span> <span class="nav-text">实验对照</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#实验可能的解"><span class="nav-number">4.1.</span> <span class="nav-text">实验可能的解</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#实验对比："><span class="nav-number">4.2.</span> <span class="nav-text">实验对比：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#结果分析"><span class="nav-number">4.3.</span> <span class="nav-text">结果分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#完整代码"><span class="nav-number">4.4.</span> <span class="nav-text">完整代码</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1、前言"><span class="nav-number">1.</span> <span class="nav-text">1、前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2、牛客网OJ平台地址"><span class="nav-number">2.</span> <span class="nav-text">2、牛客网OJ平台地址</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3、详细答题记录-个人整理"><span class="nav-number">3.</span> <span class="nav-text">3、详细答题记录(个人整理)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4、-笔记"><span class="nav-number">4.</span> <span class="nav-text">4、 笔记</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#01-left-join中on和where的区别"><span class="nav-number">4.1.</span> <span class="nav-text">01. left join中on和where的区别</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#02-三个连接的简单区别"><span class="nav-number">4.2.</span> <span class="nav-text">02. 三个连接的简单区别</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#03-内连和并列的区别"><span class="nav-number">4.3.</span> <span class="nav-text">03. 内连和并列的区别</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#04-SQL执行顺序-重要"><span class="nav-number">4.4.</span> <span class="nav-text">04. SQL执行顺序(重要)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#05-GROUP-BY-和-DISTINCT"><span class="nav-number">4.5.</span> <span class="nav-text">05. GROUP BY 和 DISTINCT</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#06-LEFT-JOIN-和-IN"><span class="nav-number">4.5.1.</span> <span class="nav-text">06. LEFT JOIN 和 IN</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#07-WHERE-和-HAVING"><span class="nav-number">4.5.2.</span> <span class="nav-text">07. WHERE 和 HAVING</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#08-JOIN关联表中ON-WHERE后面跟条件的区别"><span class="nav-number">4.5.3.</span> <span class="nav-text">08. JOIN关联表中ON,WHERE后面跟条件的区别</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#09-EXPLAIN-函数作用"><span class="nav-number">4.5.4.</span> <span class="nav-text">09. EXPLAIN 函数作用</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#10-MySQL创建索引方法：ALTER-TABLE和CREATE-INDEX的区别"><span class="nav-number">4.5.5.</span> <span class="nav-text">10. MySQL创建索引方法：ALTER TABLE和CREATE INDEX的区别</span></a></li></ol></li></ol></li></ol></div>
             
 
           </div>

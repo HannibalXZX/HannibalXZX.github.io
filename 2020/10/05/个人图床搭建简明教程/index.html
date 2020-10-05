@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="爬虫,前端," />
+  <meta name="keywords" content="图床," />
 
 
 
@@ -81,24 +81,31 @@
 
 
 
-<meta name="description" content="前言本文摘抄[1]，这部分写得太好了，我都不知道怎么补充。即使不懂Web前端的人，看完以后都能知道大体意思。 如果是要学习爬虫，这部分更有必要掌握了。不过，爬虫不需要深入了解前端，只要了解下基本的知识点就够了。 另外，俺(业余选手)觉得CSS的标签选择器不需要刻意去记，要用的时候直接查就可以了。 在文末，有一张HTML的思维导图，比较详细。 网页基础用浏览器访问网站时，页面各不相同，你有没有想过它">
+<meta name="description" content="前言随着获取图片的方式越来越简单，如何方便快捷地存储与使用图片是亟待解决的问题。 本文首先通过阿里云的对象存储服务构建一个Bucket，其次下载和配置开源工具PicGo，最后对图片的外链地址进行测试。 什么是图床顾名思义，图床是网络上专门存储图片的地方。图床能够有效地节省本地服务器空间，加快图片打开速度，并能支持创建图片外链。 图床主要用于个人博客和网站，当然也用于图像识别分析等。 我研究生上过">
 <meta property="og:type" content="article">
-<meta property="og:title" content="网络爬虫基础之Web前端">
-<meta property="og:url" content="http://yoursite.com/2020/07/30/%E7%BD%91%E7%BB%9C%E7%88%AC%E8%99%AB%E5%9F%BA%E7%A1%80%E4%B9%8BWeb%E5%89%8D%E7%AB%AF/index.html">
+<meta property="og:title" content="个人图床搭建简明教程">
+<meta property="og:url" content="http://yoursite.com/2020/10/05/%E4%B8%AA%E4%BA%BA%E5%9B%BE%E5%BA%8A%E6%90%AD%E5%BB%BA%E7%AE%80%E6%98%8E%E6%95%99%E7%A8%8B/index.html">
 <meta property="og:site_name" content="徐子潇的技术博客">
-<meta property="og:description" content="前言本文摘抄[1]，这部分写得太好了，我都不知道怎么补充。即使不懂Web前端的人，看完以后都能知道大体意思。 如果是要学习爬虫，这部分更有必要掌握了。不过，爬虫不需要深入了解前端，只要了解下基本的知识点就够了。 另外，俺(业余选手)觉得CSS的标签选择器不需要刻意去记，要用的时候直接查就可以了。 在文末，有一张HTML的思维导图，比较详细。 网页基础用浏览器访问网站时，页面各不相同，你有没有想过它">
-<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/1.png">
-<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/2.png">
-<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/3.jpg">
-<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/4.jpg">
-<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/5.png">
-<meta property="article:published_time" content="2020-07-30T13:42:00.000Z">
-<meta property="article:modified_time" content="2020-07-30T13:44:34.780Z">
+<meta property="og:description" content="前言随着获取图片的方式越来越简单，如何方便快捷地存储与使用图片是亟待解决的问题。 本文首先通过阿里云的对象存储服务构建一个Bucket，其次下载和配置开源工具PicGo，最后对图片的外链地址进行测试。 什么是图床顾名思义，图床是网络上专门存储图片的地方。图床能够有效地节省本地服务器空间，加快图片打开速度，并能支持创建图片外链。 图床主要用于个人博客和网站，当然也用于图像识别分析等。 我研究生上过">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/%E5%B0%81%E9%9D%A2%E5%9B%BE.jpg">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/1.png">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/2.png">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/3.png">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/4.png">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/5.png">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/6.png">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/7.png">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/8.png">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/9.png">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/10.png">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/11.png">
+<meta property="og:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/12.png">
+<meta property="article:published_time" content="2020-10-05T07:21:00.000Z">
+<meta property="article:modified_time" content="2020-10-05T07:29:38.359Z">
 <meta property="article:author" content="Shaw">
-<meta property="article:tag" content="爬虫">
-<meta property="article:tag" content="前端">
+<meta property="article:tag" content="图床">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/1.png">
+<meta name="twitter:image" content="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/%E5%B0%81%E9%9D%A2%E5%9B%BE.jpg">
 
 
 
@@ -128,13 +135,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2020/07/30/网络爬虫基础之Web前端/"/>
+  <link rel="canonical" href="http://yoursite.com/2020/10/05/个人图床搭建简明教程/"/>
 
 
 
 
 
-  <title>网络爬虫基础之Web前端 | 徐子潇的技术博客</title>
+  <title>个人图床搭建简明教程 | 徐子潇的技术博客</title>
   
 
 
@@ -295,7 +302,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/30/%E7%BD%91%E7%BB%9C%E7%88%AC%E8%99%AB%E5%9F%BA%E7%A1%80%E4%B9%8BWeb%E5%89%8D%E7%AB%AF/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/10/05/%E4%B8%AA%E4%BA%BA%E5%9B%BE%E5%BA%8A%E6%90%AD%E5%BB%BA%E7%AE%80%E6%98%8E%E6%95%99%E7%A8%8B/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Shaw">
@@ -312,7 +319,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">网络爬虫基础之Web前端</h1>
+          <h1 class="post-title" itemprop="name headline">个人图床搭建简明教程</h1>
         
 
         <div class="post-meta">
@@ -324,8 +331,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-07-30T13:42:00+00:00">
-                2020-07-30
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-10-05T07:21:00+00:00">
+                2020-10-05
               </time>
             
 
@@ -347,8 +354,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E7%88%AC%E8%99%AB/" itemprop="url" rel="index">
-                    <span itemprop="name">爬虫</span>
+                  <a href="/categories/%E9%98%BF%E9%87%8C%E4%BA%91/" itemprop="url" rel="index">
+                    <span itemprop="name">阿里云</span>
                   </a>
                 </span>
 
@@ -358,8 +365,19 @@
                 
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E7%88%AC%E8%99%AB/%E5%89%8D%E7%AB%AF/" itemprop="url" rel="index">
-                    <span itemprop="name">前端</span>
+                  <a href="/categories/%E9%98%BF%E9%87%8C%E4%BA%91/picgo/" itemprop="url" rel="index">
+                    <span itemprop="name">picgo</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E9%98%BF%E9%87%8C%E4%BA%91/picgo/%E5%9B%BE%E7%89%87%E5%AD%98%E5%82%A8/" itemprop="url" rel="index">
+                    <span itemprop="name">图片存储</span>
                   </a>
                 </span>
 
@@ -376,8 +394,8 @@
                 <span class="post-meta-item-icon">
                   <i class="fa fa-comment-o"></i>
                 </span>
-                <a href="/2020/07/30/%E7%BD%91%E7%BB%9C%E7%88%AC%E8%99%AB%E5%9F%BA%E7%A1%80%E4%B9%8BWeb%E5%89%8D%E7%AB%AF/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count valine-comment-count" data-xid="/2020/07/30/%E7%BD%91%E7%BB%9C%E7%88%AC%E8%99%AB%E5%9F%BA%E7%A1%80%E4%B9%8BWeb%E5%89%8D%E7%AB%AF/" itemprop="commentCount"></span>
+                <a href="/2020/10/05/%E4%B8%AA%E4%BA%BA%E5%9B%BE%E5%BA%8A%E6%90%AD%E5%BB%BA%E7%AE%80%E6%98%8E%E6%95%99%E7%A8%8B/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2020/10/05/%E4%B8%AA%E4%BA%BA%E5%9B%BE%E5%BA%8A%E6%90%AD%E5%BB%BA%E7%AE%80%E6%98%8E%E6%95%99%E7%A8%8B/" itemprop="commentCount"></span>
                 </a>
               </span>
             
@@ -385,7 +403,7 @@
 
           
           
-             <span id="/2020/07/30/%E7%BD%91%E7%BB%9C%E7%88%AC%E8%99%AB%E5%9F%BA%E7%A1%80%E4%B9%8BWeb%E5%89%8D%E7%AB%AF/" class="leancloud_visitors" data-flag-title="网络爬虫基础之Web前端">
+             <span id="/2020/10/05/%E4%B8%AA%E4%BA%BA%E5%9B%BE%E5%BA%8A%E6%90%AD%E5%BB%BA%E7%AE%80%E6%98%8E%E6%95%99%E7%A8%8B/" class="leancloud_visitors" data-flag-title="个人图床搭建简明教程">
                <span class="post-meta-divider">|</span>
                <span class="post-meta-item-icon">
                  <i class="fa fa-eye"></i>
@@ -410,7 +428,7 @@
                   <span class="post-meta-item-text">字数统计&#58;</span>
                 
                 <span title="字数统计">
-                  3,580 字
+                  1,680 字
                 </span>
               
 
@@ -426,7 +444,7 @@
                   <span class="post-meta-item-text">阅读时长 &asymp;</span>
                 
                 <span title="阅读时长">
-                  13 分钟
+                  6 分钟
                 </span>
               
             </div>
@@ -447,312 +465,72 @@
       
 
       
-        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本文摘抄[1]，这部分写得太好了，我都不知道怎么补充。即使不懂Web前端的人，看完以后都能知道大体意思。</p>
-<p>如果是要学习爬虫，这部分更有必要掌握了。不过，爬虫不需要深入了解前端，只要了解下基本的知识点就够了。</p>
-<p>另外，俺(业余选手)觉得CSS的标签选择器不需要刻意去记，要用的时候直接查就可以了。</p>
-<p>在文末，有一张HTML的思维导图，比较详细。</p>
-<h2 id="网页基础"><a href="#网页基础" class="headerlink" title="网页基础"></a>网页基础</h2><p>用浏览器访问网站时，页面各不相同，你有没有想过它为何会呈现这个样子呢？本节中，我们就来了解一下网页的基本组成、结构和节点等内容。</p>
-<h3 id="网页的组成"><a href="#网页的组成" class="headerlink" title="网页的组成"></a>网页的组成</h3><p>网页可以分为三大部分 —— HTML、CSS 和 JavaScript。如果把网页比作一个人的话，HTML 相当于<strong>骨架</strong>，JavaScript 相当于<strong>肌肉</strong>，CSS 相当于<strong>皮肤</strong>，三者结合起来才能形成一个完善的网页。下面我们分别来介绍一下这三部分的功能。</p>
-<h3 id="1-HTML"><a href="#1-HTML" class="headerlink" title="1. HTML"></a>1. HTML</h3><p><strong>HTML</strong> 是用来描述网页的一种语言，其全称叫作 Hyper Text Markup Language，即<strong>超文本标记语言</strong>。网页包括文字、按钮、图片和视频等各种复杂的元素，其基础架构就是 HTML。</p>
-<p>不同类型的元素通过不同类型的标签来表示，如图片用 <code>img</code>  标签表示，视频用 <code>video</code> 标签表示，段落用 <code>p</code> 标签表示，超链接用<code>a</code>表示。</p>
-<p>它们之间的布局又常通过布局标签 <code>div</code> 嵌套组合而成，各种标签通过不同的排列和嵌套才形成了网页的框架。</p>
-<p>在 Chrome 浏览器中打开百度，右击并选择 “检查” 项（或按 F12 键），打开开发者模式，这时在 Elements 选项卡中即可看到网页的源代码，如图 1 所示。</p>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/1.png" alt="图1. 开发者模式"></p>
-<p>这就是 HTML，整个网页就是由各种标签嵌套组合而成的。这些标签定义的节点元素相互嵌套和组合形成了复杂的层次关系，就形成了网页的架构。</p>
-<h3 id="2-CSS"><a href="#2-CSS" class="headerlink" title="2. CSS"></a>2. CSS</h3><p>HTML 定义了网页的结构，但是只有 HTML 页面的布局并不美观，可能只是简单的节点元素的排列，为了让网页看起来更好看一些，这里借助了 CSS。</p>
-<p><strong>CSS</strong>，全称叫作 Cascading Style Sheets，即层叠样式表。“层叠” 是指当在 HTML 中引用了数个样式文件，并且样式发生冲突时，浏览器能依据层叠顺序处理。“样式” 指网页中文字大小、颜色、元素间距、排列等格式。</p>
-<p>CSS 是目前<strong>唯一</strong>的网页页面排版样式标准，有了它的帮助，页面才会变得更为美观。</p>
-<p>图 1  的右侧即为 CSS，例如：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">#head_wrapper.s-ps-islite .s-p-top &#123;  </span><br><span class="line">    position: absolute;  </span><br><span class="line">    bottom: 40px;  </span><br><span class="line">    width: 100%;  </span><br><span class="line">    height: 181px;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>就是一个 CSS 样式。大括号前面是一个 CSS 选择器。此选择器的意思是首先选中 id 为<code>head_wrapper</code>  且 class 为<code>s-ps-islite</code> 的节点，然后再选中其内部的 class 为 <code>s-p-top</code> 的节点。</p>
-<p>大括号内部写的就是一条条样式规则，例如 position 指定了这个元素的布局方式为<strong>绝对布局</strong>，bottom 指定元素的<strong>下边距</strong>为 40 像素，width 指定了<strong>宽度</strong>为 100% 占满父元素，height 则指定了元素的<strong>高度</strong>。</p>
-<p>也就是说，我们将位置、宽度、高度等样式配置统一写成这样的形式，然后用大括号括起来，接着在开头再加上 CSS 选择器，这就代表这个样式对 CSS 选择器选中的元素生效，元素就会根据此样式来展示了。</p>
-<p>在网页中，一般会统一定义整个网页的样式规则，并写入 CSS 文件中（其后缀为 <code>css</code>）。在 HTML 中，只需要用 link 标签即可引入写好的 CSS 文件，这样整个页面就会变得美观、优雅。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;head&gt;</span><br><span class="line">&lt;link rel&#x3D;&quot;stylesheet&quot; type&#x3D;&quot;text&#x2F;css&quot; href&#x3D;&quot;style.css&quot;&gt;</span><br><span class="line">&lt;&#x2F;head&gt;</span><br></pre></td></tr></table></figure>
-
-<h3 id="3-JavaScript"><a href="#3-JavaScript" class="headerlink" title="3. JavaScript"></a>3. JavaScript</h3><p><strong>JavaScript</strong>，简称 JS，是一种脚本语言。HTML 和 CSS 配合使用，提供给用户的只是一种静态信息，缺乏交互性。我们在网页里可能会看到一些<strong>交互</strong>和<strong>动画效果</strong>，如下载进度条、提示框、轮播图等，这通常就是 JavaScript 的功劳。</p>
-<p>它的出现使得用户与信息之间不只是一种浏览与显示的关系，而是实现了一种实时、动态、交互的页面功能。</p>
-<p>JavaScript 通常也是以单独的文件形式加载的，后缀为 js，在 HTML 中通过 script 标签即可引入，例如：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;script src&#x3D;&quot;jquery-2.1.0.js&quot;&gt;&lt;&#x2F;script&gt;</span><br></pre></td></tr></table></figure>
-
-<p>综上所述，<strong>HTML 定义了网页的内容和结构，CSS 描述了网页的布局，JavaScript 定义了网页的行为。</strong></p>
-<h2 id="网页的结构"><a href="#网页的结构" class="headerlink" title="网页的结构"></a>网页的结构</h2><p>我们首先用例子来感受一下 HTML 的基本结构。新建一个文本文件，名称可以自取，后缀为 html，内容如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">&lt;!DOCTYPE html&gt;</span><br><span class="line">&lt;html&gt;</span><br><span class="line">&lt;head&gt;</span><br><span class="line">&lt;meta charset&#x3D;&quot;UTF-8&quot;&gt;</span><br><span class="line">&lt;title&gt;This is a Demo&lt;&#x2F;title&gt;</span><br><span class="line">&lt;&#x2F;head&gt;</span><br><span class="line">&lt;body&gt;</span><br><span class="line">&lt;div id&#x3D;&quot;container&quot;&gt;</span><br><span class="line">&lt;div class&#x3D;&quot;wrapper&quot;&gt;</span><br><span class="line">&lt;h2 class&#x3D;&quot;title&quot;&gt;Hello World&lt;&#x2F;h2&gt;</span><br><span class="line">&lt;p class&#x3D;&quot;text&quot;&gt;Hello, this is a paragraph.&lt;&#x2F;p&gt;</span><br><span class="line">&lt;&#x2F;div&gt;</span><br><span class="line">&lt;&#x2F;div&gt;</span><br><span class="line">&lt;&#x2F;body&gt;</span><br><span class="line">&lt;&#x2F;html&gt;</span><br></pre></td></tr></table></figure>
-<p>这就是一个最简单的 HTML 实例。开头用 DOCTYPE 定义了文档类型，其次最外层是 html 标签，最后还有对应的结束标签来表示闭合，其内部是 head 标签和 body 标签，分别代表网页头和网页体，它们也需要结束标签。head 标 签内定义了一些页面的配置和引用，如：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;meta charset&#x3D;&quot;UTF-8&quot;&gt;</span><br></pre></td></tr></table></figure>
-
-<p>它指定了网页的编码为 <strong>UTF-8</strong>。</p>
-<p>title 标签则定义了网页的标题，会显示在网页的选项卡中，不会显示在正文中。body 标签内则是在网页正文中显示的内容。</p>
-<p>div 标签定义了网页中的区块，它的 id 是 container，这是一个非常常用的属性，且 id 的内容在网页中是<strong>唯一</strong>的，我们可以通过它来<strong>获取这个区块</strong>。</p>
-<p>然后在此区块内又有一个 div 标签，它的 class 为 <code>wrapper</code>，这也是一个非常常用的属性，经常与 CSS 配合使用来设定样式。然后此区块内部又有一个 h2 标签，这代表一个二级标题。</p>
-<p>另外，还有一个 p 标签，这代表一个段落。在这两者中直接写入相应的内容即可在网页中呈现出来，它们也有各自的 class 属性。</p>
-<p>将代码保存后，在浏览器中打开该文件，可以看到如图 2 所示的内容。</p>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/2.png" alt="图2. 网页内容"></p>
-<p>图 2-10　运行结果</p>
-<p>可以看到，在选项卡上显示了 <code>This is a Demo</code>  字样，这是我们在 head 中的 title 里定义的文字。而网页正文是 body 标签内部定义的各个元素生成的，可以看到这里显示了二级标题和段落。</p>
-<p>这个实例便是网页的一般结构。一个网页的标准形式是 html 标签内嵌套 head 和 body 标签，<strong>head 内定义网页的配置和引用，body 内定义网页的正文</strong>。</p>
-<h2 id="节点树及节点间的关系"><a href="#节点树及节点间的关系" class="headerlink" title="节点树及节点间的关系"></a>节点树及节点间的关系</h2><p>在 HTML 中，所有标签定义的内容都是节点，它们构成了一个 HTML DOM 树。</p>
-<p>我们先看下什么是 DOM。DOM 是 W3C（万维网联盟）的标准，其英文全称 Document Object Model，即文档对象模型。它定义了访问 HTML 和 XML 文档的标准：</p>
+        <p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/%E5%B0%81%E9%9D%A2%E5%9B%BE.jpg" alt="ins @nasa"></p>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>随着获取图片的方式越来越简单，如何方便快捷地存储与使用图片是亟待解决的问题。</p>
+<p>本文首先通过阿里云的<strong>对象存储服务</strong>构建一个<code>Bucket</code>，其次下载和配置开源工具<code>PicGo</code>，最后对图片的外链地址进行测试。</p>
+<h2 id="什么是图床"><a href="#什么是图床" class="headerlink" title="什么是图床"></a>什么是图床</h2><p>顾名思义，图床是网络上专门存储图片的地方。图床能够有效地节省本地服务器空间，加快图片打开速度，并能支持创建图片外链。</p>
+<p>图床主要用于个人博客和网站，当然也用于图像识别分析等。</p>
+<p>我研究生上过一门课叫《数字水印与图像隐写》，现在看来，将相关算法直接应用于图床上，感觉还不错。</p>
+<h2 id="图床的作用"><a href="#图床的作用" class="headerlink" title="图床的作用"></a>图床的作用</h2><ul>
+<li>给图片建立外链，方便公共空间进行访问；</li>
+<li>对图片进行存储和备份，防止本地存储异常；</li>
+<li>和前端人员共用一套图床，省去传递文件操作；</li>
+<li>配合SDK，构建自动化图片分析工具；</li>
+</ul>
+<h2 id="如何构建图床"><a href="#如何构建图床" class="headerlink" title="如何构建图床"></a>如何构建图床</h2><ol>
+<li>小厂商的免费图床服务，注册即可使用；</li>
+<li>借助大厂商的对象存储服务，配合相关工具构建图床；</li>
+<li>自己在服务器上搭建图床；</li>
+</ol>
+<h2 id="谨慎免费图床"><a href="#谨慎免费图床" class="headerlink" title="谨慎免费图床"></a>谨慎免费图床</h2><p>请慎重选择免费图床，毕竟众多免费图床网站注册条款里有<strong>禁止商用</strong>这一条，哪天关闭了图片外链或者商用，势必给用户带来很大的麻烦。<br>很多免费图床总是好景不长，为什么呢？其实很简单，做相册站是要投入的，比如服务器、带宽、人员、技术投资、市场宣传等等！完全免费了，这些小站可能自己都难存活，所以总是不能长久使用！</p>
+<h2 id="为什么阿里云"><a href="#为什么阿里云" class="headerlink" title="为什么阿里云"></a>为什么阿里云</h2><ul>
+<li>有用户可调用的编程接口，方便对接到后面开发程序，例如个人博客、网站等；</li>
+<li>自带备份、版本控制等功能，便宜实惠，一年9元，云盘40G；</li>
+<li>支持https，提供非结构化数据智能分析；</li>
+<li>外链路径可自行设置，这样避免混入中文编码字符，导致非常难看;</li>
+<li>懒得自己折腾构建图床了；</li>
+</ul>
+<h2 id="开通阿里云OSS"><a href="#开通阿里云OSS" class="headerlink" title="开通阿里云OSS"></a>开通阿里云OSS</h2><p>下面开始介绍阿里云OSS：</p>
+<h3 id="开通OSS服务"><a href="#开通OSS服务" class="headerlink" title="开通OSS服务"></a>开通OSS服务</h3><p>如图1，登录到阿里云，选择「<strong>对象存储OSS</strong>」。<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/1.png" alt="图1.oss服务开通引导"></p>
+<p>下面是<code>OSS</code>的官方介绍：</p>
 <blockquote>
-<p>W3C 文档对象模型（DOM）是中立于平台和语言的接口，它允许程序和脚本动态地访问和更新文档的内容、结构和样式。</p>
+<p>阿里云对象存储服务（Object Storage Service，简称 OSS）是海量、安全、低成本、高可靠的云存储服务，提供99.9999999999%的数据可靠性。使用RESTful API可以在互联网任何位置存储和访问，容量和处理能力弹性扩展，多种存储类型供选择全面优化存储成本。</p>
 </blockquote>
-<p>W3C DOM 标准被分为 3 个不同的部分：</p>
-<ul>
-<li><strong>核心</strong> DOM - 针对任何<strong>结构化</strong>文档的标准模型</li>
-<li><strong>XML</strong> DOM - 针对 XML 文档的标准模型</li>
-<li><strong>HTML</strong> DOM - 针对 HTML 文档的标准模型</li>
-</ul>
-<p>根据 W3C 的 HTML DOM 标准，HTML 文档中的所有内容都是节点：</p>
-<ul>
-<li>整个文档是一个文档节点</li>
-<li>每个 HTML 元素是元素节点</li>
-<li>HTML 元素内的文本是文本节点</li>
-<li>每个 HTML 属性是属性节点</li>
-<li>注释是注释节点</li>
-</ul>
-<p>HTML DOM 将 HTML 文档视作树结构，这种结构被称为节点树，如图 3 所示。</p>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/3.jpg" alt="图3. 节点树"></p>
-<p>通过 HTML DOM，树中的所有节点均可通过 JavaScript 访问，所有 HTML 节点元素均可被修改，也可以被创建或删除。</p>
-<p>节点树中的节点彼此拥有层级关系。我们常用父（parent）、子（child）和兄弟（sibling）等术语描述这些关系。父节点拥有子节点，同级的子节点被称为兄弟节点。</p>
-<p>在节点树中，顶端节点称为根（root）。除了根节点之外，每个节点都有父节点，同时可拥有任意数量的子节点或兄弟节点。图 4 展示了节点树以及节点之间的关系。</p>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/4.jpg" alt="图4. 节点树与节点间的关系"></p>
-<p>本段参考 W3SCHOOL，链接：<a href="http://www.w3school.com.cn/htmldom/dom_nodes.asp" target="_blank" rel="noopener">http://www.w3school.com.cn/htmldom/dom_nodes.asp</a>。</p>
-<h2 id="CSS选择器（查询）"><a href="#CSS选择器（查询）" class="headerlink" title="CSS选择器（查询）"></a>CSS选择器（查询）</h2><p>我们知道网页由一个个<strong>节点</strong>组成，CSS 选择器会根据不同的节点设置不同的样式规则，那么怎样来定位节点呢？</p>
-<p>在 CSS 中，我们使用 CSS 选择器来定位节点。例如，上例中 div 节点的 id 为 container，那么就可以表示为 #container，其中 # 开头代表选择 id，其后紧跟 id 的名称。另外，如果我们想选择 class 为 wrapper 的节点，便可以使用.wrapper，这里以点（.）开头代表选择 class，其后紧跟 class 的名称。</p>
-<p>另外，还有一种选择方式，那就是根据标签名筛选，例如想选择二级标题，直接用 h2 即可。这是最常用的 3 种表示，分别是根据 id、class、标签名筛选，<strong>请牢记它们的写法</strong>。</p>
-<p>另外，CSS 选择器还支持<strong>嵌套选择</strong>，各个选择器之间加上<strong>空格分隔开</strong>便可以代表嵌套关系，如<code>#container .wrapper p</code> 则代表先选择 id 为 container 的节点，然后选中其内部的 class 为 wrapper 的节点，然后再进一步选中其内部的 p 节点。</p>
-<p>另外，如果不加空格，则代表并列关系，如 <code>div#container .wrapper p.text</code> 代表先选择 id 为 container 的 div 节点，然后选中其内部的 class 为 wrapper 的节点，再进一步选中其内部的 class 为 text 的 p 节点。这就是 CSS 选择器，其筛选功能还是非常强大的。</p>
-<p>另外，CSS 选择器还有一些其他语法规则，具体如表 1 所示。</p>
-<p><em>表 1CSS 选择器的其他语法规则</em></p>
-<table>
-<thead>
-<tr>
-<th>选　择　器</th>
-<th>例　　子</th>
-<th>例子描述</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>.class</td>
-<td>.intro</td>
-<td>选择 class=”intro” 的所有节点</td>
-</tr>
-<tr>
-<td>#id</td>
-<td>#firstname</td>
-<td>选择 id=”firstname” 的所有节点</td>
-</tr>
-<tr>
-<td>*</td>
-<td>*</td>
-<td>选择所有节点</td>
-</tr>
-<tr>
-<td>element</td>
-<td>p</td>
-<td>选择所有 p 节点</td>
-</tr>
-<tr>
-<td>element,element</td>
-<td>div,p</td>
-<td>选择所有 div 节点<strong>和</strong>所有 p 节点</td>
-</tr>
-<tr>
-<td>element element</td>
-<td>div p</td>
-<td>选择 div 节点内部<strong>的</strong>所有 p 节点</td>
-</tr>
-<tr>
-<td>element&gt;element</td>
-<td>div&gt;p</td>
-<td>选择父节点为 div 节点的所有 p 节点</td>
-</tr>
-<tr>
-<td>element+element</td>
-<td>div+p</td>
-<td>选择<strong>紧接</strong>在 div 节点之后的所有 p 节点</td>
-</tr>
-<tr>
-<td>[attribute]</td>
-<td>[target]</td>
-<td>选择带有 target 属性的所有节点</td>
-</tr>
-<tr>
-<td>[attribute=value]</td>
-<td>[target=blank]</td>
-<td>选择 target=”blank” 的所有节点</td>
-</tr>
-<tr>
-<td>[attribute~=value]</td>
-<td>[title~=flower]</td>
-<td>选择 title 属性包含单词 flower 的所有节点</td>
-</tr>
-<tr>
-<td>:link</td>
-<td>a:link</td>
-<td>选择所有未被访问的链接</td>
-</tr>
-<tr>
-<td>:visited</td>
-<td>a:visited</td>
-<td>选择所有已被访问的链接</td>
-</tr>
-<tr>
-<td>:active</td>
-<td>a:active</td>
-<td>选择活动链接</td>
-</tr>
-<tr>
-<td>:hover</td>
-<td>a:hover</td>
-<td>选择鼠标指针位于其上的链接</td>
-</tr>
-<tr>
-<td>:focus</td>
-<td>input:focus</td>
-<td>选择获得焦点的 input 节点</td>
-</tr>
-<tr>
-<td>:first-letter</td>
-<td>p:first-letter</td>
-<td>选择每个 p 节点的首字母</td>
-</tr>
-<tr>
-<td>:first-line</td>
-<td>p:first-line</td>
-<td>选择每个 p 节点的首行</td>
-</tr>
-<tr>
-<td>:first-child</td>
-<td>p:first-child</td>
-<td>选择属于父节点的第一个子节点的所有 p 节点</td>
-</tr>
-<tr>
-<td>:before</td>
-<td>p:before</td>
-<td>在每个 p 节点的内容之前插入内容</td>
-</tr>
-<tr>
-<td>:after</td>
-<td>p:after</td>
-<td>在每个 p 节点的内容之后插入内容</td>
-</tr>
-<tr>
-<td>:lang(language)</td>
-<td>p:lang</td>
-<td>选择带有以 it 开头的 lang 属性值的所有 p 节点</td>
-</tr>
-<tr>
-<td>element1~element2</td>
-<td>p~ul</td>
-<td>选择前面有 p 节点的所有 ul 节点</td>
-</tr>
-<tr>
-<td>[attribute^=value]</td>
-<td>a[src^=”https”]</td>
-<td>选择其 src 属性值以 https 开头的所有 a 节点</td>
-</tr>
-<tr>
-<td>[attribute$=value]</td>
-<td>a[src$=”.pdf”]</td>
-<td>选择其 src 属性以.pdf 结尾的所有 a 节点</td>
-</tr>
-<tr>
-<td>[attribute*=value]</td>
-<td>a[src*=”abc”]</td>
-<td>选择其 src 属性中包含 abc 子串的所有 a 节点</td>
-</tr>
-<tr>
-<td>:first-of-type</td>
-<td>p:first-of-type</td>
-<td>选择属于其父节点的首个 p 节点的所有 p 节点</td>
-</tr>
-<tr>
-<td>:last-of-type</td>
-<td>p:last-of-type</td>
-<td>选择属于其父节点的最后 p 节点的所有 p 节点</td>
-</tr>
-<tr>
-<td>:only-of-type</td>
-<td>p:only-of-type</td>
-<td>选择属于其父节点唯一的 p 节点的所有 p 节点</td>
-</tr>
-<tr>
-<td>:only-child</td>
-<td>p:only-child</td>
-<td>选择属于其父节点的唯一子节点的所有 p 节点</td>
-</tr>
-<tr>
-<td>:nth-child(n)</td>
-<td>p:nth-child</td>
-<td>选择属于其父节点的第二个子节点的所有 p 节点</td>
-</tr>
-<tr>
-<td>:nth-last-child(n)</td>
-<td>p:nth-last-child</td>
-<td>同上，从最后一个子节点开始计数</td>
-</tr>
-<tr>
-<td>:nth-of-type(n)</td>
-<td>p:nth-of-type</td>
-<td>选择属于其父节点第二个 p 节点的所有 p 节点</td>
-</tr>
-<tr>
-<td>:nth-last-of-type(n)</td>
-<td>p:nth-last-of-type</td>
-<td>同上，但是从最后一个子节点开始计数</td>
-</tr>
-<tr>
-<td>:last-child</td>
-<td>p:last-child</td>
-<td>选择属于其父节点最后一个子节点的所有 p 节点</td>
-</tr>
-<tr>
-<td>:root</td>
-<td>:root</td>
-<td>选择文档的根节点</td>
-</tr>
-<tr>
-<td>:empty</td>
-<td>p:empty</td>
-<td>选择没有子节点的所有 p 节点（包括文本节点）</td>
-</tr>
-<tr>
-<td>:target</td>
-<td>#news:target</td>
-<td>选择当前活动的 #news 节点</td>
-</tr>
-<tr>
-<td>:enabled</td>
-<td>input:enabled</td>
-<td>选择每个启用的 input 节点</td>
-</tr>
-<tr>
-<td>:disabled</td>
-<td>input:disabled</td>
-<td>选择每个禁用的 input 节点</td>
-</tr>
-<tr>
-<td>:checked</td>
-<td>input:checked</td>
-<td>选择每个被选中的 input 节点</td>
-</tr>
-<tr>
-<td>:not(selector)</td>
-<td>:not</td>
-<td>选择非 p 节点的所有节点</td>
-</tr>
-<tr>
-<td>::selection</td>
-<td>::selection</td>
-<td>选择被用户选取的节点部分</td>
-</tr>
-</tbody></table>
-<p>另外，还有一种比较常用的选择器是 XPath，这种选择方式后面会详细介绍。</p>
-<p>本节介绍了网页的基本结构和节点间的关系，了解了这些内容，我们才有更加清晰的思路去解析和提取网页内容。</p>
-<h2 id="HTML-图"><a href="#HTML-图" class="headerlink" title="HTML 图"></a>HTML 图</h2><p>下面这张思维导图几乎涵盖了所有HTML内容，祝你早日精通HTML！ /斜眼笑<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/5.png" alt=""></p>
-<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p>[1] <a href="https://python3webspider.cuiqingcai.com/2.1http-ji-ben-yuan-li" target="_blank" rel="noopener">Python3网络爬虫开发实战</a></p>
+<p>如图2，有以下三种存储类型，下图是对应着的特点。我选的是「<strong>标准类型</strong>」，然后开通这个服务。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/2.png" alt="图2.存储类型比较"></p>
+<h3 id="创建Bucket"><a href="#创建Bucket" class="headerlink" title="创建Bucket"></a>创建Bucket</h3><p>开通对象存储服务后，直接创建<code>Bucket</code>。<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/3.png" alt="图3.创建Bucket"></p>
+<p>记住这里的<strong>origin</strong>为：<code>oss-cn-beijing</code>，后面对接阿里云要用到。</p>
+<p>版本控制和加密我没开通，毕竟设置了<strong>公共读</strong>这种方式。况且我也主要用于外链，高级别安全加密感觉不太需要了。</p>
+<p>然后就是这里购买了<strong>一年资源包</strong>。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/4.png" alt="图4.付费页面"></p>
+<p>创建完后，点击右上角头像，选择<strong>accesskeys</strong>。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/5.png" alt="图5.控制管理台"></p>
+<p>选择<strong>继续使用</strong>，得到<code>AccessKey ID</code> 和 <code>Access Key Secret</code> ，简单记一下，在后面的配置中需要使用。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/6.png" alt="图6.安全信息管理"><br>至此，阿里云OSS服务已经搭建完毕。</p>
+<h2 id="PicGo"><a href="#PicGo" class="headerlink" title="PicGo"></a>PicGo</h2><p>下面是<strong>PicGo</strong>的介绍和配置。</p>
+<h3 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h3><p><code>PicGo</code>一个用于快速上传图片并获取图片 URL 链接的工具，支持7种常见图床对接。</p>
+<p>按道理来说，本来是要自己手动写代码来对接阿里云，但是<code>PicGo</code>已经都帮我们写好了，不用再造轮子了呀！</p>
+<h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><p>不同平台安装过程详见官网，下载链接如下：<br><code>https://github.com/Molunerfinn/PicGo/releases</code></p>
+<p>依据不同文件的<strong>后缀名</strong>，可以找到不同平台的安装包。这里我选择的是<code>exe</code>结尾的<code>windows</code>安装包。</p>
+<p>另外，<code>PicGo</code>有不同版本，我选择的是最新的<code>2.3 beta</code> 版本，可以选择低的稳定版本。<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/7.png" alt="图7.下载页面"></p>
+<h3 id="配置阿里云"><a href="#配置阿里云" class="headerlink" title="配置阿里云"></a>配置阿里云</h3><p>自行下载安装完毕后，再来配置阿里云。查看官方文档，原来就是封装好了一个json字符串，当用户填好各项参数以后，然后向<strong>阿里云</strong>发送请求。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;accessKeyId&quot;: &quot;&quot;,</span><br><span class="line">  &quot;accessKeySecret&quot;: &quot;&quot;,</span><br><span class="line">  &quot;bucket&quot;: &quot;&quot;, &#x2F;&#x2F; 存储空间名</span><br><span class="line">  &quot;area&quot;: &quot;&quot;, &#x2F;&#x2F; 存储区域代号</span><br><span class="line">  &quot;path&quot;: &quot;&quot;, &#x2F;&#x2F; 自定义存储路径</span><br><span class="line">  &quot;customUrl&quot;: &quot;&quot; &#x2F;&#x2F; 自定义域名，注意要加http:&#x2F;&#x2F;或者https:&#x2F;&#x2F;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在图床设置上选择「<strong>阿里云OSS</strong>」<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/8.png" alt="图8.阿里云OSS设置"><br>从阿里云找到 <strong>AccesKey ID, Access Key Secrect, Origin, 存储空间名</strong>。</p>
+<p><strong>注意</strong>这里的<strong>存储空间名</strong>一定要写对，比如我的为<code>article-shaw</code>，也就是当初我创建的Bucket名。另外，还有一个很重要的地方就是<strong>存储区域</strong>，名为<code>oss-cn-beijing</code>。</p>
+<p>在填写存储路径时，比如<code>img/</code>的话，上传的图片会默认放在<code>OSS</code>的<code>img</code>文件夹下。不需要你自己去网站创建文件夹，程序就会帮你自动生成哦。</p>
+<p><strong>注意</strong>存储路径一定要以<code>/</code>结尾！存储路径是可选的，如果不需要请留空。</p>
+<h3 id="上传图片"><a href="#上传图片" class="headerlink" title="上传图片"></a>上传图片</h3><p>好了，开始爽起来吧！打开软件，这里的链接格式选择的是<code>Markdown</code>，因为我主要拿来写文章的。<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/9.png" alt="图9.图片上传"><br>找到一张图片，然后拖拽到上传区之后，电脑会提示上传成功或者上传失败。</p>
+<p>如果成功了，前往自己的阿里云，就能看到刚上传的文件啦。<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/10.png" alt="图10.阿里云界面"></p>
+<p>如图10，在右下角有图片的<code>URL</code>，复制到浏览器就自动下载了。<br>再回到<code>PicGo</code>，我们选择<strong>相册</strong>，就能发现刚上传的照片，直接点击复制，就得到了<code>Markdown</code>格式的图片链接。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/11.png" alt="图11.相册"></p>
+<p>也就是说，<strong>我们不需要登录阿里云</strong>，就能轻松获取到图片的外链。我们不妨将地址放到各种<code>Markdown</code>的编译器上去，经测试都能展现出来。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/12.png" alt="图12.印象笔记"></p>
+<h2 id="对接Markdown-Nice"><a href="#对接Markdown-Nice" class="headerlink" title="对接Markdown Nice"></a>对接Markdown Nice</h2><p>在之前，我介绍了一个神级网站<code>mdnice</code>，这个网站可以对接阿里云图床，详细步骤请前往<strong>参考资料</strong>的第4篇文章《mdnice的阿里云图床搭建教程》。</p>
+<h2 id="参考资料："><a href="#参考资料：" class="headerlink" title="参考资料："></a>参考资料：</h2><p>[1] <a href="https://baike.baidu.com/item/%E5%9B%BE%E5%BA%8A/10721348?fr=aladdin" target="_blank" rel="noopener">图床介绍_百度百科</a></p>
+<p>[2] <a href="[https://github.com/Molunerfinn/PicGo]">PicGo的Github地址</a></p>
+<p>[3] <a href="https://picgo.github.io/PicGo-Doc/zh/guide/" target="_blank" rel="noopener">PicGo中文使用文档</a></p>
+<p>[4] <a href="https://preview.mdnice.com/article/developer/aliyun-image-hosting/" target="_blank" rel="noopener">mdnice的阿里云图床搭建教程</a></p>
 
       
     </div>
@@ -770,9 +548,7 @@
       
         <div class="post-tags">
           
-            <a href="/tags/%E7%88%AC%E8%99%AB/" rel="tag"># 爬虫</a>
-          
-            <a href="/tags/%E5%89%8D%E7%AB%AF/" rel="tag"># 前端</a>
+            <a href="/tags/%E5%9B%BE%E5%BA%8A/" rel="tag"># 图床</a>
           
         </div>
       
@@ -785,8 +561,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2020/07/30/%E7%BB%99%E4%BD%A0%E4%B8%80%E7%99%BE%E5%85%83%EF%BC%8C%E5%B8%AE%E6%88%91%E4%B9%B0100%E5%8F%AA%E9%B8%A1%E5%9B%9E%E6%9D%A5/" rel="next" title="给你一百元，帮我买100只鸡回来">
-                <i class="fa fa-chevron-left"></i> 给你一百元，帮我买100只鸡回来
+              <a href="/2020/09/01/%E7%89%9B%E5%AE%A2%E7%BD%91SQL%E9%A2%98%E5%BA%93%E4%B8%80%E5%88%B7%E6%80%BB%E7%BB%93/" rel="next" title="牛客网SQL题库一刷总结">
+                <i class="fa fa-chevron-left"></i> 牛客网SQL题库一刷总结
               </a>
             
           </div>
@@ -794,10 +570,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2020/08/09/%E7%BD%91%E7%BB%9C%E7%88%AC%E8%99%AB%E5%9F%BA%E7%A1%80%E4%B9%8BHTTP%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86%EF%BC%88%E9%99%84%E7%9B%B8%E5%85%B3HTTPS%E7%9F%A5%E8%AF%86%EF%BC%89/" rel="prev" title="网络爬虫基础之HTTP基本原理（附相关HTTPS知识）">
-                网络爬虫基础之HTTP基本原理（附相关HTTPS知识） <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -953,7 +725,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#网页基础"><span class="nav-number">2.</span> <span class="nav-text">网页基础</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#网页的组成"><span class="nav-number">2.1.</span> <span class="nav-text">网页的组成</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-HTML"><span class="nav-number">2.2.</span> <span class="nav-text">1. HTML</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-CSS"><span class="nav-number">2.3.</span> <span class="nav-text">2. CSS</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-JavaScript"><span class="nav-number">2.4.</span> <span class="nav-text">3. JavaScript</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#网页的结构"><span class="nav-number">3.</span> <span class="nav-text">网页的结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#节点树及节点间的关系"><span class="nav-number">4.</span> <span class="nav-text">节点树及节点间的关系</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CSS选择器（查询）"><span class="nav-number">5.</span> <span class="nav-text">CSS选择器（查询）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HTML-图"><span class="nav-number">6.</span> <span class="nav-text">HTML 图</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">7.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#什么是图床"><span class="nav-number">2.</span> <span class="nav-text">什么是图床</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#图床的作用"><span class="nav-number">3.</span> <span class="nav-text">图床的作用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#如何构建图床"><span class="nav-number">4.</span> <span class="nav-text">如何构建图床</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#谨慎免费图床"><span class="nav-number">5.</span> <span class="nav-text">谨慎免费图床</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#为什么阿里云"><span class="nav-number">6.</span> <span class="nav-text">为什么阿里云</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#开通阿里云OSS"><span class="nav-number">7.</span> <span class="nav-text">开通阿里云OSS</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#开通OSS服务"><span class="nav-number">7.1.</span> <span class="nav-text">开通OSS服务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#创建Bucket"><span class="nav-number">7.2.</span> <span class="nav-text">创建Bucket</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PicGo"><span class="nav-number">8.</span> <span class="nav-text">PicGo</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#介绍"><span class="nav-number">8.1.</span> <span class="nav-text">介绍</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#安装"><span class="nav-number">8.2.</span> <span class="nav-text">安装</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#配置阿里云"><span class="nav-number">8.3.</span> <span class="nav-text">配置阿里云</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#上传图片"><span class="nav-number">8.4.</span> <span class="nav-text">上传图片</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#对接Markdown-Nice"><span class="nav-number">9.</span> <span class="nav-text">对接Markdown Nice</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料："><span class="nav-number">10.</span> <span class="nav-text">参考资料：</span></a></li></ol></div>
             
 
           </div>

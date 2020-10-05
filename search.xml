@@ -1,140 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>Python内置数据结构原理与性能简易分析</title>
-    <url>/2020/07/27/Python%E5%86%85%E7%BD%AE%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%8E%9F%E7%90%86%E4%B8%8E%E6%80%A7%E8%83%BD%E7%AE%80%E6%98%93%E5%88%86%E6%9E%90/</url>
-    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>对于一些算法题，可以使用Python自带的内置函数解决。但很多时候用就用了，根本不知道内部的细节。这样的话，算时间复杂度**和空间复杂度就很有问题。</p>
-<p>因此，我最近几天查阅了网上相关资料，并进行归纳和整理。开始我以为复制粘贴就行了，但是呢，我发现有很多东西都没解释得清楚与透彻，在研读的过程中，我经常很懵逼，更有时候，我都怀疑自己智商了。</p>
-<p>最后不得不逼得自己还读了相关源码。越看源码，越发现有很多可以分析的，但是考虑到篇幅和时间，就先打住，以后再整个进阶版。</p>
-<p>整理完这个以后，我认为呀，不管什么东西还是得追本溯源，这样才靠谱。</p>
-<h2 id="前提说明"><a href="#前提说明" class="headerlink" title="前提说明"></a>前提说明</h2><p>时间复杂度是参考官网:<br><a href="https://wiki.python.org/moin/TimeComplexity" target="_blank" rel="noopener">https://wiki.python.org/moin/TimeComplexity</a></p>
-<p>此页面记录了当前CPython中各种操作的时间复杂度（又名“Big O”或“大欧”）。其他Python实现（或CPython的旧版本或仍在开发版本）可能具有略微不同的性能特征。但是, 通常可以安全地假设它们的速度不超过<code>O(log n)</code>。 </p>
-<p>在所有即将介绍的表格中，<code>n</code>是容器中当前元素的数量，<code>k</code>是参数的值或参数中的元素数。</p>
-<p>本文先上结论再进行分析，有助于带着问题去思考答案。</p>
-<h2 id="性能总结"><a href="#性能总结" class="headerlink" title="性能总结"></a>性能总结</h2><p>1、Python 字典中使用了 hash table，因此查找操作的复杂度为 O(1)，而 list 实际是个数组，在 list 中，查找需要遍历整个 list，其复杂度为 O(n)，因此对成员的查找访问等操作字典要比 list 更快。<br>2、set 的 union， intersection，difference 操作要比 list 的迭代要快。因此如果涉及到求 list 交集，并集或者差的问题可以转换为 set 来操作。<br>3、需要频繁在两端插入或者删除元素，可以选择双端队列。</p>
-<h2 id="1、列表-list"><a href="#1、列表-list" class="headerlink" title="1、列表(list)"></a>1、列表(list)</h2><p>可直接使用，无须调用。</p>
-<h3 id="列表实现原理"><a href="#列表实现原理" class="headerlink" title="列表实现原理"></a>列表实现原理</h3><p>列表是以<strong>数组</strong>（Array）实现的，这个数组是 <strong>over-allocate</strong> 数组。顾名思义，当底层数组容量满了而需要扩充的时候，python依据规则会扩充多个位置出来。比如初始化列表array=[1, 2, 3, 4]，向其中添加元素23，此时array对应的底层数组，扩充后的容量不是5，而是8。这就是over-allocate的意义，即扩充容量的时候会多分配一些存储空间。如图1，展示了<code>l.insert(1,5)</code> 的操作。</p>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/1.png" alt="图1. insert操作"></p>
-<p>这里说下，列表的增长模式为：0，4，8，16，25，35，46，58，72，88…</p>
-<h3 id="列表函数的时间复杂度"><a href="#列表函数的时间复杂度" class="headerlink" title="列表函数的时间复杂度"></a>列表函数的时间复杂度</h3><p>如果要更好地理解列表，就必须熟悉<strong>数组</strong>这种数据结构。如图 2所示，为列表相关函数的时间复杂度。</p>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/2.png" alt="图2. 列表函数的时间复杂度"></p>
-<h3 id="列表函数讲解"><a href="#列表函数讲解" class="headerlink" title="列表函数讲解"></a>列表函数讲解</h3><ul>
-<li>append()方法是指在列表末尾增加一个数据项，这里的表强调的是插入1个元素，即没有扩容。</li>
-<li>extend()方法是指在列表末尾增加一个数据集合；</li>
-<li>insert()方法是指在某个特定位置前面增加一个数据项，需要移动其他元素位置；</li>
-<li>len()方法获取列表内元素的个数，因为在列表实现中，其内部维护了一个 <code>Py_ssize_t</code> 类型的变量表示列表内元素的个数，因此时间复杂度为O(1)；</li>
-<li>sort()方法是排序，网上有原理讲解，使用的是 <strong>Timesort</strong> 排序，该排序结合了合并排序（merge sort）和插入排序（insertion sort）而得出的排序算法，它在现实中有很好的效率。空间复杂度为O(n)。其排序的过程大致为，对输入的数字进行分区，然后再进行合并；</li>
-</ul>
-<h3 id="性能分析"><a href="#性能分析" class="headerlink" title="性能分析"></a>性能分析</h3><p>通过对上表的分析可以发现，列表不太适合做元素的<strong>查找</strong>、<strong>删除</strong>、<strong>插入</strong>等操作，因为这些都要遍历列表，对应的时间复杂度为O(n)。</p>
-<p>访问某个<strong>索引</strong>的元素、<strong>尾部</strong>添加元素(append)或删除(pop last)元素这些操作比较适合用列表做，对应的时间复杂度为O(1)。</p>
-<p>根据官方上说，列表最大的开销发生在<strong>超过了当前所分配的列表大小</strong>，这是因为，所有元素都需要移动；或者是在起始位置附近插入或者删除元素，这种情况下所有在该位置后面的元素都需要移动。如果你需要在一个队列的两端进行增删的操作，应当使用<code>collections.deque</code>。</p>
-<p>如果我们要在业务开发中，判断一个value是否在一个数据集中，如果数据集用列表存储，那此时的判断操作就很耗时，如果我们用hash table（set or dict）来存储，则比较轻松。</p>
-<h2 id="2、双端队列-collections-deque"><a href="#2、双端队列-collections-deque" class="headerlink" title="2、双端队列(collections.deque)"></a>2、双端队列(collections.deque)</h2><p>使用时，需要导入：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">from collection import deque</span><br></pre></td></tr></table></figure>
-
-<h3 id="双端队列实现原理"><a href="#双端队列实现原理" class="headerlink" title="双端队列实现原理"></a>双端队列实现原理</h3><p>deque（双端队列）是以<strong>双向链表</strong>的形式实现的。（好吧, 一个数组列表而不是对象, 以提高效率）。</p>
-<p>为了更好地理解这种结构，可以参照 GitHub 上 CPython collections 模块的第二个 commit 的源码。注释在文末的附录下面。</p>
-<p>这里根据注释，我画了一个不太准确的图，其实leftblock和rightblock都是要存储数据的。但在下图，没有标明。</p>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/3.png" alt="图3. 存储图"></p>
-<p>参考资料4，单个block的结构体示意图如下：</p>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/4.png" alt="图4. block"></p>
-<p>总结来说，deque 内部将一组内存块组织成<strong>双向链表</strong>的形式，每个内存块可以看成一个 Python 对象的数组， 这个数组与普通数据不同，它是从数组中部往头尾两边填充数据，而平常所见数组大都是从头往后。 正因为这个特性，所以叫双端队列。</p>
-<h3 id="双端队列时间复杂度"><a href="#双端队列时间复杂度" class="headerlink" title="双端队列时间复杂度"></a>双端队列时间复杂度</h3><p>如图所示，为双端队列的相关函数的时间复杂度。</p>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/5.png" alt="图5. 双端队列时间复杂度"></p>
-<h3 id="双端队列函数讲解"><a href="#双端队列函数讲解" class="headerlink" title="双端队列函数讲解"></a>双端队列函数讲解</h3><p>在这种数据结构下，append方法是怎么实现的呢？</p>
-<ol>
-<li>如果 rightblock 可以容纳更多的元素，则放在 rightblock 中</li>
-<li>如果不能，就新建一个 block，然后更新若干指针，将元素放在更新后的 rightblock 中。</li>
-</ol>
-<h3 id="性能分析-1"><a href="#性能分析-1" class="headerlink" title="性能分析"></a>性能分析</h3><p>得益于 deque 这样的结构，它的 pop/popleft/append/appendleft 四种操作的时间复杂度均是 O(1), 用它来实现队列、栈会非常方便和高效。</p>
-<p>虽然双端队列中的元素可以从两端弹出，并且队列任意一端都可以入队和出队，但其限定<strong>插入和删除操作在表的两端进行</strong>。 由于这样，查找双端队列中间的元素较为缓慢, 增删元素就更慢了。</p>
-<h2 id="3、字典-dict"><a href="#3、字典-dict" class="headerlink" title="3、字典(dict)"></a>3、字典(dict)</h2><p>可直接使用，无须调用。</p>
-<h3 id="字典实现原理"><a href="#字典实现原理" class="headerlink" title="字典实现原理"></a>字典实现原理</h3><p>　在Python中，字典是通过<strong>哈希表</strong>实现的。也就是说，字典是一个数组，而数组的<strong>索引</strong>是经过哈希函数处理后得到的。要理解字典，必须对哈希表这种数据结构比较熟悉。下图6为哈希表的一个逻辑判断：</p>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/6.png" alt="图6. 哈希表判断"></p>
-<p>这里要注意几点：</p>
-<ul>
-<li>使用散列值的一部分进行定位</li>
-<li>散列冲突时，使用散列值的另一部分，如果这一部分是包含原始Key的信息，那么不同的Key通过比较就能区分出来。</li>
-</ul>
-<p>你可能会问，取哈希值的一部分是怎么取得呢？下图7给了一个种方式，就是将计算得到哈希值 &amp; 数组的长度。</p>
-<p>同时，由这张图，我们可以发现Python的哈希函数在键彼此连续的时候表现得很理想，这主要是考虑到通常情况下处理的都是这类形式的数据。然而，一旦我们添加了键’z’就会出现冲突，因为这个键值并不毗邻其他键，且相距较远。</p>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/7.png" alt="图7. 哈希映射"></p>
-<p>先要声明的是，针对python的不同版本，dict的实现还有所不同，较为详细的介绍请参考资料[6]。老字典只使用一张hash，而新字典还使用了一张Indices表来辅助。这里的indices才是真正的散列表哦，下来列出新的结构：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">indices &#x3D; [None, None, index, None, index, None, index]</span><br><span class="line"></span><br><span class="line">enteies &#x3D; [ [hash0, key0, value0],  [hash1, key1, value1],  [hash2, key2, value2]]</span><br></pre></td></tr></table></figure>
-
-<h4 id="字典存储过程："><a href="#字典存储过程：" class="headerlink" title="字典存储过程："></a>字典存储过程：</h4><ul>
-<li>计算key的hash值 ( <code>hash(key)</code> )，再和mask做与操作 ( <code>mask=字典最小长度（IndicesDictMinSize）- 1</code> )，运算后会得到一个数字index，这个index就是要插入的indices的下标位置（注：具体算法与Python版本相关，并不一定一样）；</li>
-<li>得到index后，会找到indices的位置，但是此位置不是存的hash值，而是存的<code>len(enteies)</code>，表示该值在enteies中的位置；</li>
-<li>如果出现hash冲突，则会继续向下寻找空位置（略有变化的开放寻址），一直到找到剩余空位为止。</li>
-</ul>
-<h4 id="字典查找过程："><a href="#字典查找过程：" class="headerlink" title="字典查找过程："></a>字典查找过程：</h4><ul>
-<li>计算 hash(key)，得到hash_value ;</li>
-<li>计算 <code>hash_value &amp; ( len(indices) - 1)</code>，得到一个数字index ;</li>
-<li>计算 indices[index] 的值，得到 entry_index ;</li>
-<li>计算 enteies[entey_index] 的值 ，为最终值。</li>
-</ul>
-<p>为方便理解，这里我做了一个图，可以看到 <strong>indices</strong> 起到一个桥梁的作用。画完这个图，再感叹一句，设计还是挺巧妙的。</p>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/8.png" alt="图8. 字典示意图"></p>
-<p>这里补充下，关于哈希冲突，是怎么寻找下一个数组位置的。源码中用到的是以下公式：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">j &#x3D; ((5*j) + 1) mod 2**i</span><br></pre></td></tr></table></figure>
-
-<p>这里的 <code>j</code> 有两层含义，赋值号左边的为数组的下一个下标，赋值号右边的是当前发生冲突的下标。而 <code>2 ** i</code>可以理解数组长度。举例说明，对于要给size大小为<code>2 ** 3</code>来说：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">j_prev &#x3D; 0 ; j_next &#x3D; ((5 * 0) + 1) mod 8 &#x3D; 1  </span><br><span class="line">j_prev &#x3D; 1 ; j_next &#x3D; ((5 * 1) + 1) mod 8  &#x3D; 6</span><br><span class="line">j_prev &#x3D; 6 ; j_next &#x3D; ((5 * 6) + 1) mod 8  &#x3D; 7</span><br><span class="line">j_prev &#x3D; 7 ; j_next &#x3D; ((5 * 7) + 1) mod  8 &#x3D; 4</span><br><span class="line">j_prev &#x3D; 4 ; j_next &#x3D; ((5 * 4 ) + 1) mod 8 &#x3D; 5</span><br></pre></td></tr></table></figure>
-
-<p>以此类推，最后回到起点为0。以下就是哈希冲突的轨迹</p>
-<p>0 -&gt; 1 -&gt; 6 -&gt; 7 -&gt; 4 -&gt; 5 -&gt; 2 -&gt; 3 -&gt; 0 [and here it’s repeating]</p>
-<h3 id="字典函数的时间复杂度"><a href="#字典函数的时间复杂度" class="headerlink" title="字典函数的时间复杂度"></a>字典函数的时间复杂度</h3><p>下列字典的平均情况基于以下假设：</p>
-<ol>
-<li>对象的散列函数足够撸棒（robust）, 不会发生冲突。</li>
-<li>字典的键是从所有可能的键的集合中随机选择的。</li>
-</ol>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/9.png" alt="图9. 字典函数的时间复杂度"></p>
-<p>小窍门：只使用字符串作为字典的键。这么做虽然不会影响算法的时间复杂度, 但会对常数项产生显著的影响, 这决定了你的一段程序能多快跑完。</p>
-<h3 id="字典函数说明"><a href="#字典函数说明" class="headerlink" title="字典函数说明"></a>字典函数说明</h3><ol>
-<li>这些操作依赖于“摊销最坏情况”的“摊销”部分。根据容器的历史, 个别动作可能需要很长时间。</li>
-<li>对于这些操作, 最坏的情况n是<strong>容器达到的最大尺寸</strong>, 而不仅仅是当前的大小。例如, 如果一个N个元素的字典, 然后删除N-1个元素, 这个字典会重新为N个元素调整大小, 而不是当前的一个元素, 所以时间复杂度是O(n)。</li>
-</ol>
-<h3 id="字典性能分析"><a href="#字典性能分析" class="headerlink" title="字典性能分析"></a>字典性能分析</h3><p>字典的查询、添加、删除的平均时间复杂度都是O(1)，相比列表与元祖，性能更优。但是，如果发生散列冲突，或者容器需要扩充，那么时间复杂度就要考虑最差的情况 O(n)。所以说字典及其依赖哈希算法，真正要灵活运用词典时，还需要查看底层的哈希算法。</p>
-<h2 id="4、集合-set"><a href="#4、集合-set" class="headerlink" title="4、集合(set)"></a>4、集合(set)</h2><p>dict与set实现原理是一样的，都是将实际的值放到list中。唯一不同的在于hash函数操作的对象，对于dict，hash函数操作的是其key，而对于set是直接操作的它的元素。</p>
-<p>假设操作内容为x，其作为因变量，放入hash函数，通过运算后取list的余数，转化为一个list的下标，此下标位置对于set而言用来放其本身。</p>
-<p>而对于dict则是创建了两个list，一个listf存储哈希表对应的下标，另一个list中存储哈希表具体对应的值。</p>
-<p>这里为了更好地理解，对比上面字典那个图，我尝试画一个图。</p>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/10.png" alt="图10. 集合映射"></p>
-<h3 id="集合函数的时间复杂度"><a href="#集合函数的时间复杂度" class="headerlink" title="集合函数的时间复杂度"></a>集合函数的时间复杂度</h3><p>下图是函数的时间复杂度：</p>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/11.png" alt="图11. 集合时间复杂度"></p>
-<h3 id="集合性能分析"><a href="#集合性能分析" class="headerlink" title="集合性能分析"></a>集合性能分析</h3><p>由源码得知, 求差集（s-t, 或s.difference(t)）运算与更新为差集（s.difference_uptate(t)）运算的时间复杂度并不相同！</p>
-<ul>
-<li>第一个是O(len(s))（对于s中的每个元素, 如果不在t中, 将它添加到新集合中）。</li>
-<li>第二个是O(len(t))（对于t中的每个元素, 将其从s中删除）。</li>
-</ul>
-<p>因此, 必须注意哪个是首选, 取决于哪一个是最长的集合以及是否需要新的集合。</p>
-<p>集合的s-t运算中, s和t都要是set类型。如果t不是set类型, 但是是可迭代的, 你可以使用等价的方法达到目的, 比如 s.difference(l), l是个list类型。</p>
-<p>另外，列表的一些集合运算，可以转成集合类型来操作，速度更快。</p>
-<h2 id="给自己留一个坑"><a href="#给自己留一个坑" class="headerlink" title="给自己留一个坑"></a>给自己留一个坑</h2><p>自己也尝试读了一下一些数据结构的源码，虽然很多看不懂，但是抓到一些关键信息。比如下面的代码和图片。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">static Py_ssize_t</span><br><span class="line">list_length(PyListObject *a)</span><br><span class="line">&#123;</span><br><span class="line">return Py_SIZE(a);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>下图12为dictobject.c里的一个函数：<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/12.png" alt="图12. 集合时间复杂度"></p>
-<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p>[1]  <a href="https://zhuanlan.zhihu.com/p/64841133" target="_blank" rel="noopener">Python内置方法的时间复杂度</a> </p>
-<p>[2] <a href="https://wiki.python.org/moin/TimeComplexity" target="_blank" rel="noopener">TimeComplexity</a></p>
-<p>[3] <a href="https://www.jianshu.com/p/a2c98df9cfae" target="_blank" rel="noopener">python list 之时间复杂度分析</a></p>
-<p>[4] <a href="https://www.cnblogs.com/bonelee/p/11433743.html" target="_blank" rel="noopener">How collections.deque works?</a>，</p>
-<p>[5] <a href="https://zhuanlan.zhihu.com/p/45871870" target="_blank" rel="noopener">深入 Python 列表的内部实现</a>；</p>
-<p>[6] <a href="https://zhuanlan.zhihu.com/p/74003719" target="_blank" rel="noopener">Python字典dict实现原理</a></p>
-<h2 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h2><h3 id="Cpython-list-部分源码注释"><a href="#Cpython-list-部分源码注释" class="headerlink" title="Cpython list 部分源码注释"></a>Cpython list 部分源码注释</h3><p>源码地址传送门：<br><a href="https://github.com/python/cpython/blob/master/Objects/listobject.c" target="_blank" rel="noopener">https://github.com/python/cpython/blob/master/Objects/listobject.c</a></p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;* This over-allocates proportional to the list size, making room</span><br><span class="line">* for additional growth. The over-allocation is mild, but is</span><br><span class="line">* enough to give linear-time amortized behavior over a long</span><br><span class="line">* sequence of appends() in the presence of a poorly-performing</span><br><span class="line">* system realloc().</span><br><span class="line">* Add padding to make the allocated size multiple of 4.</span><br><span class="line">* The growth pattern is: 0, 4, 8, 16, 24, 32, 40, 52, 64, 76, ...</span><br><span class="line">* Note: new_allocated won&#39;t overflow because the largest possible value</span><br><span class="line">* is PY_SSIZE_T_MAX * (9 &#x2F; 8) + 6 which always fits in a size_t.</span><br><span class="line">*&#x2F;</span><br></pre></td></tr></table></figure>
-<h3 id="Cpython-collections-部分源码注释"><a href="#Cpython-collections-部分源码注释" class="headerlink" title="Cpython collections 部分源码注释"></a>Cpython collections 部分源码注释</h3><p>源码地址传送门：<br><a href="https://github.com/python/cpython/blob/master/Modules/_collectionsmodule.c" target="_blank" rel="noopener">https://github.com/python/cpython/blob/master/Modules/_collectionsmodule.c</a></p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;* The block length may be set to any number over 1.  Larger numbers</span><br><span class="line">* reduce the number of calls to the memory allocator but take more</span><br><span class="line">* memory.  Ideally, BLOCKLEN should be set with an eye to the</span><br><span class="line">* length of a cache line.</span><br><span class="line">*&#x2F;</span><br><span class="line"></span><br><span class="line">#define BLOCKLEN 62</span><br><span class="line">#define CENTER ((BLOCKLEN - 1) &#x2F; 2)</span><br><span class="line">&#x2F;* A &#96;dequeobject&#96; is composed of a doubly-linked list of &#96;block&#96; nodes.</span><br><span class="line">* This list is not circular (the leftmost block has leftlink&#x3D;&#x3D;NULL,</span><br><span class="line">* and the rightmost block has rightlink&#x3D;&#x3D;NULL).  A deque d&#39;s first</span><br><span class="line">* element is at d.leftblock[leftindex] and its last element is at</span><br><span class="line">* d.rightblock[rightindex]; note that, unlike as for Python slice</span><br><span class="line">* indices, these indices are inclusive on both ends.  By being inclusive</span><br><span class="line">* on both ends, algorithms for left and right operations become</span><br><span class="line">* symmetrical which simplifies the design.</span><br><span class="line">* The list of blocks is never empty, so d.leftblock and d.rightblock</span><br><span class="line">* are never equal to NULL.</span><br><span class="line">* The indices, d.leftindex and d.rightindex are always in the range</span><br><span class="line">*     0 &lt;&#x3D; index &lt; BLOCKLEN.</span><br><span class="line">* Their exact relationship is:</span><br><span class="line">*     (d.leftindex + d.len - 1) % BLOCKLEN &#x3D;&#x3D; d.rightindex.</span><br><span class="line">* Empty deques have d.len &#x3D;&#x3D; 0; d.leftblock&#x3D;&#x3D;d.rightblock;</span><br><span class="line">* d.leftindex &#x3D;&#x3D; CENTER+1; and d.rightindex &#x3D;&#x3D; CENTER.</span><br><span class="line">* Checking for d.len &#x3D;&#x3D; 0 is the intended way to see whether d is empty.</span><br><span class="line">* Whenever d.leftblock &#x3D;&#x3D; d.rightblock,</span><br><span class="line">*     d.leftindex + d.len - 1 &#x3D;&#x3D; d.rightindex.</span><br><span class="line">* However, when d.leftblock !&#x3D; d.rightblock, d.leftindex and d.rightindex</span><br><span class="line">* become indices into distinct blocks and either may be larger than the</span><br><span class="line">* other.</span><br><span class="line">*&#x2F;</span><br></pre></td></tr></table></figure>
-<h3 id="Cpython-dict源码部分注释"><a href="#Cpython-dict源码部分注释" class="headerlink" title="Cpython dict源码部分注释"></a>Cpython dict源码部分注释</h3><p>源码地址传送门：<br><a href="https://github.com/python/cpython/blob/master/Objects/dictobject.c" target="_blank" rel="noopener">https://github.com/python/cpython/blob/master/Objects/dictobject.c</a></p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;*layout:</span><br><span class="line">+---------------+</span><br><span class="line">| dk_refcnt         |</span><br><span class="line">| dk_size            |</span><br><span class="line">| dk_lookup       |</span><br><span class="line">| dk_usable        |</span><br><span class="line">| dk_nentries      |</span><br><span class="line">+---------------+</span><br><span class="line">| dk_indices       |</span><br><span class="line">|                         |</span><br><span class="line">+---------------+</span><br><span class="line">| dk_entries       |</span><br><span class="line">|                     |</span><br><span class="line">+---------------+</span><br><span class="line"></span><br><span class="line">dk_indices is actual hashtable. It holds index in entries, or DKIX_EMPTY(-1) or</span><br><span class="line">DKIX_DUMMY(-2).</span><br><span class="line">dk_entries is array of PyDictKeyEntry. Its size is USABLE_FRACTION(dk_size).DK_ENTRIES(dk) can be used to get pointer to entries.</span><br><span class="line">The first half of collision resolution is to visit table indices via this</span><br><span class="line">recurrence:</span><br><span class="line"></span><br><span class="line">But catering to unusual cases should not slow the usual ones, so we just take the last i bits anyway. It&#39;s up to collision resolution to do the rest. If</span><br><span class="line">we *usually* find the key we&#39;re looking for on the first try (and, it turns out, we usually do -- the table load factor is kept under 2&#x2F;3, so the odds</span><br><span class="line">are solidly in our favor), then it makes best sense to keep the initial index computation dirt cheap.</span><br><span class="line"></span><br><span class="line">j &#x3D; ((5*j) + 1) mod 2**i</span><br><span class="line"></span><br><span class="line">For any initial j in range(2**i), repeating that 2**i times generates each</span><br><span class="line">int in range(2**i) exactly once (see any text on random-number generation for</span><br><span class="line">proof). By itself, this doesn&#39;t help much: like linear probing (setting</span><br><span class="line">j +&#x3D; 1, or j -&#x3D; 1, on each loop trip), it scans the table entries in a fixed</span><br><span class="line">order. This would be bad, except that&#39;s not the only thing we do, and it&#39;s</span><br><span class="line">actually *good* in the common cases where hash keys are consecutive. </span><br><span class="line"></span><br><span class="line">In an example that&#39;s really too small to make this entirely clear, for a table of</span><br><span class="line">size 2**3 the order of indices is:</span><br><span class="line">0 -&gt; 1 -&gt; 6 -&gt; 7 -&gt; 4 -&gt; 5 -&gt; 2 -&gt; 3 -&gt; 0 [and here it&#39;s repeating]</span><br><span class="line">*&#x2F;</span><br></pre></td></tr></table></figure>
-]]></content>
-      <categories>
-        <category>数据结构</category>
-        <category>python</category>
-      </categories>
-      <tags>
-        <tag>python</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>git支持emoji了！快来更换你的提交风格吧！</title>
     <url>/2020/07/24/git%E6%94%AF%E6%8C%81emoji%E4%BA%86%EF%BC%81%E5%BF%AB%E6%9D%A5%E6%9B%B4%E6%8D%A2%E4%BD%A0%E7%9A%84%E6%8F%90%E4%BA%A4%E9%A3%8E%E6%A0%BC%E5%90%A7%EF%BC%81/</url>
     <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本文[2]简要介绍了git代码提交的规范，以及使用emoji表情的方法和注意事项。</p>
@@ -376,6 +242,85 @@
       </tags>
   </entry>
   <entry>
+    <title>个人图床搭建简明教程</title>
+    <url>/2020/10/05/%E4%B8%AA%E4%BA%BA%E5%9B%BE%E5%BA%8A%E6%90%AD%E5%BB%BA%E7%AE%80%E6%98%8E%E6%95%99%E7%A8%8B/</url>
+    <content><![CDATA[<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/%E5%B0%81%E9%9D%A2%E5%9B%BE.jpg" alt="ins @nasa"></p>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>随着获取图片的方式越来越简单，如何方便快捷地存储与使用图片是亟待解决的问题。</p>
+<p>本文首先通过阿里云的<strong>对象存储服务</strong>构建一个<code>Bucket</code>，其次下载和配置开源工具<code>PicGo</code>，最后对图片的外链地址进行测试。</p>
+<h2 id="什么是图床"><a href="#什么是图床" class="headerlink" title="什么是图床"></a>什么是图床</h2><p>顾名思义，图床是网络上专门存储图片的地方。图床能够有效地节省本地服务器空间，加快图片打开速度，并能支持创建图片外链。</p>
+<p>图床主要用于个人博客和网站，当然也用于图像识别分析等。</p>
+<p>我研究生上过一门课叫《数字水印与图像隐写》，现在看来，将相关算法直接应用于图床上，感觉还不错。</p>
+<h2 id="图床的作用"><a href="#图床的作用" class="headerlink" title="图床的作用"></a>图床的作用</h2><ul>
+<li>给图片建立外链，方便公共空间进行访问；</li>
+<li>对图片进行存储和备份，防止本地存储异常；</li>
+<li>和前端人员共用一套图床，省去传递文件操作；</li>
+<li>配合SDK，构建自动化图片分析工具；</li>
+</ul>
+<h2 id="如何构建图床"><a href="#如何构建图床" class="headerlink" title="如何构建图床"></a>如何构建图床</h2><ol>
+<li>小厂商的免费图床服务，注册即可使用；</li>
+<li>借助大厂商的对象存储服务，配合相关工具构建图床；</li>
+<li>自己在服务器上搭建图床；</li>
+</ol>
+<h2 id="谨慎免费图床"><a href="#谨慎免费图床" class="headerlink" title="谨慎免费图床"></a>谨慎免费图床</h2><p>请慎重选择免费图床，毕竟众多免费图床网站注册条款里有<strong>禁止商用</strong>这一条，哪天关闭了图片外链或者商用，势必给用户带来很大的麻烦。<br>很多免费图床总是好景不长，为什么呢？其实很简单，做相册站是要投入的，比如服务器、带宽、人员、技术投资、市场宣传等等！完全免费了，这些小站可能自己都难存活，所以总是不能长久使用！</p>
+<h2 id="为什么阿里云"><a href="#为什么阿里云" class="headerlink" title="为什么阿里云"></a>为什么阿里云</h2><ul>
+<li>有用户可调用的编程接口，方便对接到后面开发程序，例如个人博客、网站等；</li>
+<li>自带备份、版本控制等功能，便宜实惠，一年9元，云盘40G；</li>
+<li>支持https，提供非结构化数据智能分析；</li>
+<li>外链路径可自行设置，这样避免混入中文编码字符，导致非常难看;</li>
+<li>懒得自己折腾构建图床了；</li>
+</ul>
+<h2 id="开通阿里云OSS"><a href="#开通阿里云OSS" class="headerlink" title="开通阿里云OSS"></a>开通阿里云OSS</h2><p>下面开始介绍阿里云OSS：</p>
+<h3 id="开通OSS服务"><a href="#开通OSS服务" class="headerlink" title="开通OSS服务"></a>开通OSS服务</h3><p>如图1，登录到阿里云，选择「<strong>对象存储OSS</strong>」。<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/1.png" alt="图1.oss服务开通引导"></p>
+<p>下面是<code>OSS</code>的官方介绍：</p>
+<blockquote>
+<p>阿里云对象存储服务（Object Storage Service，简称 OSS）是海量、安全、低成本、高可靠的云存储服务，提供99.9999999999%的数据可靠性。使用RESTful API可以在互联网任何位置存储和访问，容量和处理能力弹性扩展，多种存储类型供选择全面优化存储成本。</p>
+</blockquote>
+<p>如图2，有以下三种存储类型，下图是对应着的特点。我选的是「<strong>标准类型</strong>」，然后开通这个服务。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/2.png" alt="图2.存储类型比较"></p>
+<h3 id="创建Bucket"><a href="#创建Bucket" class="headerlink" title="创建Bucket"></a>创建Bucket</h3><p>开通对象存储服务后，直接创建<code>Bucket</code>。<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/3.png" alt="图3.创建Bucket"></p>
+<p>记住这里的<strong>origin</strong>为：<code>oss-cn-beijing</code>，后面对接阿里云要用到。</p>
+<p>版本控制和加密我没开通，毕竟设置了<strong>公共读</strong>这种方式。况且我也主要用于外链，高级别安全加密感觉不太需要了。</p>
+<p>然后就是这里购买了<strong>一年资源包</strong>。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/4.png" alt="图4.付费页面"></p>
+<p>创建完后，点击右上角头像，选择<strong>accesskeys</strong>。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/5.png" alt="图5.控制管理台"></p>
+<p>选择<strong>继续使用</strong>，得到<code>AccessKey ID</code> 和 <code>Access Key Secret</code> ，简单记一下，在后面的配置中需要使用。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/6.png" alt="图6.安全信息管理"><br>至此，阿里云OSS服务已经搭建完毕。</p>
+<h2 id="PicGo"><a href="#PicGo" class="headerlink" title="PicGo"></a>PicGo</h2><p>下面是<strong>PicGo</strong>的介绍和配置。</p>
+<h3 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h3><p><code>PicGo</code>一个用于快速上传图片并获取图片 URL 链接的工具，支持7种常见图床对接。</p>
+<p>按道理来说，本来是要自己手动写代码来对接阿里云，但是<code>PicGo</code>已经都帮我们写好了，不用再造轮子了呀！</p>
+<h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><p>不同平台安装过程详见官网，下载链接如下：<br><code>https://github.com/Molunerfinn/PicGo/releases</code></p>
+<p>依据不同文件的<strong>后缀名</strong>，可以找到不同平台的安装包。这里我选择的是<code>exe</code>结尾的<code>windows</code>安装包。</p>
+<p>另外，<code>PicGo</code>有不同版本，我选择的是最新的<code>2.3 beta</code> 版本，可以选择低的稳定版本。<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/7.png" alt="图7.下载页面"></p>
+<h3 id="配置阿里云"><a href="#配置阿里云" class="headerlink" title="配置阿里云"></a>配置阿里云</h3><p>自行下载安装完毕后，再来配置阿里云。查看官方文档，原来就是封装好了一个json字符串，当用户填好各项参数以后，然后向<strong>阿里云</strong>发送请求。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;accessKeyId&quot;: &quot;&quot;,</span><br><span class="line">  &quot;accessKeySecret&quot;: &quot;&quot;,</span><br><span class="line">  &quot;bucket&quot;: &quot;&quot;, &#x2F;&#x2F; 存储空间名</span><br><span class="line">  &quot;area&quot;: &quot;&quot;, &#x2F;&#x2F; 存储区域代号</span><br><span class="line">  &quot;path&quot;: &quot;&quot;, &#x2F;&#x2F; 自定义存储路径</span><br><span class="line">  &quot;customUrl&quot;: &quot;&quot; &#x2F;&#x2F; 自定义域名，注意要加http:&#x2F;&#x2F;或者https:&#x2F;&#x2F;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在图床设置上选择「<strong>阿里云OSS</strong>」<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/8.png" alt="图8.阿里云OSS设置"><br>从阿里云找到 <strong>AccesKey ID, Access Key Secrect, Origin, 存储空间名</strong>。</p>
+<p><strong>注意</strong>这里的<strong>存储空间名</strong>一定要写对，比如我的为<code>article-shaw</code>，也就是当初我创建的Bucket名。另外，还有一个很重要的地方就是<strong>存储区域</strong>，名为<code>oss-cn-beijing</code>。</p>
+<p>在填写存储路径时，比如<code>img/</code>的话，上传的图片会默认放在<code>OSS</code>的<code>img</code>文件夹下。不需要你自己去网站创建文件夹，程序就会帮你自动生成哦。</p>
+<p><strong>注意</strong>存储路径一定要以<code>/</code>结尾！存储路径是可选的，如果不需要请留空。</p>
+<h3 id="上传图片"><a href="#上传图片" class="headerlink" title="上传图片"></a>上传图片</h3><p>好了，开始爽起来吧！打开软件，这里的链接格式选择的是<code>Markdown</code>，因为我主要拿来写文章的。<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/9.png" alt="图9.图片上传"><br>找到一张图片，然后拖拽到上传区之后，电脑会提示上传成功或者上传失败。</p>
+<p>如果成功了，前往自己的阿里云，就能看到刚上传的文件啦。<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/10.png" alt="图10.阿里云界面"></p>
+<p>如图10，在右下角有图片的<code>URL</code>，复制到浏览器就自动下载了。<br>再回到<code>PicGo</code>，我们选择<strong>相册</strong>，就能发现刚上传的照片，直接点击复制，就得到了<code>Markdown</code>格式的图片链接。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/11.png" alt="图11.相册"></p>
+<p>也就是说，<strong>我们不需要登录阿里云</strong>，就能轻松获取到图片的外链。我们不妨将地址放到各种<code>Markdown</code>的编译器上去，经测试都能展现出来。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/54/12.png" alt="图12.印象笔记"></p>
+<h2 id="对接Markdown-Nice"><a href="#对接Markdown-Nice" class="headerlink" title="对接Markdown Nice"></a>对接Markdown Nice</h2><p>在之前，我介绍了一个神级网站<code>mdnice</code>，这个网站可以对接阿里云图床，详细步骤请前往<strong>参考资料</strong>的第4篇文章《mdnice的阿里云图床搭建教程》。</p>
+<h2 id="参考资料："><a href="#参考资料：" class="headerlink" title="参考资料："></a>参考资料：</h2><p>[1] <a href="https://baike.baidu.com/item/%E5%9B%BE%E5%BA%8A/10721348?fr=aladdin" target="_blank" rel="noopener">图床介绍_百度百科</a></p>
+<p>[2] <a href="[https://github.com/Molunerfinn/PicGo]">PicGo的Github地址</a></p>
+<p>[3] <a href="https://picgo.github.io/PicGo-Doc/zh/guide/" target="_blank" rel="noopener">PicGo中文使用文档</a></p>
+<p>[4] <a href="https://preview.mdnice.com/article/developer/aliyun-image-hosting/" target="_blank" rel="noopener">mdnice的阿里云图床搭建教程</a></p>
+]]></content>
+      <categories>
+        <category>阿里云</category>
+        <category>picgo</category>
+        <category>图片存储</category>
+      </categories>
+      <tags>
+        <tag>图床</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Hello World</title>
     <url>/2020/07/18/hello-world/</url>
     <content><![CDATA[<p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
@@ -467,6 +412,370 @@ yum-util提供<code>yum-config-manager</code>功能，另外两个是<code>devic
       <tags>
         <tag>Docker</tag>
       </tags>
+  </entry>
+  <entry>
+    <title>牛客网SQL题库一刷总结</title>
+    <url>/2020/09/01/%E7%89%9B%E5%AE%A2%E7%BD%91SQL%E9%A2%98%E5%BA%93%E4%B8%80%E5%88%B7%E6%80%BB%E7%BB%93/</url>
+    <content><![CDATA[<h2 id="1、前言"><a href="#1、前言" class="headerlink" title="1、前言"></a>1、前言</h2><blockquote>
+<p>结构化查询语言(Structured Query Language)简称SQL，是一种特殊目的的编程语言，是一种数据库查询和程序设计语言，用于存取数据以及查询、更新和管理关系数据库系统；同时也是数据库脚本文件的扩展名。</p>
+</blockquote>
+<p>差不多花了一周的时间做完了牛客网平台的61道SQL题，先说一说这个平台的坑:</p>
+<ol>
+<li>题目含糊不清，有一些题没有准确表达意思，会让人产生误解。</li>
+<li>OJ的答案判断比较死板，不是所有正确的解法都能通过。</li>
+<li>难度不是缓慢递增，中间有的题会非常搞人。</li>
+<li>没有提供单独的测试数据，需要去有的题目下面找。</li>
+<li>只支持sqlite，不支持mysql,oracle等其他SQL语言。</li>
+</ol>
+<p>再讲一讲自己的刷题体会：</p>
+<ol>
+<li>比较坑也是一件好事，可以训练思维的全面性，努力去寻找问题的不同切入点。</li>
+<li>不要做完了就直接下一题！我个人最喜欢看评论，因为可以学习到前辈们的思路和解法。 首先，我会在脑海里形成自己的思路，然后和他们的思路进行对比。如果是一致的，哇，我就很开心。 如果不一致，则仔细进行比对，找到我的缺陷。</li>
+<li>SQL语句不是正确通过就万事大吉了，尽可能做多一题多解。分析每种解法的优化性能，找到 对应的使用场景。</li>
+<li>写法要规范，注意缩进，这样每个子语句看起来就比较清晰。</li>
+<li>在动手之前先思考一下，不要上来就急着写。</li>
+<li>了解一些函数，比如窗口函数等，这些是利器。</li>
+</ol>
+<p>如果要二刷，注意以下几点：</p>
+<ol>
+<li>思考题目的真实使用场景，不要单纯做题。</li>
+<li>遇到比较坑的题目，直接跳过，不要多花时间。</li>
+<li>多归纳总结，必要时做一下实验。</li>
+<li>思考一些高阶用法，降维打击。</li>
+</ol>
+<p>二刷先放一下，先去刷一下LeetCode的SQL题。那里的题库更加正规，还有一些企业真题。<br>这么好吗？毕竟是付费的呀 - -。</p>
+<h2 id="2、牛客网OJ平台地址"><a href="#2、牛客网OJ平台地址" class="headerlink" title="2、牛客网OJ平台地址"></a>2、牛客网OJ平台地址</h2><p><a href="https://www.nowcoder.com/ta/sql" target="_blank" rel="noopener">https://www.nowcoder.com/ta/sql</a></p>
+<h2 id="3、详细答题记录-个人整理"><a href="#3、详细答题记录-个人整理" class="headerlink" title="3、详细答题记录(个人整理)"></a>3、详细答题记录(个人整理)</h2><p><a href="https://github.com/HannibalXZX/LearnSQL/tree/master/SQL%E5%AE%9E%E6%88%98-%E7%89%9B%E5%AE%A2%E7%BD%91" target="_blank" rel="noopener">https://github.com/HannibalXZX/LearnSQL/tree/master/SQL%E5%AE%9E%E6%88%98-%E7%89%9B%E5%AE%A2%E7%BD%91</a></p>
+<h2 id="4、-笔记"><a href="#4、-笔记" class="headerlink" title="4、 笔记"></a>4、 笔记</h2><h3 id="01-left-join中on和where的区别"><a href="#01-left-join中on和where的区别" class="headerlink" title="01. left join中on和where的区别"></a>01. left join中on和where的区别</h3><ol>
+<li><code>on</code>条件是在生成临时表时使用的条件，不管on中的条件是否为真，都会返回左边表中的记录。</li>
+<li><code>where</code>条件是在临时表生成好后，再对临时表进行过滤的条件。这时已经没有left join的含义（必须返回左边表的记录）了，条件不为真的就全部过滤掉。</li>
+</ol>
+<h3 id="02-三个连接的简单区别"><a href="#02-三个连接的简单区别" class="headerlink" title="02. 三个连接的简单区别"></a>02. 三个连接的简单区别</h3><ul>
+<li><code>INNER JOIN</code> 两边表同时有对应的数据，即任何一边缺失数据就不显示。</li>
+<li><code>LEFT JOIN</code> 会读取左边数据表的全部数据，即便右边表无对应数据。</li>
+<li><code>RIGHT JOIN</code> 会读取右边数据表的全部数据，即便左边表无对应数据</li>
+</ul>
+<h3 id="03-内连和并列的区别"><a href="#03-内连和并列的区别" class="headerlink" title="03. 内连和并列的区别"></a>03. 内连和并列的区别</h3><p>并列，也是等值连接。在这个过程中，实际上是没有创建出临时的新表，只是为了方便理解，可以认为两张表合并成一张新表，然后再从该表 <code>SELECT</code>所需的字段和记录。<br>内连可以不等。推荐用内连，因为，可以将连接条件标记得比较清楚。</p>
+<h3 id="04-SQL执行顺序-重要"><a href="#04-SQL执行顺序-重要" class="headerlink" title="04. SQL执行顺序(重要)"></a>04. SQL执行顺序(重要)</h3><p><code>FROM</code>、 <code>WHERE</code>、 <code>GROUP BY</code>、 <code>HAVING</code>、 <code>SELECT</code>、 <code>DISTINCT</code>、 <code>UNION</code>、 <code>ORDER BY</code></p>
+<h3 id="05-GROUP-BY-和-DISTINCT"><a href="#05-GROUP-BY-和-DISTINCT" class="headerlink" title="05. GROUP BY 和 DISTINCT"></a>05. GROUP BY 和 DISTINCT</h3><ul>
+<li>当对系统的性能高并数据量大时使用 <code>GROUP BY</code></li>
+<li>当对系统的性能不高时使用数据量少时两者皆可</li>
+<li>尽量使用 <code>GROUP BY</code></li>
+</ul>
+<p>针对网上实验结果，还有一种结论：</p>
+<blockquote>
+<p>去重场景下，未加索引时，更偏向于使用distinct，而加索引时，distinct和group by两者都可以使用 </p>
+</blockquote>
+<p><a href="https://blog.csdn.net/NestorBian/article/details/106004840?utm_medium=distribute.pc_relevant_t0.none-task-blog-BlogCommendFromMachineLearnPai2-1.nonecase&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-BlogCommendFromMachineLearnPai2-1.nonecase" target="_blank" rel="noopener">实验过程原文链接</a></p>
+<h4 id="06-LEFT-JOIN-和-IN"><a href="#06-LEFT-JOIN-和-IN" class="headerlink" title="06. LEFT JOIN 和 IN"></a>06. LEFT JOIN 和 IN</h4><p>MySQL官方文档有说明， <code>IN</code>关键字适合<strong>确定数量</strong>的情况，一般效率较低，不推荐使用。能用 <code>IN</code>关键字的语句都可以转化为使用 <code>JOIN</code>的语句，推荐使用 <code>JOIN</code>关键字。</p>
+<h4 id="07-WHERE-和-HAVING"><a href="#07-WHERE-和-HAVING" class="headerlink" title="07. WHERE 和 HAVING"></a>07. WHERE 和 HAVING</h4><p><code>WHERE</code>和 <code>HAVING</code>的不同之处在于， <code>WHERE</code>是查找之前的限定，而 <code>HAVING</code>是查找之后。如果使用 <code>HAVING</code>，必须提前筛选字段，但 <code>WHERE</code>不需要。 <code>WHERE</code>后面不能加聚合函数， <code>HAVING</code>后可以加聚合函数。</p>
+<h4 id="08-JOIN关联表中ON-WHERE后面跟条件的区别"><a href="#08-JOIN关联表中ON-WHERE后面跟条件的区别" class="headerlink" title="08. JOIN关联表中ON,WHERE后面跟条件的区别"></a>08. JOIN关联表中ON,WHERE后面跟条件的区别</h4><p>不管 <code>ON</code>上的条件是否为真都会返回 <code>LEFT</code>或 <code>RIGHT</code>表中的记录，full则具有 <code>LEFT</code>和 <code>RIGHT</code>的特性的并集。 而 <code>INNER JOIN</code>没这个特殊性，则条件放在 <code>ON</code>中和 <code>WHERE</code>中，返回的结果集是相同的。</p>
+<p><a href="https://blog.csdn.net/wqc19920906/article/details/79785424" target="_blank" rel="noopener">参考原文链接</a> </p>
+<h4 id="09-EXPLAIN-函数作用"><a href="#09-EXPLAIN-函数作用" class="headerlink" title="09. EXPLAIN 函数作用"></a>09. EXPLAIN 函数作用</h4><ol>
+<li>表的读取顺序</li>
+<li>数据读取操作的操作类型</li>
+<li>哪些索引可以使用</li>
+<li>哪些索引被实际使用</li>
+<li>表之间的引用</li>
+<li>每张表有多少行被优化器查询</li>
+</ol>
+<h4 id="10-MySQL创建索引方法：ALTER-TABLE和CREATE-INDEX的区别"><a href="#10-MySQL创建索引方法：ALTER-TABLE和CREATE-INDEX的区别" class="headerlink" title="10. MySQL创建索引方法：ALTER TABLE和CREATE INDEX的区别"></a>10. MySQL创建索引方法：ALTER TABLE和CREATE INDEX的区别</h4><p>众所周知，MySQL创建索引有两种语法，即： </p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">1、ALTER TABLE HeadOfState ADD INDEX(LastName,FirstName); </span><br><span class="line">2、CREATE INDEX index_name HeadOfState(LastName,FirstName);</span><br></pre></td></tr></table></figure>
+
+<p>那么，这两种语法有什么区别呢？</p>
+<ol>
+<li><code>CREATE INDEX</code>必须提供索引名，对于 <code>ALTER TABLE</code>，如果你不提供索引名，将会自动创建；</li>
+<li><code>CREATE INDEX</code>一个语句一次只能建立一个索引， <code>ALTER TABLE</code>可以在一个语句建立多个，如：<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">ALTER TABLE HeadOfState ADD PRIMARY KEY(ID),ADD INDEX(LastName,FirstName);</span><br></pre></td></tr></table></figure></li>
+<li>只有 <code>ALTER TABLE</code>才能创建主键；</li>
+</ol>
+<h4 id="11-强制索引"><a href="#11-强制索引" class="headerlink" title="11. 强制索引"></a>11. 强制索引</h4><p>MYSQL中强制索引查询使用： </p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">SELECT * FROM table FORCE INDEX(indexname);</span><br></pre></td></tr></table></figure>
+
+<p>SQLite中强制索引查询使用： </p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">SELECT * FROM table INDEXED BY indexname;</span><br></pre></td></tr></table></figure>
+
+<h4 id="12-严格模式"><a href="#12-严格模式" class="headerlink" title="12. 严格模式"></a>12. 严格模式</h4><p>mysql的 <code>datetime</code>类型无法插入’0000-00-00 00:00:00’,这是因为mysql开启了严格模式。</p>
+<p>输入<code>SELECT@@sql_mode</code> </p>
+<p>得到如下结果： </p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION</span><br></pre></td></tr></table></figure>
+
+<p>可以看到结果里面有 <code>NO_ZERO_IN_DATE,NO_ZERO_IN_DATE</code>。把这两个去掉，再重新设置即可。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">SET GLOBAL sql_mode&#x3D;&#39;ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION&#39;;</span><br></pre></td></tr></table></figure>
+
+<p><strong>玄学</strong>：在Navicat Premium上不行，但在mysql终端上可行。</p>
+<h4 id="13-MYSQL子查询的坑"><a href="#13-MYSQL子查询的坑" class="headerlink" title="13. MYSQL子查询的坑"></a>13. MYSQL子查询的坑</h4><p>MySQL的 <code>UPDATE</code>或 <code>DELETE</code>中子查询不能为同一张表，可将查询结果再次 <code>SELECT</code>。</p>
+<p>在MySQL中还有一个坑，需要给子查询添加<strong>别名</strong>， 不然会抛出错误：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">ERROR 1248 (42000): Every derived table must have its own alias</span><br></pre></td></tr></table></figure>
+
+<h4 id="14-字符长度函数"><a href="#14-字符长度函数" class="headerlink" title="14. 字符长度函数"></a>14. 字符长度函数</h4><p><code>char_length()</code>: 统计的是字符长度，而 <code>LENGTH()</code>函数统计的是字符串的字节长度，所以 <code>LENGTH(&#39;中&#39;)</code>在utf8下的结果是3，而 <code>char_length(&#39;中&#39;)</code>的结果仍然是1。</p>
+<h4 id="15-EXISTS的用法"><a href="#15-EXISTS的用法" class="headerlink" title="15. EXISTS的用法"></a>15. EXISTS的用法</h4><p><strong>EXISTS对外表用loop逐条查询</strong>，每次查询都会查看 <code>EXISTS</code>的条件语句，当 <code>EXISTS</code>里的条件语句能够返回记录行时(无论记录行是的多少)，只要能返回，条件就为真。并返回当前loop到的这条记录;</p>
+<p>反之如果 <code>EXISTS</code>里的条件语句不能返回记录行，则当前loop到的这条记录被丢弃， <code>EXISTS</code>的条件就像一个bool条件，当能返回结果集则为true，不能返回结果集则为 false。</p>
+<p>简而言之，使用 <code>EXISTS</code>需要建立内外关联。</p>
+<ul>
+<li>没有建立内外关联，等价于： <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">SELECT b.emp_no FROM employees b</span><br><span class="line">WHERE  EXISTS (SELECT emp_no FROM dept_emp)</span><br></pre></td></tr></table></figure>
+
+
+</li>
+</ul>
+<ul>
+<li>建立内外关联，等价于:<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">SELECT b.emp_no FROM employees b</span><br><span class="line">WHERE  EXISTS (SELECT emp_no FROM dept_emp WHERE b.emp_no&#x3D;emp_no)</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<h2 id="5、注意"><a href="#5、注意" class="headerlink" title="5、注意"></a>5、注意</h2><p>在使用markdown语言编写时，注意 </p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#96;&#96;&#96;后面不要加空格，要不然会出现排版错误！</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>数据库</category>
+        <category>面试</category>
+      </categories>
+      <tags>
+        <tag>数据库</tag>
+        <tag>SQL</tag>
+        <tag>面试</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Python内置数据结构原理与性能简易分析</title>
+    <url>/2020/07/27/Python%E5%86%85%E7%BD%AE%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%8E%9F%E7%90%86%E4%B8%8E%E6%80%A7%E8%83%BD%E7%AE%80%E6%98%93%E5%88%86%E6%9E%90/</url>
+    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>对于一些算法题，可以使用Python自带的内置函数解决。但很多时候用就用了，根本不知道内部的细节。这样的话，算时间复杂度**和空间复杂度就很有问题。</p>
+<p>因此，我最近几天查阅了网上相关资料，并进行归纳和整理。开始我以为复制粘贴就行了，但是呢，我发现有很多东西都没解释得清楚与透彻，在研读的过程中，我经常很懵逼，更有时候，我都怀疑自己智商了。</p>
+<p>最后不得不逼得自己还读了相关源码。越看源码，越发现有很多可以分析的，但是考虑到篇幅和时间，就先打住，以后再整个进阶版。</p>
+<p>整理完这个以后，我认为呀，不管什么东西还是得追本溯源，这样才靠谱。</p>
+<h2 id="前提说明"><a href="#前提说明" class="headerlink" title="前提说明"></a>前提说明</h2><p>时间复杂度是参考官网:<br><a href="https://wiki.python.org/moin/TimeComplexity" target="_blank" rel="noopener">https://wiki.python.org/moin/TimeComplexity</a></p>
+<p>此页面记录了当前CPython中各种操作的时间复杂度（又名“Big O”或“大欧”）。其他Python实现（或CPython的旧版本或仍在开发版本）可能具有略微不同的性能特征。但是, 通常可以安全地假设它们的速度不超过<code>O(log n)</code>。 </p>
+<p>在所有即将介绍的表格中，<code>n</code>是容器中当前元素的数量，<code>k</code>是参数的值或参数中的元素数。</p>
+<p>本文先上结论再进行分析，有助于带着问题去思考答案。</p>
+<h2 id="性能总结"><a href="#性能总结" class="headerlink" title="性能总结"></a>性能总结</h2><p>1、Python 字典中使用了 hash table，因此查找操作的复杂度为 O(1)，而 list 实际是个数组，在 list 中，查找需要遍历整个 list，其复杂度为 O(n)，因此对成员的查找访问等操作字典要比 list 更快。<br>2、set 的 union， intersection，difference 操作要比 list 的迭代要快。因此如果涉及到求 list 交集，并集或者差的问题可以转换为 set 来操作。<br>3、需要频繁在两端插入或者删除元素，可以选择双端队列。</p>
+<h2 id="1、列表-list"><a href="#1、列表-list" class="headerlink" title="1、列表(list)"></a>1、列表(list)</h2><p>可直接使用，无须调用。</p>
+<h3 id="列表实现原理"><a href="#列表实现原理" class="headerlink" title="列表实现原理"></a>列表实现原理</h3><p>列表是以<strong>数组</strong>（Array）实现的，这个数组是 <strong>over-allocate</strong> 数组。顾名思义，当底层数组容量满了而需要扩充的时候，python依据规则会扩充多个位置出来。比如初始化列表array=[1, 2, 3, 4]，向其中添加元素23，此时array对应的底层数组，扩充后的容量不是5，而是8。这就是over-allocate的意义，即扩充容量的时候会多分配一些存储空间。如图1，展示了<code>l.insert(1,5)</code> 的操作。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/1.png" alt="图1. insert操作"></p>
+<p>这里说下，列表的增长模式为：0，4，8，16，25，35，46，58，72，88…</p>
+<h3 id="列表函数的时间复杂度"><a href="#列表函数的时间复杂度" class="headerlink" title="列表函数的时间复杂度"></a>列表函数的时间复杂度</h3><p>如果要更好地理解列表，就必须熟悉<strong>数组</strong>这种数据结构。如图 2所示，为列表相关函数的时间复杂度。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/2.png" alt="图2. 列表函数的时间复杂度"></p>
+<h3 id="列表函数讲解"><a href="#列表函数讲解" class="headerlink" title="列表函数讲解"></a>列表函数讲解</h3><ul>
+<li>append()方法是指在列表末尾增加一个数据项，这里的表强调的是插入1个元素，即没有扩容。</li>
+<li>extend()方法是指在列表末尾增加一个数据集合；</li>
+<li>insert()方法是指在某个特定位置前面增加一个数据项，需要移动其他元素位置；</li>
+<li>len()方法获取列表内元素的个数，因为在列表实现中，其内部维护了一个 <code>Py_ssize_t</code> 类型的变量表示列表内元素的个数，因此时间复杂度为O(1)；</li>
+<li>sort()方法是排序，网上有原理讲解，使用的是 <strong>Timesort</strong> 排序，该排序结合了合并排序（merge sort）和插入排序（insertion sort）而得出的排序算法，它在现实中有很好的效率。空间复杂度为O(n)。其排序的过程大致为，对输入的数字进行分区，然后再进行合并；</li>
+</ul>
+<h3 id="性能分析"><a href="#性能分析" class="headerlink" title="性能分析"></a>性能分析</h3><p>通过对上表的分析可以发现，列表不太适合做元素的<strong>查找</strong>、<strong>删除</strong>、<strong>插入</strong>等操作，因为这些都要遍历列表，对应的时间复杂度为O(n)。</p>
+<p>访问某个<strong>索引</strong>的元素、<strong>尾部</strong>添加元素(append)或删除(pop last)元素这些操作比较适合用列表做，对应的时间复杂度为O(1)。</p>
+<p>根据官方上说，列表最大的开销发生在<strong>超过了当前所分配的列表大小</strong>，这是因为，所有元素都需要移动；或者是在起始位置附近插入或者删除元素，这种情况下所有在该位置后面的元素都需要移动。如果你需要在一个队列的两端进行增删的操作，应当使用<code>collections.deque</code>。</p>
+<p>如果我们要在业务开发中，判断一个value是否在一个数据集中，如果数据集用列表存储，那此时的判断操作就很耗时，如果我们用hash table（set or dict）来存储，则比较轻松。</p>
+<h2 id="2、双端队列-collections-deque"><a href="#2、双端队列-collections-deque" class="headerlink" title="2、双端队列(collections.deque)"></a>2、双端队列(collections.deque)</h2><p>使用时，需要导入：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">from collection import deque</span><br></pre></td></tr></table></figure>
+
+<h3 id="双端队列实现原理"><a href="#双端队列实现原理" class="headerlink" title="双端队列实现原理"></a>双端队列实现原理</h3><p>deque（双端队列）是以<strong>双向链表</strong>的形式实现的。（好吧, 一个数组列表而不是对象, 以提高效率）。</p>
+<p>为了更好地理解这种结构，可以参照 GitHub 上 CPython collections 模块的第二个 commit 的源码。注释在文末的附录下面。</p>
+<p>这里根据注释，我画了一个不太准确的图，其实leftblock和rightblock都是要存储数据的。但在下图，没有标明。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/3.png" alt="图3. 存储图"></p>
+<p>参考资料4，单个block的结构体示意图如下：</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/4.png" alt="图4. block"></p>
+<p>总结来说，deque 内部将一组内存块组织成<strong>双向链表</strong>的形式，每个内存块可以看成一个 Python 对象的数组， 这个数组与普通数据不同，它是从数组中部往头尾两边填充数据，而平常所见数组大都是从头往后。 正因为这个特性，所以叫双端队列。</p>
+<h3 id="双端队列时间复杂度"><a href="#双端队列时间复杂度" class="headerlink" title="双端队列时间复杂度"></a>双端队列时间复杂度</h3><p>如图所示，为双端队列的相关函数的时间复杂度。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/5.png" alt="图5. 双端队列时间复杂度"></p>
+<h3 id="双端队列函数讲解"><a href="#双端队列函数讲解" class="headerlink" title="双端队列函数讲解"></a>双端队列函数讲解</h3><p>在这种数据结构下，append方法是怎么实现的呢？</p>
+<ol>
+<li>如果 rightblock 可以容纳更多的元素，则放在 rightblock 中</li>
+<li>如果不能，就新建一个 block，然后更新若干指针，将元素放在更新后的 rightblock 中。</li>
+</ol>
+<h3 id="性能分析-1"><a href="#性能分析-1" class="headerlink" title="性能分析"></a>性能分析</h3><p>得益于 deque 这样的结构，它的 pop/popleft/append/appendleft 四种操作的时间复杂度均是 O(1), 用它来实现队列、栈会非常方便和高效。</p>
+<p>虽然双端队列中的元素可以从两端弹出，并且队列任意一端都可以入队和出队，但其限定<strong>插入和删除操作在表的两端进行</strong>。 由于这样，查找双端队列中间的元素较为缓慢, 增删元素就更慢了。</p>
+<h2 id="3、字典-dict"><a href="#3、字典-dict" class="headerlink" title="3、字典(dict)"></a>3、字典(dict)</h2><p>可直接使用，无须调用。</p>
+<h3 id="字典实现原理"><a href="#字典实现原理" class="headerlink" title="字典实现原理"></a>字典实现原理</h3><p>　在Python中，字典是通过<strong>哈希表</strong>实现的。也就是说，字典是一个数组，而数组的<strong>索引</strong>是经过哈希函数处理后得到的。要理解字典，必须对哈希表这种数据结构比较熟悉。下图6为哈希表的一个逻辑判断：</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/6.png" alt="图6. 哈希表判断"></p>
+<p>这里要注意几点：</p>
+<ul>
+<li>使用散列值的一部分进行定位</li>
+<li>散列冲突时，使用散列值的另一部分，如果这一部分是包含原始Key的信息，那么不同的Key通过比较就能区分出来。</li>
+</ul>
+<p>你可能会问，取哈希值的一部分是怎么取得呢？下图7给了一个种方式，就是将计算得到哈希值 &amp; 数组的长度。</p>
+<p>同时，由这张图，我们可以发现Python的哈希函数在键彼此连续的时候表现得很理想，这主要是考虑到通常情况下处理的都是这类形式的数据。然而，一旦我们添加了键’z’就会出现冲突，因为这个键值并不毗邻其他键，且相距较远。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/7.png" alt="图7. 哈希映射"></p>
+<p>先要声明的是，针对python的不同版本，dict的实现还有所不同，较为详细的介绍请参考资料[6]。老字典只使用一张hash，而新字典还使用了一张Indices表来辅助。这里的indices才是真正的散列表哦，下来列出新的结构：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">indices &#x3D; [None, None, index, None, index, None, index]</span><br><span class="line"></span><br><span class="line">enteies &#x3D; [ [hash0, key0, value0],  [hash1, key1, value1],  [hash2, key2, value2]]</span><br></pre></td></tr></table></figure>
+
+<h4 id="字典存储过程："><a href="#字典存储过程：" class="headerlink" title="字典存储过程："></a>字典存储过程：</h4><ul>
+<li>计算key的hash值 ( <code>hash(key)</code> )，再和mask做与操作 ( <code>mask=字典最小长度（IndicesDictMinSize）- 1</code> )，运算后会得到一个数字index，这个index就是要插入的indices的下标位置（注：具体算法与Python版本相关，并不一定一样）；</li>
+<li>得到index后，会找到indices的位置，但是此位置不是存的hash值，而是存的<code>len(enteies)</code>，表示该值在enteies中的位置；</li>
+<li>如果出现hash冲突，则会继续向下寻找空位置（略有变化的开放寻址），一直到找到剩余空位为止。</li>
+</ul>
+<h4 id="字典查找过程："><a href="#字典查找过程：" class="headerlink" title="字典查找过程："></a>字典查找过程：</h4><ul>
+<li>计算 hash(key)，得到hash_value ;</li>
+<li>计算 <code>hash_value &amp; ( len(indices) - 1)</code>，得到一个数字index ;</li>
+<li>计算 indices[index] 的值，得到 entry_index ;</li>
+<li>计算 enteies[entey_index] 的值 ，为最终值。</li>
+</ul>
+<p>为方便理解，这里我做了一个图，可以看到 <strong>indices</strong> 起到一个桥梁的作用。画完这个图，再感叹一句，设计还是挺巧妙的。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/8.png" alt="图8. 字典示意图"></p>
+<p>这里补充下，关于哈希冲突，是怎么寻找下一个数组位置的。源码中用到的是以下公式：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">j &#x3D; ((5*j) + 1) mod 2**i</span><br></pre></td></tr></table></figure>
+
+<p>这里的 <code>j</code> 有两层含义，赋值号左边的为数组的下一个下标，赋值号右边的是当前发生冲突的下标。而 <code>2 ** i</code>可以理解数组长度。举例说明，对于要给size大小为<code>2 ** 3</code>来说：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">j_prev &#x3D; 0 ; j_next &#x3D; ((5 * 0) + 1) mod 8 &#x3D; 1  </span><br><span class="line">j_prev &#x3D; 1 ; j_next &#x3D; ((5 * 1) + 1) mod 8  &#x3D; 6</span><br><span class="line">j_prev &#x3D; 6 ; j_next &#x3D; ((5 * 6) + 1) mod 8  &#x3D; 7</span><br><span class="line">j_prev &#x3D; 7 ; j_next &#x3D; ((5 * 7) + 1) mod  8 &#x3D; 4</span><br><span class="line">j_prev &#x3D; 4 ; j_next &#x3D; ((5 * 4 ) + 1) mod 8 &#x3D; 5</span><br></pre></td></tr></table></figure>
+
+<p>以此类推，最后回到起点为0。以下就是哈希冲突的轨迹</p>
+<p>0 -&gt; 1 -&gt; 6 -&gt; 7 -&gt; 4 -&gt; 5 -&gt; 2 -&gt; 3 -&gt; 0 [and here it’s repeating]</p>
+<h3 id="字典函数的时间复杂度"><a href="#字典函数的时间复杂度" class="headerlink" title="字典函数的时间复杂度"></a>字典函数的时间复杂度</h3><p>下列字典的平均情况基于以下假设：</p>
+<ol>
+<li>对象的散列函数足够撸棒（robust）, 不会发生冲突。</li>
+<li>字典的键是从所有可能的键的集合中随机选择的。</li>
+</ol>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/9.png" alt="图9. 字典函数的时间复杂度"></p>
+<p>小窍门：只使用字符串作为字典的键。这么做虽然不会影响算法的时间复杂度, 但会对常数项产生显著的影响, 这决定了你的一段程序能多快跑完。</p>
+<h3 id="字典函数说明"><a href="#字典函数说明" class="headerlink" title="字典函数说明"></a>字典函数说明</h3><ol>
+<li>这些操作依赖于“摊销最坏情况”的“摊销”部分。根据容器的历史, 个别动作可能需要很长时间。</li>
+<li>对于这些操作, 最坏的情况n是<strong>容器达到的最大尺寸</strong>, 而不仅仅是当前的大小。例如, 如果一个N个元素的字典, 然后删除N-1个元素, 这个字典会重新为N个元素调整大小, 而不是当前的一个元素, 所以时间复杂度是O(n)。</li>
+</ol>
+<h3 id="字典性能分析"><a href="#字典性能分析" class="headerlink" title="字典性能分析"></a>字典性能分析</h3><p>字典的查询、添加、删除的平均时间复杂度都是O(1)，相比列表与元祖，性能更优。但是，如果发生散列冲突，或者容器需要扩充，那么时间复杂度就要考虑最差的情况 O(n)。所以说字典及其依赖哈希算法，真正要灵活运用词典时，还需要查看底层的哈希算法。</p>
+<h2 id="4、集合-set"><a href="#4、集合-set" class="headerlink" title="4、集合(set)"></a>4、集合(set)</h2><p>dict与set实现原理是一样的，都是将实际的值放到list中。唯一不同的在于hash函数操作的对象，对于dict，hash函数操作的是其key，而对于set是直接操作的它的元素。</p>
+<p>假设操作内容为x，其作为因变量，放入hash函数，通过运算后取list的余数，转化为一个list的下标，此下标位置对于set而言用来放其本身。</p>
+<p>而对于dict则是创建了两个list，一个listf存储哈希表对应的下标，另一个list中存储哈希表具体对应的值。</p>
+<p>这里为了更好地理解，对比上面字典那个图，我尝试画一个图。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/10.png" alt="图10. 集合映射"></p>
+<h3 id="集合函数的时间复杂度"><a href="#集合函数的时间复杂度" class="headerlink" title="集合函数的时间复杂度"></a>集合函数的时间复杂度</h3><p>下图是函数的时间复杂度：</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/11.png" alt="图11. 集合时间复杂度"></p>
+<h3 id="集合性能分析"><a href="#集合性能分析" class="headerlink" title="集合性能分析"></a>集合性能分析</h3><p>由源码得知, 求差集（s-t, 或s.difference(t)）运算与更新为差集（s.difference_uptate(t)）运算的时间复杂度并不相同！</p>
+<ul>
+<li>第一个是O(len(s))（对于s中的每个元素, 如果不在t中, 将它添加到新集合中）。</li>
+<li>第二个是O(len(t))（对于t中的每个元素, 将其从s中删除）。</li>
+</ul>
+<p>因此, 必须注意哪个是首选, 取决于哪一个是最长的集合以及是否需要新的集合。</p>
+<p>集合的s-t运算中, s和t都要是set类型。如果t不是set类型, 但是是可迭代的, 你可以使用等价的方法达到目的, 比如 s.difference(l), l是个list类型。</p>
+<p>另外，列表的一些集合运算，可以转成集合类型来操作，速度更快。</p>
+<h2 id="给自己留一个坑"><a href="#给自己留一个坑" class="headerlink" title="给自己留一个坑"></a>给自己留一个坑</h2><p>自己也尝试读了一下一些数据结构的源码，虽然很多看不懂，但是抓到一些关键信息。比如下面的代码和图片。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">static Py_ssize_t</span><br><span class="line">list_length(PyListObject *a)</span><br><span class="line">&#123;</span><br><span class="line">return Py_SIZE(a);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>下图12为dictobject.c里的一个函数：<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/61/12.png" alt="图12. 集合时间复杂度"></p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p>[1]  <a href="https://zhuanlan.zhihu.com/p/64841133" target="_blank" rel="noopener">Python内置方法的时间复杂度</a> </p>
+<p>[2] <a href="https://wiki.python.org/moin/TimeComplexity" target="_blank" rel="noopener">TimeComplexity</a></p>
+<p>[3] <a href="https://www.jianshu.com/p/a2c98df9cfae" target="_blank" rel="noopener">python list 之时间复杂度分析</a></p>
+<p>[4] <a href="https://www.cnblogs.com/bonelee/p/11433743.html" target="_blank" rel="noopener">How collections.deque works?</a>，</p>
+<p>[5] <a href="https://zhuanlan.zhihu.com/p/45871870" target="_blank" rel="noopener">深入 Python 列表的内部实现</a>；</p>
+<p>[6] <a href="https://zhuanlan.zhihu.com/p/74003719" target="_blank" rel="noopener">Python字典dict实现原理</a></p>
+<h2 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h2><h3 id="Cpython-list-部分源码注释"><a href="#Cpython-list-部分源码注释" class="headerlink" title="Cpython list 部分源码注释"></a>Cpython list 部分源码注释</h3><p>源码地址传送门：<br><a href="https://github.com/python/cpython/blob/master/Objects/listobject.c" target="_blank" rel="noopener">https://github.com/python/cpython/blob/master/Objects/listobject.c</a></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;* This over-allocates proportional to the list size, making room</span><br><span class="line">* for additional growth. The over-allocation is mild, but is</span><br><span class="line">* enough to give linear-time amortized behavior over a long</span><br><span class="line">* sequence of appends() in the presence of a poorly-performing</span><br><span class="line">* system realloc().</span><br><span class="line">* Add padding to make the allocated size multiple of 4.</span><br><span class="line">* The growth pattern is: 0, 4, 8, 16, 24, 32, 40, 52, 64, 76, ...</span><br><span class="line">* Note: new_allocated won&#39;t overflow because the largest possible value</span><br><span class="line">* is PY_SSIZE_T_MAX * (9 &#x2F; 8) + 6 which always fits in a size_t.</span><br><span class="line">*&#x2F;</span><br></pre></td></tr></table></figure>
+<h3 id="Cpython-collections-部分源码注释"><a href="#Cpython-collections-部分源码注释" class="headerlink" title="Cpython collections 部分源码注释"></a>Cpython collections 部分源码注释</h3><p>源码地址传送门：<br><a href="https://github.com/python/cpython/blob/master/Modules/_collectionsmodule.c" target="_blank" rel="noopener">https://github.com/python/cpython/blob/master/Modules/_collectionsmodule.c</a></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;* The block length may be set to any number over 1.  Larger numbers</span><br><span class="line">* reduce the number of calls to the memory allocator but take more</span><br><span class="line">* memory.  Ideally, BLOCKLEN should be set with an eye to the</span><br><span class="line">* length of a cache line.</span><br><span class="line">*&#x2F;</span><br><span class="line"></span><br><span class="line">#define BLOCKLEN 62</span><br><span class="line">#define CENTER ((BLOCKLEN - 1) &#x2F; 2)</span><br><span class="line">&#x2F;* A &#96;dequeobject&#96; is composed of a doubly-linked list of &#96;block&#96; nodes.</span><br><span class="line">* This list is not circular (the leftmost block has leftlink&#x3D;&#x3D;NULL,</span><br><span class="line">* and the rightmost block has rightlink&#x3D;&#x3D;NULL).  A deque d&#39;s first</span><br><span class="line">* element is at d.leftblock[leftindex] and its last element is at</span><br><span class="line">* d.rightblock[rightindex]; note that, unlike as for Python slice</span><br><span class="line">* indices, these indices are inclusive on both ends.  By being inclusive</span><br><span class="line">* on both ends, algorithms for left and right operations become</span><br><span class="line">* symmetrical which simplifies the design.</span><br><span class="line">* The list of blocks is never empty, so d.leftblock and d.rightblock</span><br><span class="line">* are never equal to NULL.</span><br><span class="line">* The indices, d.leftindex and d.rightindex are always in the range</span><br><span class="line">*     0 &lt;&#x3D; index &lt; BLOCKLEN.</span><br><span class="line">* Their exact relationship is:</span><br><span class="line">*     (d.leftindex + d.len - 1) % BLOCKLEN &#x3D;&#x3D; d.rightindex.</span><br><span class="line">* Empty deques have d.len &#x3D;&#x3D; 0; d.leftblock&#x3D;&#x3D;d.rightblock;</span><br><span class="line">* d.leftindex &#x3D;&#x3D; CENTER+1; and d.rightindex &#x3D;&#x3D; CENTER.</span><br><span class="line">* Checking for d.len &#x3D;&#x3D; 0 is the intended way to see whether d is empty.</span><br><span class="line">* Whenever d.leftblock &#x3D;&#x3D; d.rightblock,</span><br><span class="line">*     d.leftindex + d.len - 1 &#x3D;&#x3D; d.rightindex.</span><br><span class="line">* However, when d.leftblock !&#x3D; d.rightblock, d.leftindex and d.rightindex</span><br><span class="line">* become indices into distinct blocks and either may be larger than the</span><br><span class="line">* other.</span><br><span class="line">*&#x2F;</span><br></pre></td></tr></table></figure>
+<h3 id="Cpython-dict源码部分注释"><a href="#Cpython-dict源码部分注释" class="headerlink" title="Cpython dict源码部分注释"></a>Cpython dict源码部分注释</h3><p>源码地址传送门：<br><a href="https://github.com/python/cpython/blob/master/Objects/dictobject.c" target="_blank" rel="noopener">https://github.com/python/cpython/blob/master/Objects/dictobject.c</a></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;*layout:</span><br><span class="line">+---------------+</span><br><span class="line">| dk_refcnt         |</span><br><span class="line">| dk_size            |</span><br><span class="line">| dk_lookup       |</span><br><span class="line">| dk_usable        |</span><br><span class="line">| dk_nentries      |</span><br><span class="line">+---------------+</span><br><span class="line">| dk_indices       |</span><br><span class="line">|                         |</span><br><span class="line">+---------------+</span><br><span class="line">| dk_entries       |</span><br><span class="line">|                     |</span><br><span class="line">+---------------+</span><br><span class="line"></span><br><span class="line">dk_indices is actual hashtable. It holds index in entries, or DKIX_EMPTY(-1) or</span><br><span class="line">DKIX_DUMMY(-2).</span><br><span class="line">dk_entries is array of PyDictKeyEntry. Its size is USABLE_FRACTION(dk_size).DK_ENTRIES(dk) can be used to get pointer to entries.</span><br><span class="line">The first half of collision resolution is to visit table indices via this</span><br><span class="line">recurrence:</span><br><span class="line"></span><br><span class="line">But catering to unusual cases should not slow the usual ones, so we just take the last i bits anyway. It&#39;s up to collision resolution to do the rest. If</span><br><span class="line">we *usually* find the key we&#39;re looking for on the first try (and, it turns out, we usually do -- the table load factor is kept under 2&#x2F;3, so the odds</span><br><span class="line">are solidly in our favor), then it makes best sense to keep the initial index computation dirt cheap.</span><br><span class="line"></span><br><span class="line">j &#x3D; ((5*j) + 1) mod 2**i</span><br><span class="line"></span><br><span class="line">For any initial j in range(2**i), repeating that 2**i times generates each</span><br><span class="line">int in range(2**i) exactly once (see any text on random-number generation for</span><br><span class="line">proof). By itself, this doesn&#39;t help much: like linear probing (setting</span><br><span class="line">j +&#x3D; 1, or j -&#x3D; 1, on each loop trip), it scans the table entries in a fixed</span><br><span class="line">order. This would be bad, except that&#39;s not the only thing we do, and it&#39;s</span><br><span class="line">actually *good* in the common cases where hash keys are consecutive. </span><br><span class="line"></span><br><span class="line">In an example that&#39;s really too small to make this entirely clear, for a table of</span><br><span class="line">size 2**3 the order of indices is:</span><br><span class="line">0 -&gt; 1 -&gt; 6 -&gt; 7 -&gt; 4 -&gt; 5 -&gt; 2 -&gt; 3 -&gt; 0 [and here it&#39;s repeating]</span><br><span class="line">*&#x2F;</span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>数据结构</category>
+        <category>python</category>
+      </categories>
+      <tags>
+        <tag>python</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>给你一百元，帮我买100只鸡回来</title>
+    <url>/2020/07/30/%E7%BB%99%E4%BD%A0%E4%B8%80%E7%99%BE%E5%85%83%EF%BC%8C%E5%B8%AE%E6%88%91%E4%B9%B0100%E5%8F%AA%E9%B8%A1%E5%9B%9E%E6%9D%A5/</url>
+    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本篇是大学《算法》课程的实验报告，这份报告包含了从原理分析到实验结果展示，有理有据地证明了好的方案会是多么地高效。</p>
+<h2 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h2><p>我国古代数学家张丘建在《算经》一书中曾提出过著名的「百钱买百鸡」问题，该问题叙述如下：鸡翁一，值钱五；鸡母一，值钱三；鸡雏三，值钱一；百钱买百鸡，则翁、母、雏各几何？</p>
+<p>翻译过来，公鸡一个五块钱，母鸡一个三块钱，小鸡三个一块钱，现在要用一百块钱买一百只鸡，问公鸡、母鸡、小鸡各多少只？</p>
+<h2 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h2><p>这里，我们先假设：</p>
+<ul>
+<li>a：鸡翁数</li>
+<li>b：鸡母数</li>
+<li>c：鸡雏数</li>
+</ul>
+<h3 id="方案一：穷举法"><a href="#方案一：穷举法" class="headerlink" title="方案一：穷举法"></a>方案一：穷举法</h3><p>三个值的范围如下，让计算机进行循环判断即可。</p>
+<p>$a \in [0,100]$</p>
+<p>$b \in [0,100]$</p>
+<p>$c \in [0,100]$</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">n&#x3D;100</span><br><span class="line">if((a+b+c &#x3D;&#x3D; n)&amp;&amp;(5*a + 3*b + c&#x2F;3 &#x3D;&#x3D; n)&amp;&amp;(c%3&#x3D;&#x3D;0))</span><br><span class="line">&#123; OK!&#125;</span><br></pre></td></tr></table></figure>
+
+<p>三层遍历循环，该方案的时间复杂度即为$O(n^3)$</p>
+<h3 id="方案二：变量代替法"><a href="#方案二：变量代替法" class="headerlink" title="方案二：变量代替法"></a>方案二：变量代替法</h3><p>在算法1的基础上，将搜索的范围和层数缩小。</p>
+<p>$c = 100 - a -b$</p>
+<p>$a \in [0,100/5]$</p>
+<p>$b \in [0,100/3]$</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">n &#x3D; 100</span><br><span class="line">c &#x3D; n -a-b;</span><br><span class="line">if(5*a + 3*b + c&#x2F;3 &#x3D;&#x3D; n &amp;&amp; c%3&#x3D;&#x3D;0)</span><br><span class="line">&#123;OK!&#125;</span><br></pre></td></tr></table></figure>
+
+<p>两层遍历循环，该方案的时间复杂度即为$O(n^2)$</p>
+<h3 id="方案三：推导法"><a href="#方案三：推导法" class="headerlink" title="方案三：推导法"></a>方案三：推导法</h3><p>这里，我们进行推导，很容易就知道要满足下面这两个条件：<br>$$<br>        \begin{cases}<br>        5 a + 3 b + \frac 13  c = 100 \<br>        a + b +  c = 100<br>        \end{cases}<br>$$<br>消除$c$后<br>$$<br>        7a + 4b = 100<br>$$<br>为了消除$b$前面的系数4，不妨令$a = 4k$ ,即$b=25-7k$ ,由$a$和$b$的范围可得：</p>
+<p>$$<br>        \begin{cases}<br>        0 \leq 4k \leq 20\<br>        0\leq 25-7k \leq \frac {100}3<br>        \end{cases}<br>$$<br>解出$k$的范围为$k\in[0,\frac {25}7]$<br>只要遍历$k$的值，即可求解，该方案的时间复杂度即为$O(n)$</p>
+<h2 id="实验对照"><a href="#实验对照" class="headerlink" title="实验对照"></a>实验对照</h2><p>下面我们将计算机得到的结果进行罗列，让我们能更好地对三种算法进行比较。</p>
+<h3 id="实验可能的解"><a href="#实验可能的解" class="headerlink" title="实验可能的解"></a>实验可能的解</h3><p>公鸡0只，母鸡25只，小鸡75只;</p>
+<p>公鸡4只，母鸡18只，小鸡78只;</p>
+<p>公鸡8只，母鸡11只，小鸡81只;</p>
+<p>公鸡12只，母鸡4只，小鸡84只;</p>
+<h3 id="实验对比："><a href="#实验对比：" class="headerlink" title="实验对比："></a>实验对比：</h3><p>这里我们为了测试三种算法到底差别多少，不妨将规模提升到n元买n鸡问题。</p>
+<p>软件：codeblocks </p>
+<p><em>表格1：三种算法对比</em></p>
+<table>
+<thead>
+<tr>
+<th>规模</th>
+<th>算法1</th>
+<th>算法2</th>
+<th>算法3</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>n=100</td>
+<td>0.01s</td>
+<td>&lt;0.0000001s</td>
+<td>&lt;0.0000001s</td>
+</tr>
+<tr>
+<td>n=6000</td>
+<td>616.14s</td>
+<td>0.31s</td>
+<td>0.14s</td>
+</tr>
+<tr>
+<td>n=50000</td>
+<td>&gt;1000s</td>
+<td>1.31s</td>
+<td>0.24s</td>
+</tr>
+<tr>
+<td>n=200000</td>
+<td>&gt;1000s</td>
+<td>10.90s</td>
+<td>1.00s</td>
+</tr>
+<tr>
+<td>n=500000</td>
+<td>&gt;1000s</td>
+<td>64.82s</td>
+<td>2.66s</td>
+</tr>
+<tr>
+<td>n=800000</td>
+<td>&gt;1000s</td>
+<td>148.63s</td>
+<td>3.61s</td>
+</tr>
+<tr>
+<td>n=2000000</td>
+<td>&gt;1000s</td>
+<td>920.05s</td>
+<td>9.86s</td>
+</tr>
+<tr>
+<td>n=5000000</td>
+<td>&gt;1000s</td>
+<td>&gt;1000s</td>
+<td>30.61s</td>
+</tr>
+<tr>
+<td>n=10000000</td>
+<td>&gt;1000s</td>
+<td>&gt;1000s</td>
+<td>59.81s</td>
+</tr>
+</tbody></table>
+<h3 id="结果分析"><a href="#结果分析" class="headerlink" title="结果分析"></a>结果分析</h3><p>当算法1到了n=6000以上的规模，就需要花费大量时间，超过1000s。</p>
+<p>算法2与算法3在n=50000开始显示出差别，随着n的提升，两个算法之间耗时差距越来越大。</p>
+<p>当n=2000000时，算法2需要消耗920s，而算法3只需要9.86s。</p>
+<p>当n=10000000时，算法3耗时59.819s，相当于算法二在n=500000时所用的时间。</p>
+<p>可见当我们的规模越大时，时间消耗的差距就会体现的越大。</p>
+<h3 id="完整代码"><a href="#完整代码" class="headerlink" title="完整代码"></a>完整代码</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">int g[1000000],m[1000000],s[1000000];</span><br><span class="line">void chicken_question(int n,int &amp;k,int g[],int m[],int s[]);</span><br><span class="line">void chicken_question2(int n,int &amp;k,int g[],int m[],int s[]);</span><br><span class="line">void chicken_question3(int n,int &amp;k,int g[],int m[],int s[]);</span><br><span class="line"></span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">int k&#x3D;0;</span><br><span class="line">int n&#x3D;15000000,c&#x3D;0;</span><br><span class="line">double  duration1,duration2,duration3;</span><br><span class="line">clock_t start, finish;</span><br><span class="line">printf(&quot;请输入n的值\n&quot;);</span><br><span class="line"></span><br><span class="line">start &#x3D; clock();</span><br><span class="line">chicken_question(n,k,g,m,s);</span><br><span class="line">finish &#x3D; clock();</span><br><span class="line">duration1 &#x3D; (double)(finish - start)&#x2F; CLOCKS_PER_SEC;  &#x2F;&#x2F;转化为秒</span><br><span class="line">printf( &quot;\n算法1运行%d次的时间为%f seconds\n&quot;,n,duration1 );</span><br><span class="line">start &#x3D; clock();</span><br><span class="line">chicken_question2(n,k,g,m,s);</span><br><span class="line">finish &#x3D; clock();</span><br><span class="line">duration2 &#x3D; (double)(finish - start)&#x2F; CLOCKS_PER_SEC;  &#x2F;&#x2F;转化为秒*&#x2F;</span><br><span class="line">start &#x3D; clock();</span><br><span class="line">chicken_question3(n,k,g,m,s);</span><br><span class="line">finish &#x3D; clock();</span><br><span class="line">duration3 &#x3D; (double)(finish - start)&#x2F; CLOCKS_PER_SEC;  &#x2F;&#x2F;转化为秒</span><br><span class="line">printf( &quot;\n算法2运行%d次的时间为%f seconds\n&quot;,n,duration2 );</span><br><span class="line">printf( &quot;\n算法3运行%d次的时间为%f seconds\n&quot;,n,duration3 );</span><br><span class="line">system(&quot;pause&quot;);&#x2F;&#x2F;</span><br><span class="line">return 0;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 公鸡 母鸡 小鸡的数目为 g[] m[] s[]  三种鸡购买的总数目为n  问题的解数目为k</span><br><span class="line">void chicken_question(int n,int &amp;k,int g[],int m[],int s[])</span><br><span class="line">&#123;</span><br><span class="line">int a,b,c;</span><br><span class="line">k &#x3D; 0;</span><br><span class="line">for (a&#x3D;0;a&lt;&#x3D;n;a++)</span><br><span class="line">&#123;</span><br><span class="line">	for(b&#x3D;0;b&lt;&#x3D;n;b++)</span><br><span class="line">	&#123;</span><br><span class="line">		for(c&#x3D;0;c&lt;&#x3D;n;c++)</span><br><span class="line">		&#123;</span><br><span class="line">			  if((a+b+c &#x3D;&#x3D; n)&amp;&amp;(5*a + 3*b + c&#x2F;3 &#x3D;&#x3D; n)&amp;&amp;(c%3&#x3D;&#x3D;0))</span><br><span class="line">			  &#123;</span><br><span class="line">			  g[k] &#x3D; a;</span><br><span class="line">			  m[k] &#x3D; b;</span><br><span class="line">			  s[k] &#x3D; c;</span><br><span class="line">            &#x2F;&#x2F;printf(&quot;g[%d]&#x3D;%d,m[%d]&#x3D;%d,s[%d]&#x3D;%d\n&quot;,k,a,k,b,k,c);</span><br><span class="line">			  k++;</span><br><span class="line"></span><br><span class="line">			  &#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">void chicken_question2(int n,int &amp;k,int g[],int m[],int s[])</span><br><span class="line">&#123;</span><br><span class="line">int i,j,a,b,c;</span><br><span class="line">k &#x3D; 0;</span><br><span class="line">i &#x3D; n&#x2F;5;</span><br><span class="line"> j &#x3D; n&#x2F;3;</span><br><span class="line">for (a&#x3D;0;a&lt;&#x3D;i;a++)</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">	for(b&#x3D;0;b&lt;&#x3D;j;b++)</span><br><span class="line">	&#123;</span><br><span class="line">	    c &#x3D; n -a-b;</span><br><span class="line"> if(5*a + 3*b + c&#x2F;3 &#x3D;&#x3D; n &amp;&amp; c%3&#x3D;&#x3D;0)</span><br><span class="line">			  &#123;</span><br><span class="line">			  g[k] &#x3D; a;</span><br><span class="line">			  m[k] &#x3D; b;</span><br><span class="line">			  s[k] &#x3D; c;</span><br><span class="line">              printf(&quot;g[%d]&#x3D;%d,m[%d]&#x3D;%d,s[%d]&#x3D;%d\n&quot;,k,a,k,b,k,c);</span><br><span class="line">			  k++;</span><br><span class="line">			  &#125;</span><br><span class="line"></span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">void chicken_question3(int n,int &amp;k,int g[],int m[],int s[])</span><br><span class="line">&#123;</span><br><span class="line">int x,y,z;</span><br><span class="line">k &#x3D; 0;</span><br><span class="line">for(int k1&#x3D;0;k1&lt;&#x3D;n&#x2F;28;k1++)</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">    x &#x3D; 4*k1;</span><br><span class="line">    y &#x3D; n&#x2F;4 -7*k1;</span><br><span class="line">    z &#x3D; (3*n)&#x2F;4+3*k1;</span><br><span class="line">       if(5*x + 3*y + z&#x2F;3 &#x3D;&#x3D; n &amp;&amp; z%3&#x3D;&#x3D;0)</span><br><span class="line">        &#123;</span><br><span class="line">            g[k] &#x3D; x;</span><br><span class="line">            m[k] &#x3D; y;</span><br><span class="line">            s[k] &#x3D; z;</span><br><span class="line">            printf(&quot;g[%d]&#x3D;%d,m[%d]&#x3D;%d,s[%d]&#x3D;%d\n&quot;,k,x,k,y,k,z);</span><br><span class="line">            k++;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>]]></content>
   </entry>
   <entry>
     <title>学习正则表达式的简单方法</title>
@@ -768,234 +1077,323 @@ yum-util提供<code>yum-config-manager</code>功能，另外两个是<code>devic
       </tags>
   </entry>
   <entry>
-    <title>牛客网SQL题库一刷总结</title>
-    <url>/2020/09/01/%E7%89%9B%E5%AE%A2%E7%BD%91SQL%E9%A2%98%E5%BA%93%E4%B8%80%E5%88%B7%E6%80%BB%E7%BB%93/</url>
-    <content><![CDATA[<h2 id="1、前言"><a href="#1、前言" class="headerlink" title="1、前言"></a>1、前言</h2><blockquote>
-<p>结构化查询语言(Structured Query Language)简称SQL，是一种特殊目的的编程语言，是一种数据库查询和程序设计语言，用于存取数据以及查询、更新和管理关系数据库系统；同时也是数据库脚本文件的扩展名。</p>
-</blockquote>
-<p>差不多花了一周的时间做完了牛客网平台的61道SQL题，先说一说这个平台的坑:</p>
-<ol>
-<li>题目含糊不清，有一些题没有准确表达意思，会让人产生误解。</li>
-<li>OJ的答案判断比较死板，不是所有正确的解法都能通过。</li>
-<li>难度不是缓慢递增，中间有的题会非常搞人。</li>
-<li>没有提供单独的测试数据，需要去有的题目下面找。</li>
-<li>只支持sqlite，不支持mysql,oracle等其他SQL语言。</li>
-</ol>
-<p>再讲一讲自己的刷题体会：</p>
-<ol>
-<li>比较坑也是一件好事，可以训练思维的全面性，努力去寻找问题的不同切入点。</li>
-<li>不要做完了就直接下一题！我个人最喜欢看评论，因为可以学习到前辈们的思路和解法。 首先，我会在脑海里形成自己的思路，然后和他们的思路进行对比。如果是一致的，哇，我就很开心。 如果不一致，则仔细进行比对，找到我的缺陷。</li>
-<li>SQL语句不是正确通过就万事大吉了，尽可能做多一题多解。分析每种解法的优化性能，找到 对应的使用场景。</li>
-<li>写法要规范，注意缩进，这样每个子语句看起来就比较清晰。</li>
-<li>在动手之前先思考一下，不要上来就急着写。</li>
-<li>了解一些函数，比如窗口函数等，这些是利器。</li>
-</ol>
-<p>如果要二刷，注意以下几点：</p>
-<ol>
-<li>思考题目的真实使用场景，不要单纯做题。</li>
-<li>遇到比较坑的题目，直接跳过，不要多花时间。</li>
-<li>多归纳总结，必要时做一下实验。</li>
-<li>思考一些高阶用法，降维打击。</li>
-</ol>
-<p>二刷先放一下，先去刷一下LeetCode的SQL题。那里的题库更加正规，还有一些企业真题。<br>这么好吗？毕竟是付费的呀 - -。</p>
-<h2 id="2、牛客网OJ平台地址"><a href="#2、牛客网OJ平台地址" class="headerlink" title="2、牛客网OJ平台地址"></a>2、牛客网OJ平台地址</h2><p><a href="https://www.nowcoder.com/ta/sql" target="_blank" rel="noopener">https://www.nowcoder.com/ta/sql</a></p>
-<h2 id="3、详细答题记录-个人整理"><a href="#3、详细答题记录-个人整理" class="headerlink" title="3、详细答题记录(个人整理)"></a>3、详细答题记录(个人整理)</h2><p><a href="https://github.com/HannibalXZX/LearnSQL/tree/master/SQL%E5%AE%9E%E6%88%98-%E7%89%9B%E5%AE%A2%E7%BD%91" target="_blank" rel="noopener">https://github.com/HannibalXZX/LearnSQL/tree/master/SQL%E5%AE%9E%E6%88%98-%E7%89%9B%E5%AE%A2%E7%BD%91</a></p>
-<h2 id="4、-笔记"><a href="#4、-笔记" class="headerlink" title="4、 笔记"></a>4、 笔记</h2><h3 id="01-left-join中on和where的区别"><a href="#01-left-join中on和where的区别" class="headerlink" title="01. left join中on和where的区别"></a>01. left join中on和where的区别</h3><ol>
-<li><code>on</code>条件是在生成临时表时使用的条件，不管on中的条件是否为真，都会返回左边表中的记录。</li>
-<li><code>where</code>条件是在临时表生成好后，再对临时表进行过滤的条件。这时已经没有left join的含义（必须返回左边表的记录）了，条件不为真的就全部过滤掉。</li>
-</ol>
-<h3 id="02-三个连接的简单区别"><a href="#02-三个连接的简单区别" class="headerlink" title="02. 三个连接的简单区别"></a>02. 三个连接的简单区别</h3><ul>
-<li><code>INNER JOIN</code> 两边表同时有对应的数据，即任何一边缺失数据就不显示。</li>
-<li><code>LEFT JOIN</code> 会读取左边数据表的全部数据，即便右边表无对应数据。</li>
-<li><code>RIGHT JOIN</code> 会读取右边数据表的全部数据，即便左边表无对应数据</li>
-</ul>
-<h3 id="03-内连和并列的区别"><a href="#03-内连和并列的区别" class="headerlink" title="03. 内连和并列的区别"></a>03. 内连和并列的区别</h3><p>并列，也是等值连接。在这个过程中，实际上是没有创建出临时的新表，只是为了方便理解，可以认为两张表合并成一张新表，然后再从该表 <code>SELECT</code>所需的字段和记录。<br>内连可以不等。推荐用内连，因为，可以将连接条件标记得比较清楚。</p>
-<h3 id="04-SQL执行顺序-重要"><a href="#04-SQL执行顺序-重要" class="headerlink" title="04. SQL执行顺序(重要)"></a>04. SQL执行顺序(重要)</h3><p><code>FROM</code>、 <code>WHERE</code>、 <code>GROUP BY</code>、 <code>HAVING</code>、 <code>SELECT</code>、 <code>DISTINCT</code>、 <code>UNION</code>、 <code>ORDER BY</code></p>
-<h3 id="05-GROUP-BY-和-DISTINCT"><a href="#05-GROUP-BY-和-DISTINCT" class="headerlink" title="05. GROUP BY 和 DISTINCT"></a>05. GROUP BY 和 DISTINCT</h3><ul>
-<li>当对系统的性能高并数据量大时使用 <code>GROUP BY</code></li>
-<li>当对系统的性能不高时使用数据量少时两者皆可</li>
-<li>尽量使用 <code>GROUP BY</code></li>
-</ul>
-<p>针对网上实验结果，还有一种结论：</p>
+    <title>网络爬虫基础之Web前端</title>
+    <url>/2020/07/30/%E7%BD%91%E7%BB%9C%E7%88%AC%E8%99%AB%E5%9F%BA%E7%A1%80%E4%B9%8BWeb%E5%89%8D%E7%AB%AF/</url>
+    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本文摘抄[1]，这部分写得太好了，我都不知道怎么补充。即使不懂Web前端的人，看完以后都能知道大体意思。</p>
+<p>如果是要学习爬虫，这部分更有必要掌握了。不过，爬虫不需要深入了解前端，只要了解下基本的知识点就够了。</p>
+<p>另外，俺(业余选手)觉得CSS的标签选择器不需要刻意去记，要用的时候直接查就可以了。</p>
+<p>在文末，有一张HTML的思维导图，比较详细。</p>
+<h2 id="网页基础"><a href="#网页基础" class="headerlink" title="网页基础"></a>网页基础</h2><p>用浏览器访问网站时，页面各不相同，你有没有想过它为何会呈现这个样子呢？本节中，我们就来了解一下网页的基本组成、结构和节点等内容。</p>
+<h3 id="网页的组成"><a href="#网页的组成" class="headerlink" title="网页的组成"></a>网页的组成</h3><p>网页可以分为三大部分 —— HTML、CSS 和 JavaScript。如果把网页比作一个人的话，HTML 相当于<strong>骨架</strong>，JavaScript 相当于<strong>肌肉</strong>，CSS 相当于<strong>皮肤</strong>，三者结合起来才能形成一个完善的网页。下面我们分别来介绍一下这三部分的功能。</p>
+<h3 id="1-HTML"><a href="#1-HTML" class="headerlink" title="1. HTML"></a>1. HTML</h3><p><strong>HTML</strong> 是用来描述网页的一种语言，其全称叫作 Hyper Text Markup Language，即<strong>超文本标记语言</strong>。网页包括文字、按钮、图片和视频等各种复杂的元素，其基础架构就是 HTML。</p>
+<p>不同类型的元素通过不同类型的标签来表示，如图片用 <code>img</code>  标签表示，视频用 <code>video</code> 标签表示，段落用 <code>p</code> 标签表示，超链接用<code>a</code>表示。</p>
+<p>它们之间的布局又常通过布局标签 <code>div</code> 嵌套组合而成，各种标签通过不同的排列和嵌套才形成了网页的框架。</p>
+<p>在 Chrome 浏览器中打开百度，右击并选择 “检查” 项（或按 F12 键），打开开发者模式，这时在 Elements 选项卡中即可看到网页的源代码，如图 1 所示。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/1.png" alt="图1. 开发者模式"></p>
+<p>这就是 HTML，整个网页就是由各种标签嵌套组合而成的。这些标签定义的节点元素相互嵌套和组合形成了复杂的层次关系，就形成了网页的架构。</p>
+<h3 id="2-CSS"><a href="#2-CSS" class="headerlink" title="2. CSS"></a>2. CSS</h3><p>HTML 定义了网页的结构，但是只有 HTML 页面的布局并不美观，可能只是简单的节点元素的排列，为了让网页看起来更好看一些，这里借助了 CSS。</p>
+<p><strong>CSS</strong>，全称叫作 Cascading Style Sheets，即层叠样式表。“层叠” 是指当在 HTML 中引用了数个样式文件，并且样式发生冲突时，浏览器能依据层叠顺序处理。“样式” 指网页中文字大小、颜色、元素间距、排列等格式。</p>
+<p>CSS 是目前<strong>唯一</strong>的网页页面排版样式标准，有了它的帮助，页面才会变得更为美观。</p>
+<p>图 1  的右侧即为 CSS，例如：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#head_wrapper.s-ps-islite .s-p-top &#123;  </span><br><span class="line">    position: absolute;  </span><br><span class="line">    bottom: 40px;  </span><br><span class="line">    width: 100%;  </span><br><span class="line">    height: 181px;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>就是一个 CSS 样式。大括号前面是一个 CSS 选择器。此选择器的意思是首先选中 id 为<code>head_wrapper</code>  且 class 为<code>s-ps-islite</code> 的节点，然后再选中其内部的 class 为 <code>s-p-top</code> 的节点。</p>
+<p>大括号内部写的就是一条条样式规则，例如 position 指定了这个元素的布局方式为<strong>绝对布局</strong>，bottom 指定元素的<strong>下边距</strong>为 40 像素，width 指定了<strong>宽度</strong>为 100% 占满父元素，height 则指定了元素的<strong>高度</strong>。</p>
+<p>也就是说，我们将位置、宽度、高度等样式配置统一写成这样的形式，然后用大括号括起来，接着在开头再加上 CSS 选择器，这就代表这个样式对 CSS 选择器选中的元素生效，元素就会根据此样式来展示了。</p>
+<p>在网页中，一般会统一定义整个网页的样式规则，并写入 CSS 文件中（其后缀为 <code>css</code>）。在 HTML 中，只需要用 link 标签即可引入写好的 CSS 文件，这样整个页面就会变得美观、优雅。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&lt;head&gt;</span><br><span class="line">&lt;link rel&#x3D;&quot;stylesheet&quot; type&#x3D;&quot;text&#x2F;css&quot; href&#x3D;&quot;style.css&quot;&gt;</span><br><span class="line">&lt;&#x2F;head&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-JavaScript"><a href="#3-JavaScript" class="headerlink" title="3. JavaScript"></a>3. JavaScript</h3><p><strong>JavaScript</strong>，简称 JS，是一种脚本语言。HTML 和 CSS 配合使用，提供给用户的只是一种静态信息，缺乏交互性。我们在网页里可能会看到一些<strong>交互</strong>和<strong>动画效果</strong>，如下载进度条、提示框、轮播图等，这通常就是 JavaScript 的功劳。</p>
+<p>它的出现使得用户与信息之间不只是一种浏览与显示的关系，而是实现了一种实时、动态、交互的页面功能。</p>
+<p>JavaScript 通常也是以单独的文件形式加载的，后缀为 js，在 HTML 中通过 script 标签即可引入，例如：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&lt;script src&#x3D;&quot;jquery-2.1.0.js&quot;&gt;&lt;&#x2F;script&gt;</span><br></pre></td></tr></table></figure>
+
+<p>综上所述，<strong>HTML 定义了网页的内容和结构，CSS 描述了网页的布局，JavaScript 定义了网页的行为。</strong></p>
+<h2 id="网页的结构"><a href="#网页的结构" class="headerlink" title="网页的结构"></a>网页的结构</h2><p>我们首先用例子来感受一下 HTML 的基本结构。新建一个文本文件，名称可以自取，后缀为 html，内容如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&lt;!DOCTYPE html&gt;</span><br><span class="line">&lt;html&gt;</span><br><span class="line">&lt;head&gt;</span><br><span class="line">&lt;meta charset&#x3D;&quot;UTF-8&quot;&gt;</span><br><span class="line">&lt;title&gt;This is a Demo&lt;&#x2F;title&gt;</span><br><span class="line">&lt;&#x2F;head&gt;</span><br><span class="line">&lt;body&gt;</span><br><span class="line">&lt;div id&#x3D;&quot;container&quot;&gt;</span><br><span class="line">&lt;div class&#x3D;&quot;wrapper&quot;&gt;</span><br><span class="line">&lt;h2 class&#x3D;&quot;title&quot;&gt;Hello World&lt;&#x2F;h2&gt;</span><br><span class="line">&lt;p class&#x3D;&quot;text&quot;&gt;Hello, this is a paragraph.&lt;&#x2F;p&gt;</span><br><span class="line">&lt;&#x2F;div&gt;</span><br><span class="line">&lt;&#x2F;div&gt;</span><br><span class="line">&lt;&#x2F;body&gt;</span><br><span class="line">&lt;&#x2F;html&gt;</span><br></pre></td></tr></table></figure>
+<p>这就是一个最简单的 HTML 实例。开头用 DOCTYPE 定义了文档类型，其次最外层是 html 标签，最后还有对应的结束标签来表示闭合，其内部是 head 标签和 body 标签，分别代表网页头和网页体，它们也需要结束标签。head 标 签内定义了一些页面的配置和引用，如：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&lt;meta charset&#x3D;&quot;UTF-8&quot;&gt;</span><br></pre></td></tr></table></figure>
+
+<p>它指定了网页的编码为 <strong>UTF-8</strong>。</p>
+<p>title 标签则定义了网页的标题，会显示在网页的选项卡中，不会显示在正文中。body 标签内则是在网页正文中显示的内容。</p>
+<p>div 标签定义了网页中的区块，它的 id 是 container，这是一个非常常用的属性，且 id 的内容在网页中是<strong>唯一</strong>的，我们可以通过它来<strong>获取这个区块</strong>。</p>
+<p>然后在此区块内又有一个 div 标签，它的 class 为 <code>wrapper</code>，这也是一个非常常用的属性，经常与 CSS 配合使用来设定样式。然后此区块内部又有一个 h2 标签，这代表一个二级标题。</p>
+<p>另外，还有一个 p 标签，这代表一个段落。在这两者中直接写入相应的内容即可在网页中呈现出来，它们也有各自的 class 属性。</p>
+<p>将代码保存后，在浏览器中打开该文件，可以看到如图 2 所示的内容。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/2.png" alt="图2. 网页内容"></p>
+<p>图 2-10　运行结果</p>
+<p>可以看到，在选项卡上显示了 <code>This is a Demo</code>  字样，这是我们在 head 中的 title 里定义的文字。而网页正文是 body 标签内部定义的各个元素生成的，可以看到这里显示了二级标题和段落。</p>
+<p>这个实例便是网页的一般结构。一个网页的标准形式是 html 标签内嵌套 head 和 body 标签，<strong>head 内定义网页的配置和引用，body 内定义网页的正文</strong>。</p>
+<h2 id="节点树及节点间的关系"><a href="#节点树及节点间的关系" class="headerlink" title="节点树及节点间的关系"></a>节点树及节点间的关系</h2><p>在 HTML 中，所有标签定义的内容都是节点，它们构成了一个 HTML DOM 树。</p>
+<p>我们先看下什么是 DOM。DOM 是 W3C（万维网联盟）的标准，其英文全称 Document Object Model，即文档对象模型。它定义了访问 HTML 和 XML 文档的标准：</p>
 <blockquote>
-<p>去重场景下，未加索引时，更偏向于使用distinct，而加索引时，distinct和group by两者都可以使用 </p>
+<p>W3C 文档对象模型（DOM）是中立于平台和语言的接口，它允许程序和脚本动态地访问和更新文档的内容、结构和样式。</p>
 </blockquote>
-<p><a href="https://blog.csdn.net/NestorBian/article/details/106004840?utm_medium=distribute.pc_relevant_t0.none-task-blog-BlogCommendFromMachineLearnPai2-1.nonecase&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-BlogCommendFromMachineLearnPai2-1.nonecase" target="_blank" rel="noopener">实验过程原文链接</a></p>
-<h4 id="06-LEFT-JOIN-和-IN"><a href="#06-LEFT-JOIN-和-IN" class="headerlink" title="06. LEFT JOIN 和 IN"></a>06. LEFT JOIN 和 IN</h4><p>MySQL官方文档有说明， <code>IN</code>关键字适合<strong>确定数量</strong>的情况，一般效率较低，不推荐使用。能用 <code>IN</code>关键字的语句都可以转化为使用 <code>JOIN</code>的语句，推荐使用 <code>JOIN</code>关键字。</p>
-<h4 id="07-WHERE-和-HAVING"><a href="#07-WHERE-和-HAVING" class="headerlink" title="07. WHERE 和 HAVING"></a>07. WHERE 和 HAVING</h4><p><code>WHERE</code>和 <code>HAVING</code>的不同之处在于， <code>WHERE</code>是查找之前的限定，而 <code>HAVING</code>是查找之后。如果使用 <code>HAVING</code>，必须提前筛选字段，但 <code>WHERE</code>不需要。 <code>WHERE</code>后面不能加聚合函数， <code>HAVING</code>后可以加聚合函数。</p>
-<h4 id="08-JOIN关联表中ON-WHERE后面跟条件的区别"><a href="#08-JOIN关联表中ON-WHERE后面跟条件的区别" class="headerlink" title="08. JOIN关联表中ON,WHERE后面跟条件的区别"></a>08. JOIN关联表中ON,WHERE后面跟条件的区别</h4><p>不管 <code>ON</code>上的条件是否为真都会返回 <code>LEFT</code>或 <code>RIGHT</code>表中的记录，full则具有 <code>LEFT</code>和 <code>RIGHT</code>的特性的并集。 而 <code>INNER JOIN</code>没这个特殊性，则条件放在 <code>ON</code>中和 <code>WHERE</code>中，返回的结果集是相同的。</p>
-<p><a href="https://blog.csdn.net/wqc19920906/article/details/79785424" target="_blank" rel="noopener">参考原文链接</a> </p>
-<h4 id="09-EXPLAIN-函数作用"><a href="#09-EXPLAIN-函数作用" class="headerlink" title="09. EXPLAIN 函数作用"></a>09. EXPLAIN 函数作用</h4><ol>
-<li>表的读取顺序</li>
-<li>数据读取操作的操作类型</li>
-<li>哪些索引可以使用</li>
-<li>哪些索引被实际使用</li>
-<li>表之间的引用</li>
-<li>每张表有多少行被优化器查询</li>
-</ol>
-<h4 id="10-MySQL创建索引方法：ALTER-TABLE和CREATE-INDEX的区别"><a href="#10-MySQL创建索引方法：ALTER-TABLE和CREATE-INDEX的区别" class="headerlink" title="10. MySQL创建索引方法：ALTER TABLE和CREATE INDEX的区别"></a>10. MySQL创建索引方法：ALTER TABLE和CREATE INDEX的区别</h4><p>众所周知，MySQL创建索引有两种语法，即： </p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">1、ALTER TABLE HeadOfState ADD INDEX(LastName,FirstName); </span><br><span class="line">2、CREATE INDEX index_name HeadOfState(LastName,FirstName);</span><br></pre></td></tr></table></figure>
-
-<p>那么，这两种语法有什么区别呢？</p>
-<ol>
-<li><code>CREATE INDEX</code>必须提供索引名，对于 <code>ALTER TABLE</code>，如果你不提供索引名，将会自动创建；</li>
-<li><code>CREATE INDEX</code>一个语句一次只能建立一个索引， <code>ALTER TABLE</code>可以在一个语句建立多个，如：<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">ALTER TABLE HeadOfState ADD PRIMARY KEY(ID),ADD INDEX(LastName,FirstName);</span><br></pre></td></tr></table></figure></li>
-<li>只有 <code>ALTER TABLE</code>才能创建主键；</li>
-</ol>
-<h4 id="11-强制索引"><a href="#11-强制索引" class="headerlink" title="11. 强制索引"></a>11. 强制索引</h4><p>MYSQL中强制索引查询使用： </p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">SELECT * FROM table FORCE INDEX(indexname);</span><br></pre></td></tr></table></figure>
-
-<p>SQLite中强制索引查询使用： </p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">SELECT * FROM table INDEXED BY indexname;</span><br></pre></td></tr></table></figure>
-
-<h4 id="12-严格模式"><a href="#12-严格模式" class="headerlink" title="12. 严格模式"></a>12. 严格模式</h4><p>mysql的 <code>datetime</code>类型无法插入’0000-00-00 00:00:00’,这是因为mysql开启了严格模式。</p>
-<p>输入<code>SELECT@@sql_mode</code> </p>
-<p>得到如下结果： </p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION</span><br></pre></td></tr></table></figure>
-
-<p>可以看到结果里面有 <code>NO_ZERO_IN_DATE,NO_ZERO_IN_DATE</code>。把这两个去掉，再重新设置即可。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">SET GLOBAL sql_mode&#x3D;&#39;ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION&#39;;</span><br></pre></td></tr></table></figure>
-
-<p><strong>玄学</strong>：在Navicat Premium上不行，但在mysql终端上可行。</p>
-<h4 id="13-MYSQL子查询的坑"><a href="#13-MYSQL子查询的坑" class="headerlink" title="13. MYSQL子查询的坑"></a>13. MYSQL子查询的坑</h4><p>MySQL的 <code>UPDATE</code>或 <code>DELETE</code>中子查询不能为同一张表，可将查询结果再次 <code>SELECT</code>。</p>
-<p>在MySQL中还有一个坑，需要给子查询添加<strong>别名</strong>， 不然会抛出错误：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">ERROR 1248 (42000): Every derived table must have its own alias</span><br></pre></td></tr></table></figure>
-
-<h4 id="14-字符长度函数"><a href="#14-字符长度函数" class="headerlink" title="14. 字符长度函数"></a>14. 字符长度函数</h4><p><code>char_length()</code>: 统计的是字符长度，而 <code>LENGTH()</code>函数统计的是字符串的字节长度，所以 <code>LENGTH(&#39;中&#39;)</code>在utf8下的结果是3，而 <code>char_length(&#39;中&#39;)</code>的结果仍然是1。</p>
-<h4 id="15-EXISTS的用法"><a href="#15-EXISTS的用法" class="headerlink" title="15. EXISTS的用法"></a>15. EXISTS的用法</h4><p><strong>EXISTS对外表用loop逐条查询</strong>，每次查询都会查看 <code>EXISTS</code>的条件语句，当 <code>EXISTS</code>里的条件语句能够返回记录行时(无论记录行是的多少)，只要能返回，条件就为真。并返回当前loop到的这条记录;</p>
-<p>反之如果 <code>EXISTS</code>里的条件语句不能返回记录行，则当前loop到的这条记录被丢弃， <code>EXISTS</code>的条件就像一个bool条件，当能返回结果集则为true，不能返回结果集则为 false。</p>
-<p>简而言之，使用 <code>EXISTS</code>需要建立内外关联。</p>
+<p>W3C DOM 标准被分为 3 个不同的部分：</p>
 <ul>
-<li>没有建立内外关联，等价于： <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">SELECT b.emp_no FROM employees b</span><br><span class="line">WHERE  EXISTS (SELECT emp_no FROM dept_emp)</span><br></pre></td></tr></table></figure>
-
-
-</li>
+<li><strong>核心</strong> DOM - 针对任何<strong>结构化</strong>文档的标准模型</li>
+<li><strong>XML</strong> DOM - 针对 XML 文档的标准模型</li>
+<li><strong>HTML</strong> DOM - 针对 HTML 文档的标准模型</li>
 </ul>
+<p>根据 W3C 的 HTML DOM 标准，HTML 文档中的所有内容都是节点：</p>
 <ul>
-<li>建立内外关联，等价于:<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">SELECT b.emp_no FROM employees b</span><br><span class="line">WHERE  EXISTS (SELECT emp_no FROM dept_emp WHERE b.emp_no&#x3D;emp_no)</span><br></pre></td></tr></table></figure>
-
-</li>
+<li>整个文档是一个文档节点</li>
+<li>每个 HTML 元素是元素节点</li>
+<li>HTML 元素内的文本是文本节点</li>
+<li>每个 HTML 属性是属性节点</li>
+<li>注释是注释节点</li>
 </ul>
-<h2 id="5、注意"><a href="#5、注意" class="headerlink" title="5、注意"></a>5、注意</h2><p>在使用markdown语言编写时，注意 </p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#96;&#96;&#96;后面不要加空格，要不然会出现排版错误！</span><br></pre></td></tr></table></figure>
-
-]]></content>
-      <categories>
-        <category>数据库</category>
-        <category>面试</category>
-      </categories>
-      <tags>
-        <tag>数据库</tag>
-        <tag>SQL</tag>
-        <tag>面试</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>给你一百元，帮我买100只鸡回来</title>
-    <url>/2020/07/30/%E7%BB%99%E4%BD%A0%E4%B8%80%E7%99%BE%E5%85%83%EF%BC%8C%E5%B8%AE%E6%88%91%E4%B9%B0100%E5%8F%AA%E9%B8%A1%E5%9B%9E%E6%9D%A5/</url>
-    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本篇是大学《算法》课程的实验报告，这份报告包含了从原理分析到实验结果展示，有理有据地证明了好的方案会是多么地高效。</p>
-<h2 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h2><p>我国古代数学家张丘建在《算经》一书中曾提出过著名的「百钱买百鸡」问题，该问题叙述如下：鸡翁一，值钱五；鸡母一，值钱三；鸡雏三，值钱一；百钱买百鸡，则翁、母、雏各几何？</p>
-<p>翻译过来，公鸡一个五块钱，母鸡一个三块钱，小鸡三个一块钱，现在要用一百块钱买一百只鸡，问公鸡、母鸡、小鸡各多少只？</p>
-<h2 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h2><p>这里，我们先假设：</p>
-<ul>
-<li>a：鸡翁数</li>
-<li>b：鸡母数</li>
-<li>c：鸡雏数</li>
-</ul>
-<h3 id="方案一：穷举法"><a href="#方案一：穷举法" class="headerlink" title="方案一：穷举法"></a>方案一：穷举法</h3><p>三个值的范围如下，让计算机进行循环判断即可。</p>
-<p>$a \in [0,100]$</p>
-<p>$b \in [0,100]$</p>
-<p>$c \in [0,100]$</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">n&#x3D;100</span><br><span class="line">if((a+b+c &#x3D;&#x3D; n)&amp;&amp;(5*a + 3*b + c&#x2F;3 &#x3D;&#x3D; n)&amp;&amp;(c%3&#x3D;&#x3D;0))</span><br><span class="line">&#123; OK!&#125;</span><br></pre></td></tr></table></figure>
-
-<p>三层遍历循环，该方案的时间复杂度即为$O(n^3)$</p>
-<h3 id="方案二：变量代替法"><a href="#方案二：变量代替法" class="headerlink" title="方案二：变量代替法"></a>方案二：变量代替法</h3><p>在算法1的基础上，将搜索的范围和层数缩小。</p>
-<p>$c = 100 - a -b$</p>
-<p>$a \in [0,100/5]$</p>
-<p>$b \in [0,100/3]$</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">n &#x3D; 100</span><br><span class="line">c &#x3D; n -a-b;</span><br><span class="line">if(5*a + 3*b + c&#x2F;3 &#x3D;&#x3D; n &amp;&amp; c%3&#x3D;&#x3D;0)</span><br><span class="line">&#123;OK!&#125;</span><br></pre></td></tr></table></figure>
-
-<p>两层遍历循环，该方案的时间复杂度即为$O(n^2)$</p>
-<h3 id="方案三：推导法"><a href="#方案三：推导法" class="headerlink" title="方案三：推导法"></a>方案三：推导法</h3><p>这里，我们进行推导，很容易就知道要满足下面这两个条件：<br>$$<br>        \begin{cases}<br>        5 a + 3 b + \frac 13  c = 100 \<br>        a + b +  c = 100<br>        \end{cases}<br>$$<br>消除$c$后<br>$$<br>        7a + 4b = 100<br>$$<br>为了消除$b$前面的系数4，不妨令$a = 4k$ ,即$b=25-7k$ ,由$a$和$b$的范围可得：</p>
-<p>$$<br>        \begin{cases}<br>        0 \leq 4k \leq 20\<br>        0\leq 25-7k \leq \frac {100}3<br>        \end{cases}<br>$$<br>解出$k$的范围为$k\in[0,\frac {25}7]$<br>只要遍历$k$的值，即可求解，该方案的时间复杂度即为$O(n)$</p>
-<h2 id="实验对照"><a href="#实验对照" class="headerlink" title="实验对照"></a>实验对照</h2><p>下面我们将计算机得到的结果进行罗列，让我们能更好地对三种算法进行比较。</p>
-<h3 id="实验可能的解"><a href="#实验可能的解" class="headerlink" title="实验可能的解"></a>实验可能的解</h3><p>公鸡0只，母鸡25只，小鸡75只;</p>
-<p>公鸡4只，母鸡18只，小鸡78只;</p>
-<p>公鸡8只，母鸡11只，小鸡81只;</p>
-<p>公鸡12只，母鸡4只，小鸡84只;</p>
-<h3 id="实验对比："><a href="#实验对比：" class="headerlink" title="实验对比："></a>实验对比：</h3><p>这里我们为了测试三种算法到底差别多少，不妨将规模提升到n元买n鸡问题。</p>
-<p>软件：codeblocks </p>
-<p><em>表格1：三种算法对比</em></p>
+<p>HTML DOM 将 HTML 文档视作树结构，这种结构被称为节点树，如图 3 所示。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/3.jpg" alt="图3. 节点树"></p>
+<p>通过 HTML DOM，树中的所有节点均可通过 JavaScript 访问，所有 HTML 节点元素均可被修改，也可以被创建或删除。</p>
+<p>节点树中的节点彼此拥有层级关系。我们常用父（parent）、子（child）和兄弟（sibling）等术语描述这些关系。父节点拥有子节点，同级的子节点被称为兄弟节点。</p>
+<p>在节点树中，顶端节点称为根（root）。除了根节点之外，每个节点都有父节点，同时可拥有任意数量的子节点或兄弟节点。图 4 展示了节点树以及节点之间的关系。</p>
+<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/4.jpg" alt="图4. 节点树与节点间的关系"></p>
+<p>本段参考 W3SCHOOL，链接：<a href="http://www.w3school.com.cn/htmldom/dom_nodes.asp" target="_blank" rel="noopener">http://www.w3school.com.cn/htmldom/dom_nodes.asp</a>。</p>
+<h2 id="CSS选择器（查询）"><a href="#CSS选择器（查询）" class="headerlink" title="CSS选择器（查询）"></a>CSS选择器（查询）</h2><p>我们知道网页由一个个<strong>节点</strong>组成，CSS 选择器会根据不同的节点设置不同的样式规则，那么怎样来定位节点呢？</p>
+<p>在 CSS 中，我们使用 CSS 选择器来定位节点。例如，上例中 div 节点的 id 为 container，那么就可以表示为 #container，其中 # 开头代表选择 id，其后紧跟 id 的名称。另外，如果我们想选择 class 为 wrapper 的节点，便可以使用.wrapper，这里以点（.）开头代表选择 class，其后紧跟 class 的名称。</p>
+<p>另外，还有一种选择方式，那就是根据标签名筛选，例如想选择二级标题，直接用 h2 即可。这是最常用的 3 种表示，分别是根据 id、class、标签名筛选，<strong>请牢记它们的写法</strong>。</p>
+<p>另外，CSS 选择器还支持<strong>嵌套选择</strong>，各个选择器之间加上<strong>空格分隔开</strong>便可以代表嵌套关系，如<code>#container .wrapper p</code> 则代表先选择 id 为 container 的节点，然后选中其内部的 class 为 wrapper 的节点，然后再进一步选中其内部的 p 节点。</p>
+<p>另外，如果不加空格，则代表并列关系，如 <code>div#container .wrapper p.text</code> 代表先选择 id 为 container 的 div 节点，然后选中其内部的 class 为 wrapper 的节点，再进一步选中其内部的 class 为 text 的 p 节点。这就是 CSS 选择器，其筛选功能还是非常强大的。</p>
+<p>另外，CSS 选择器还有一些其他语法规则，具体如表 1 所示。</p>
+<p><em>表 1CSS 选择器的其他语法规则</em></p>
 <table>
 <thead>
 <tr>
-<th>规模</th>
-<th>算法1</th>
-<th>算法2</th>
-<th>算法3</th>
+<th>选　择　器</th>
+<th>例　　子</th>
+<th>例子描述</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>n=100</td>
-<td>0.01s</td>
-<td>&lt;0.0000001s</td>
-<td>&lt;0.0000001s</td>
+<td>.class</td>
+<td>.intro</td>
+<td>选择 class=”intro” 的所有节点</td>
 </tr>
 <tr>
-<td>n=6000</td>
-<td>616.14s</td>
-<td>0.31s</td>
-<td>0.14s</td>
+<td>#id</td>
+<td>#firstname</td>
+<td>选择 id=”firstname” 的所有节点</td>
 </tr>
 <tr>
-<td>n=50000</td>
-<td>&gt;1000s</td>
-<td>1.31s</td>
-<td>0.24s</td>
+<td>*</td>
+<td>*</td>
+<td>选择所有节点</td>
 </tr>
 <tr>
-<td>n=200000</td>
-<td>&gt;1000s</td>
-<td>10.90s</td>
-<td>1.00s</td>
+<td>element</td>
+<td>p</td>
+<td>选择所有 p 节点</td>
 </tr>
 <tr>
-<td>n=500000</td>
-<td>&gt;1000s</td>
-<td>64.82s</td>
-<td>2.66s</td>
+<td>element,element</td>
+<td>div,p</td>
+<td>选择所有 div 节点<strong>和</strong>所有 p 节点</td>
 </tr>
 <tr>
-<td>n=800000</td>
-<td>&gt;1000s</td>
-<td>148.63s</td>
-<td>3.61s</td>
+<td>element element</td>
+<td>div p</td>
+<td>选择 div 节点内部<strong>的</strong>所有 p 节点</td>
 </tr>
 <tr>
-<td>n=2000000</td>
-<td>&gt;1000s</td>
-<td>920.05s</td>
-<td>9.86s</td>
+<td>element&gt;element</td>
+<td>div&gt;p</td>
+<td>选择父节点为 div 节点的所有 p 节点</td>
 </tr>
 <tr>
-<td>n=5000000</td>
-<td>&gt;1000s</td>
-<td>&gt;1000s</td>
-<td>30.61s</td>
+<td>element+element</td>
+<td>div+p</td>
+<td>选择<strong>紧接</strong>在 div 节点之后的所有 p 节点</td>
 </tr>
 <tr>
-<td>n=10000000</td>
-<td>&gt;1000s</td>
-<td>&gt;1000s</td>
-<td>59.81s</td>
+<td>[attribute]</td>
+<td>[target]</td>
+<td>选择带有 target 属性的所有节点</td>
+</tr>
+<tr>
+<td>[attribute=value]</td>
+<td>[target=blank]</td>
+<td>选择 target=”blank” 的所有节点</td>
+</tr>
+<tr>
+<td>[attribute~=value]</td>
+<td>[title~=flower]</td>
+<td>选择 title 属性包含单词 flower 的所有节点</td>
+</tr>
+<tr>
+<td>:link</td>
+<td>a:link</td>
+<td>选择所有未被访问的链接</td>
+</tr>
+<tr>
+<td>:visited</td>
+<td>a:visited</td>
+<td>选择所有已被访问的链接</td>
+</tr>
+<tr>
+<td>:active</td>
+<td>a:active</td>
+<td>选择活动链接</td>
+</tr>
+<tr>
+<td>:hover</td>
+<td>a:hover</td>
+<td>选择鼠标指针位于其上的链接</td>
+</tr>
+<tr>
+<td>:focus</td>
+<td>input:focus</td>
+<td>选择获得焦点的 input 节点</td>
+</tr>
+<tr>
+<td>:first-letter</td>
+<td>p:first-letter</td>
+<td>选择每个 p 节点的首字母</td>
+</tr>
+<tr>
+<td>:first-line</td>
+<td>p:first-line</td>
+<td>选择每个 p 节点的首行</td>
+</tr>
+<tr>
+<td>:first-child</td>
+<td>p:first-child</td>
+<td>选择属于父节点的第一个子节点的所有 p 节点</td>
+</tr>
+<tr>
+<td>:before</td>
+<td>p:before</td>
+<td>在每个 p 节点的内容之前插入内容</td>
+</tr>
+<tr>
+<td>:after</td>
+<td>p:after</td>
+<td>在每个 p 节点的内容之后插入内容</td>
+</tr>
+<tr>
+<td>:lang(language)</td>
+<td>p:lang</td>
+<td>选择带有以 it 开头的 lang 属性值的所有 p 节点</td>
+</tr>
+<tr>
+<td>element1~element2</td>
+<td>p~ul</td>
+<td>选择前面有 p 节点的所有 ul 节点</td>
+</tr>
+<tr>
+<td>[attribute^=value]</td>
+<td>a[src^=”https”]</td>
+<td>选择其 src 属性值以 https 开头的所有 a 节点</td>
+</tr>
+<tr>
+<td>[attribute$=value]</td>
+<td>a[src$=”.pdf”]</td>
+<td>选择其 src 属性以.pdf 结尾的所有 a 节点</td>
+</tr>
+<tr>
+<td>[attribute*=value]</td>
+<td>a[src*=”abc”]</td>
+<td>选择其 src 属性中包含 abc 子串的所有 a 节点</td>
+</tr>
+<tr>
+<td>:first-of-type</td>
+<td>p:first-of-type</td>
+<td>选择属于其父节点的首个 p 节点的所有 p 节点</td>
+</tr>
+<tr>
+<td>:last-of-type</td>
+<td>p:last-of-type</td>
+<td>选择属于其父节点的最后 p 节点的所有 p 节点</td>
+</tr>
+<tr>
+<td>:only-of-type</td>
+<td>p:only-of-type</td>
+<td>选择属于其父节点唯一的 p 节点的所有 p 节点</td>
+</tr>
+<tr>
+<td>:only-child</td>
+<td>p:only-child</td>
+<td>选择属于其父节点的唯一子节点的所有 p 节点</td>
+</tr>
+<tr>
+<td>:nth-child(n)</td>
+<td>p:nth-child</td>
+<td>选择属于其父节点的第二个子节点的所有 p 节点</td>
+</tr>
+<tr>
+<td>:nth-last-child(n)</td>
+<td>p:nth-last-child</td>
+<td>同上，从最后一个子节点开始计数</td>
+</tr>
+<tr>
+<td>:nth-of-type(n)</td>
+<td>p:nth-of-type</td>
+<td>选择属于其父节点第二个 p 节点的所有 p 节点</td>
+</tr>
+<tr>
+<td>:nth-last-of-type(n)</td>
+<td>p:nth-last-of-type</td>
+<td>同上，但是从最后一个子节点开始计数</td>
+</tr>
+<tr>
+<td>:last-child</td>
+<td>p:last-child</td>
+<td>选择属于其父节点最后一个子节点的所有 p 节点</td>
+</tr>
+<tr>
+<td>:root</td>
+<td>:root</td>
+<td>选择文档的根节点</td>
+</tr>
+<tr>
+<td>:empty</td>
+<td>p:empty</td>
+<td>选择没有子节点的所有 p 节点（包括文本节点）</td>
+</tr>
+<tr>
+<td>:target</td>
+<td>#news:target</td>
+<td>选择当前活动的 #news 节点</td>
+</tr>
+<tr>
+<td>:enabled</td>
+<td>input:enabled</td>
+<td>选择每个启用的 input 节点</td>
+</tr>
+<tr>
+<td>:disabled</td>
+<td>input:disabled</td>
+<td>选择每个禁用的 input 节点</td>
+</tr>
+<tr>
+<td>:checked</td>
+<td>input:checked</td>
+<td>选择每个被选中的 input 节点</td>
+</tr>
+<tr>
+<td>:not(selector)</td>
+<td>:not</td>
+<td>选择非 p 节点的所有节点</td>
+</tr>
+<tr>
+<td>::selection</td>
+<td>::selection</td>
+<td>选择被用户选取的节点部分</td>
 </tr>
 </tbody></table>
-<h3 id="结果分析"><a href="#结果分析" class="headerlink" title="结果分析"></a>结果分析</h3><p>当算法1到了n=6000以上的规模，就需要花费大量时间，超过1000s。</p>
-<p>算法2与算法3在n=50000开始显示出差别，随着n的提升，两个算法之间耗时差距越来越大。</p>
-<p>当n=2000000时，算法2需要消耗920s，而算法3只需要9.86s。</p>
-<p>当n=10000000时，算法3耗时59.819s，相当于算法二在n=500000时所用的时间。</p>
-<p>可见当我们的规模越大时，时间消耗的差距就会体现的越大。</p>
-<h3 id="完整代码"><a href="#完整代码" class="headerlink" title="完整代码"></a>完整代码</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">int g[1000000],m[1000000],s[1000000];</span><br><span class="line">void chicken_question(int n,int &amp;k,int g[],int m[],int s[]);</span><br><span class="line">void chicken_question2(int n,int &amp;k,int g[],int m[],int s[]);</span><br><span class="line">void chicken_question3(int n,int &amp;k,int g[],int m[],int s[]);</span><br><span class="line"></span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">int k&#x3D;0;</span><br><span class="line">int n&#x3D;15000000,c&#x3D;0;</span><br><span class="line">double  duration1,duration2,duration3;</span><br><span class="line">clock_t start, finish;</span><br><span class="line">printf(&quot;请输入n的值\n&quot;);</span><br><span class="line"></span><br><span class="line">start &#x3D; clock();</span><br><span class="line">chicken_question(n,k,g,m,s);</span><br><span class="line">finish &#x3D; clock();</span><br><span class="line">duration1 &#x3D; (double)(finish - start)&#x2F; CLOCKS_PER_SEC;  &#x2F;&#x2F;转化为秒</span><br><span class="line">printf( &quot;\n算法1运行%d次的时间为%f seconds\n&quot;,n,duration1 );</span><br><span class="line">start &#x3D; clock();</span><br><span class="line">chicken_question2(n,k,g,m,s);</span><br><span class="line">finish &#x3D; clock();</span><br><span class="line">duration2 &#x3D; (double)(finish - start)&#x2F; CLOCKS_PER_SEC;  &#x2F;&#x2F;转化为秒*&#x2F;</span><br><span class="line">start &#x3D; clock();</span><br><span class="line">chicken_question3(n,k,g,m,s);</span><br><span class="line">finish &#x3D; clock();</span><br><span class="line">duration3 &#x3D; (double)(finish - start)&#x2F; CLOCKS_PER_SEC;  &#x2F;&#x2F;转化为秒</span><br><span class="line">printf( &quot;\n算法2运行%d次的时间为%f seconds\n&quot;,n,duration2 );</span><br><span class="line">printf( &quot;\n算法3运行%d次的时间为%f seconds\n&quot;,n,duration3 );</span><br><span class="line">system(&quot;pause&quot;);&#x2F;&#x2F;</span><br><span class="line">return 0;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 公鸡 母鸡 小鸡的数目为 g[] m[] s[]  三种鸡购买的总数目为n  问题的解数目为k</span><br><span class="line">void chicken_question(int n,int &amp;k,int g[],int m[],int s[])</span><br><span class="line">&#123;</span><br><span class="line">int a,b,c;</span><br><span class="line">k &#x3D; 0;</span><br><span class="line">for (a&#x3D;0;a&lt;&#x3D;n;a++)</span><br><span class="line">&#123;</span><br><span class="line">	for(b&#x3D;0;b&lt;&#x3D;n;b++)</span><br><span class="line">	&#123;</span><br><span class="line">		for(c&#x3D;0;c&lt;&#x3D;n;c++)</span><br><span class="line">		&#123;</span><br><span class="line">			  if((a+b+c &#x3D;&#x3D; n)&amp;&amp;(5*a + 3*b + c&#x2F;3 &#x3D;&#x3D; n)&amp;&amp;(c%3&#x3D;&#x3D;0))</span><br><span class="line">			  &#123;</span><br><span class="line">			  g[k] &#x3D; a;</span><br><span class="line">			  m[k] &#x3D; b;</span><br><span class="line">			  s[k] &#x3D; c;</span><br><span class="line">            &#x2F;&#x2F;printf(&quot;g[%d]&#x3D;%d,m[%d]&#x3D;%d,s[%d]&#x3D;%d\n&quot;,k,a,k,b,k,c);</span><br><span class="line">			  k++;</span><br><span class="line"></span><br><span class="line">			  &#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">void chicken_question2(int n,int &amp;k,int g[],int m[],int s[])</span><br><span class="line">&#123;</span><br><span class="line">int i,j,a,b,c;</span><br><span class="line">k &#x3D; 0;</span><br><span class="line">i &#x3D; n&#x2F;5;</span><br><span class="line"> j &#x3D; n&#x2F;3;</span><br><span class="line">for (a&#x3D;0;a&lt;&#x3D;i;a++)</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">	for(b&#x3D;0;b&lt;&#x3D;j;b++)</span><br><span class="line">	&#123;</span><br><span class="line">	    c &#x3D; n -a-b;</span><br><span class="line"> if(5*a + 3*b + c&#x2F;3 &#x3D;&#x3D; n &amp;&amp; c%3&#x3D;&#x3D;0)</span><br><span class="line">			  &#123;</span><br><span class="line">			  g[k] &#x3D; a;</span><br><span class="line">			  m[k] &#x3D; b;</span><br><span class="line">			  s[k] &#x3D; c;</span><br><span class="line">              printf(&quot;g[%d]&#x3D;%d,m[%d]&#x3D;%d,s[%d]&#x3D;%d\n&quot;,k,a,k,b,k,c);</span><br><span class="line">			  k++;</span><br><span class="line">			  &#125;</span><br><span class="line"></span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">void chicken_question3(int n,int &amp;k,int g[],int m[],int s[])</span><br><span class="line">&#123;</span><br><span class="line">int x,y,z;</span><br><span class="line">k &#x3D; 0;</span><br><span class="line">for(int k1&#x3D;0;k1&lt;&#x3D;n&#x2F;28;k1++)</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">    x &#x3D; 4*k1;</span><br><span class="line">    y &#x3D; n&#x2F;4 -7*k1;</span><br><span class="line">    z &#x3D; (3*n)&#x2F;4+3*k1;</span><br><span class="line">       if(5*x + 3*y + z&#x2F;3 &#x3D;&#x3D; n &amp;&amp; z%3&#x3D;&#x3D;0)</span><br><span class="line">        &#123;</span><br><span class="line">            g[k] &#x3D; x;</span><br><span class="line">            m[k] &#x3D; y;</span><br><span class="line">            s[k] &#x3D; z;</span><br><span class="line">            printf(&quot;g[%d]&#x3D;%d,m[%d]&#x3D;%d,s[%d]&#x3D;%d\n&quot;,k,x,k,y,k,z);</span><br><span class="line">            k++;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>]]></content>
+<p>另外，还有一种比较常用的选择器是 XPath，这种选择方式后面会详细介绍。</p>
+<p>本节介绍了网页的基本结构和节点间的关系，了解了这些内容，我们才有更加清晰的思路去解析和提取网页内容。</p>
+<h2 id="HTML-图"><a href="#HTML-图" class="headerlink" title="HTML 图"></a>HTML 图</h2><p>下面这张思维导图几乎涵盖了所有HTML内容，祝你早日精通HTML！ /斜眼笑<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/5.png" alt=""></p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p>[1] <a href="https://python3webspider.cuiqingcai.com/2.1http-ji-ben-yuan-li" target="_blank" rel="noopener">Python3网络爬虫开发实战</a></p>
+]]></content>
+      <categories>
+        <category>爬虫</category>
+        <category>前端</category>
+      </categories>
+      <tags>
+        <tag>爬虫</tag>
+        <tag>前端</tag>
+      </tags>
   </entry>
   <entry>
     <title>网络爬虫基础之HTTP基本原理（附相关HTTPS知识）</title>
@@ -1399,325 +1797,6 @@ yum-util提供<code>yum-config-manager</code>功能，另外两个是<code>devic
         <tag>爬虫</tag>
         <tag>HTTP</tag>
         <tag>HTTPS</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>网络爬虫基础之Web前端</title>
-    <url>/2020/07/30/%E7%BD%91%E7%BB%9C%E7%88%AC%E8%99%AB%E5%9F%BA%E7%A1%80%E4%B9%8BWeb%E5%89%8D%E7%AB%AF/</url>
-    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本文摘抄[1]，这部分写得太好了，我都不知道怎么补充。即使不懂Web前端的人，看完以后都能知道大体意思。</p>
-<p>如果是要学习爬虫，这部分更有必要掌握了。不过，爬虫不需要深入了解前端，只要了解下基本的知识点就够了。</p>
-<p>另外，俺(业余选手)觉得CSS的标签选择器不需要刻意去记，要用的时候直接查就可以了。</p>
-<p>在文末，有一张HTML的思维导图，比较详细。</p>
-<h2 id="网页基础"><a href="#网页基础" class="headerlink" title="网页基础"></a>网页基础</h2><p>用浏览器访问网站时，页面各不相同，你有没有想过它为何会呈现这个样子呢？本节中，我们就来了解一下网页的基本组成、结构和节点等内容。</p>
-<h3 id="网页的组成"><a href="#网页的组成" class="headerlink" title="网页的组成"></a>网页的组成</h3><p>网页可以分为三大部分 —— HTML、CSS 和 JavaScript。如果把网页比作一个人的话，HTML 相当于<strong>骨架</strong>，JavaScript 相当于<strong>肌肉</strong>，CSS 相当于<strong>皮肤</strong>，三者结合起来才能形成一个完善的网页。下面我们分别来介绍一下这三部分的功能。</p>
-<h3 id="1-HTML"><a href="#1-HTML" class="headerlink" title="1. HTML"></a>1. HTML</h3><p><strong>HTML</strong> 是用来描述网页的一种语言，其全称叫作 Hyper Text Markup Language，即<strong>超文本标记语言</strong>。网页包括文字、按钮、图片和视频等各种复杂的元素，其基础架构就是 HTML。</p>
-<p>不同类型的元素通过不同类型的标签来表示，如图片用 <code>img</code>  标签表示，视频用 <code>video</code> 标签表示，段落用 <code>p</code> 标签表示，超链接用<code>a</code>表示。</p>
-<p>它们之间的布局又常通过布局标签 <code>div</code> 嵌套组合而成，各种标签通过不同的排列和嵌套才形成了网页的框架。</p>
-<p>在 Chrome 浏览器中打开百度，右击并选择 “检查” 项（或按 F12 键），打开开发者模式，这时在 Elements 选项卡中即可看到网页的源代码，如图 1 所示。</p>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/1.png" alt="图1. 开发者模式"></p>
-<p>这就是 HTML，整个网页就是由各种标签嵌套组合而成的。这些标签定义的节点元素相互嵌套和组合形成了复杂的层次关系，就形成了网页的架构。</p>
-<h3 id="2-CSS"><a href="#2-CSS" class="headerlink" title="2. CSS"></a>2. CSS</h3><p>HTML 定义了网页的结构，但是只有 HTML 页面的布局并不美观，可能只是简单的节点元素的排列，为了让网页看起来更好看一些，这里借助了 CSS。</p>
-<p><strong>CSS</strong>，全称叫作 Cascading Style Sheets，即层叠样式表。“层叠” 是指当在 HTML 中引用了数个样式文件，并且样式发生冲突时，浏览器能依据层叠顺序处理。“样式” 指网页中文字大小、颜色、元素间距、排列等格式。</p>
-<p>CSS 是目前<strong>唯一</strong>的网页页面排版样式标准，有了它的帮助，页面才会变得更为美观。</p>
-<p>图 1  的右侧即为 CSS，例如：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#head_wrapper.s-ps-islite .s-p-top &#123;  </span><br><span class="line">    position: absolute;  </span><br><span class="line">    bottom: 40px;  </span><br><span class="line">    width: 100%;  </span><br><span class="line">    height: 181px;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>就是一个 CSS 样式。大括号前面是一个 CSS 选择器。此选择器的意思是首先选中 id 为<code>head_wrapper</code>  且 class 为<code>s-ps-islite</code> 的节点，然后再选中其内部的 class 为 <code>s-p-top</code> 的节点。</p>
-<p>大括号内部写的就是一条条样式规则，例如 position 指定了这个元素的布局方式为<strong>绝对布局</strong>，bottom 指定元素的<strong>下边距</strong>为 40 像素，width 指定了<strong>宽度</strong>为 100% 占满父元素，height 则指定了元素的<strong>高度</strong>。</p>
-<p>也就是说，我们将位置、宽度、高度等样式配置统一写成这样的形式，然后用大括号括起来，接着在开头再加上 CSS 选择器，这就代表这个样式对 CSS 选择器选中的元素生效，元素就会根据此样式来展示了。</p>
-<p>在网页中，一般会统一定义整个网页的样式规则，并写入 CSS 文件中（其后缀为 <code>css</code>）。在 HTML 中，只需要用 link 标签即可引入写好的 CSS 文件，这样整个页面就会变得美观、优雅。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&lt;head&gt;</span><br><span class="line">&lt;link rel&#x3D;&quot;stylesheet&quot; type&#x3D;&quot;text&#x2F;css&quot; href&#x3D;&quot;style.css&quot;&gt;</span><br><span class="line">&lt;&#x2F;head&gt;</span><br></pre></td></tr></table></figure>
-
-<h3 id="3-JavaScript"><a href="#3-JavaScript" class="headerlink" title="3. JavaScript"></a>3. JavaScript</h3><p><strong>JavaScript</strong>，简称 JS，是一种脚本语言。HTML 和 CSS 配合使用，提供给用户的只是一种静态信息，缺乏交互性。我们在网页里可能会看到一些<strong>交互</strong>和<strong>动画效果</strong>，如下载进度条、提示框、轮播图等，这通常就是 JavaScript 的功劳。</p>
-<p>它的出现使得用户与信息之间不只是一种浏览与显示的关系，而是实现了一种实时、动态、交互的页面功能。</p>
-<p>JavaScript 通常也是以单独的文件形式加载的，后缀为 js，在 HTML 中通过 script 标签即可引入，例如：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&lt;script src&#x3D;&quot;jquery-2.1.0.js&quot;&gt;&lt;&#x2F;script&gt;</span><br></pre></td></tr></table></figure>
-
-<p>综上所述，<strong>HTML 定义了网页的内容和结构，CSS 描述了网页的布局，JavaScript 定义了网页的行为。</strong></p>
-<h2 id="网页的结构"><a href="#网页的结构" class="headerlink" title="网页的结构"></a>网页的结构</h2><p>我们首先用例子来感受一下 HTML 的基本结构。新建一个文本文件，名称可以自取，后缀为 html，内容如下：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&lt;!DOCTYPE html&gt;</span><br><span class="line">&lt;html&gt;</span><br><span class="line">&lt;head&gt;</span><br><span class="line">&lt;meta charset&#x3D;&quot;UTF-8&quot;&gt;</span><br><span class="line">&lt;title&gt;This is a Demo&lt;&#x2F;title&gt;</span><br><span class="line">&lt;&#x2F;head&gt;</span><br><span class="line">&lt;body&gt;</span><br><span class="line">&lt;div id&#x3D;&quot;container&quot;&gt;</span><br><span class="line">&lt;div class&#x3D;&quot;wrapper&quot;&gt;</span><br><span class="line">&lt;h2 class&#x3D;&quot;title&quot;&gt;Hello World&lt;&#x2F;h2&gt;</span><br><span class="line">&lt;p class&#x3D;&quot;text&quot;&gt;Hello, this is a paragraph.&lt;&#x2F;p&gt;</span><br><span class="line">&lt;&#x2F;div&gt;</span><br><span class="line">&lt;&#x2F;div&gt;</span><br><span class="line">&lt;&#x2F;body&gt;</span><br><span class="line">&lt;&#x2F;html&gt;</span><br></pre></td></tr></table></figure>
-<p>这就是一个最简单的 HTML 实例。开头用 DOCTYPE 定义了文档类型，其次最外层是 html 标签，最后还有对应的结束标签来表示闭合，其内部是 head 标签和 body 标签，分别代表网页头和网页体，它们也需要结束标签。head 标 签内定义了一些页面的配置和引用，如：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&lt;meta charset&#x3D;&quot;UTF-8&quot;&gt;</span><br></pre></td></tr></table></figure>
-
-<p>它指定了网页的编码为 <strong>UTF-8</strong>。</p>
-<p>title 标签则定义了网页的标题，会显示在网页的选项卡中，不会显示在正文中。body 标签内则是在网页正文中显示的内容。</p>
-<p>div 标签定义了网页中的区块，它的 id 是 container，这是一个非常常用的属性，且 id 的内容在网页中是<strong>唯一</strong>的，我们可以通过它来<strong>获取这个区块</strong>。</p>
-<p>然后在此区块内又有一个 div 标签，它的 class 为 <code>wrapper</code>，这也是一个非常常用的属性，经常与 CSS 配合使用来设定样式。然后此区块内部又有一个 h2 标签，这代表一个二级标题。</p>
-<p>另外，还有一个 p 标签，这代表一个段落。在这两者中直接写入相应的内容即可在网页中呈现出来，它们也有各自的 class 属性。</p>
-<p>将代码保存后，在浏览器中打开该文件，可以看到如图 2 所示的内容。</p>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/2.png" alt="图2. 网页内容"></p>
-<p>图 2-10　运行结果</p>
-<p>可以看到，在选项卡上显示了 <code>This is a Demo</code>  字样，这是我们在 head 中的 title 里定义的文字。而网页正文是 body 标签内部定义的各个元素生成的，可以看到这里显示了二级标题和段落。</p>
-<p>这个实例便是网页的一般结构。一个网页的标准形式是 html 标签内嵌套 head 和 body 标签，<strong>head 内定义网页的配置和引用，body 内定义网页的正文</strong>。</p>
-<h2 id="节点树及节点间的关系"><a href="#节点树及节点间的关系" class="headerlink" title="节点树及节点间的关系"></a>节点树及节点间的关系</h2><p>在 HTML 中，所有标签定义的内容都是节点，它们构成了一个 HTML DOM 树。</p>
-<p>我们先看下什么是 DOM。DOM 是 W3C（万维网联盟）的标准，其英文全称 Document Object Model，即文档对象模型。它定义了访问 HTML 和 XML 文档的标准：</p>
-<blockquote>
-<p>W3C 文档对象模型（DOM）是中立于平台和语言的接口，它允许程序和脚本动态地访问和更新文档的内容、结构和样式。</p>
-</blockquote>
-<p>W3C DOM 标准被分为 3 个不同的部分：</p>
-<ul>
-<li><strong>核心</strong> DOM - 针对任何<strong>结构化</strong>文档的标准模型</li>
-<li><strong>XML</strong> DOM - 针对 XML 文档的标准模型</li>
-<li><strong>HTML</strong> DOM - 针对 HTML 文档的标准模型</li>
-</ul>
-<p>根据 W3C 的 HTML DOM 标准，HTML 文档中的所有内容都是节点：</p>
-<ul>
-<li>整个文档是一个文档节点</li>
-<li>每个 HTML 元素是元素节点</li>
-<li>HTML 元素内的文本是文本节点</li>
-<li>每个 HTML 属性是属性节点</li>
-<li>注释是注释节点</li>
-</ul>
-<p>HTML DOM 将 HTML 文档视作树结构，这种结构被称为节点树，如图 3 所示。</p>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/3.jpg" alt="图3. 节点树"></p>
-<p>通过 HTML DOM，树中的所有节点均可通过 JavaScript 访问，所有 HTML 节点元素均可被修改，也可以被创建或删除。</p>
-<p>节点树中的节点彼此拥有层级关系。我们常用父（parent）、子（child）和兄弟（sibling）等术语描述这些关系。父节点拥有子节点，同级的子节点被称为兄弟节点。</p>
-<p>在节点树中，顶端节点称为根（root）。除了根节点之外，每个节点都有父节点，同时可拥有任意数量的子节点或兄弟节点。图 4 展示了节点树以及节点之间的关系。</p>
-<p><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/4.jpg" alt="图4. 节点树与节点间的关系"></p>
-<p>本段参考 W3SCHOOL，链接：<a href="http://www.w3school.com.cn/htmldom/dom_nodes.asp" target="_blank" rel="noopener">http://www.w3school.com.cn/htmldom/dom_nodes.asp</a>。</p>
-<h2 id="CSS选择器（查询）"><a href="#CSS选择器（查询）" class="headerlink" title="CSS选择器（查询）"></a>CSS选择器（查询）</h2><p>我们知道网页由一个个<strong>节点</strong>组成，CSS 选择器会根据不同的节点设置不同的样式规则，那么怎样来定位节点呢？</p>
-<p>在 CSS 中，我们使用 CSS 选择器来定位节点。例如，上例中 div 节点的 id 为 container，那么就可以表示为 #container，其中 # 开头代表选择 id，其后紧跟 id 的名称。另外，如果我们想选择 class 为 wrapper 的节点，便可以使用.wrapper，这里以点（.）开头代表选择 class，其后紧跟 class 的名称。</p>
-<p>另外，还有一种选择方式，那就是根据标签名筛选，例如想选择二级标题，直接用 h2 即可。这是最常用的 3 种表示，分别是根据 id、class、标签名筛选，<strong>请牢记它们的写法</strong>。</p>
-<p>另外，CSS 选择器还支持<strong>嵌套选择</strong>，各个选择器之间加上<strong>空格分隔开</strong>便可以代表嵌套关系，如<code>#container .wrapper p</code> 则代表先选择 id 为 container 的节点，然后选中其内部的 class 为 wrapper 的节点，然后再进一步选中其内部的 p 节点。</p>
-<p>另外，如果不加空格，则代表并列关系，如 <code>div#container .wrapper p.text</code> 代表先选择 id 为 container 的 div 节点，然后选中其内部的 class 为 wrapper 的节点，再进一步选中其内部的 class 为 text 的 p 节点。这就是 CSS 选择器，其筛选功能还是非常强大的。</p>
-<p>另外，CSS 选择器还有一些其他语法规则，具体如表 1 所示。</p>
-<p><em>表 1CSS 选择器的其他语法规则</em></p>
-<table>
-<thead>
-<tr>
-<th>选　择　器</th>
-<th>例　　子</th>
-<th>例子描述</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>.class</td>
-<td>.intro</td>
-<td>选择 class=”intro” 的所有节点</td>
-</tr>
-<tr>
-<td>#id</td>
-<td>#firstname</td>
-<td>选择 id=”firstname” 的所有节点</td>
-</tr>
-<tr>
-<td>*</td>
-<td>*</td>
-<td>选择所有节点</td>
-</tr>
-<tr>
-<td>element</td>
-<td>p</td>
-<td>选择所有 p 节点</td>
-</tr>
-<tr>
-<td>element,element</td>
-<td>div,p</td>
-<td>选择所有 div 节点<strong>和</strong>所有 p 节点</td>
-</tr>
-<tr>
-<td>element element</td>
-<td>div p</td>
-<td>选择 div 节点内部<strong>的</strong>所有 p 节点</td>
-</tr>
-<tr>
-<td>element&gt;element</td>
-<td>div&gt;p</td>
-<td>选择父节点为 div 节点的所有 p 节点</td>
-</tr>
-<tr>
-<td>element+element</td>
-<td>div+p</td>
-<td>选择<strong>紧接</strong>在 div 节点之后的所有 p 节点</td>
-</tr>
-<tr>
-<td>[attribute]</td>
-<td>[target]</td>
-<td>选择带有 target 属性的所有节点</td>
-</tr>
-<tr>
-<td>[attribute=value]</td>
-<td>[target=blank]</td>
-<td>选择 target=”blank” 的所有节点</td>
-</tr>
-<tr>
-<td>[attribute~=value]</td>
-<td>[title~=flower]</td>
-<td>选择 title 属性包含单词 flower 的所有节点</td>
-</tr>
-<tr>
-<td>:link</td>
-<td>a:link</td>
-<td>选择所有未被访问的链接</td>
-</tr>
-<tr>
-<td>:visited</td>
-<td>a:visited</td>
-<td>选择所有已被访问的链接</td>
-</tr>
-<tr>
-<td>:active</td>
-<td>a:active</td>
-<td>选择活动链接</td>
-</tr>
-<tr>
-<td>:hover</td>
-<td>a:hover</td>
-<td>选择鼠标指针位于其上的链接</td>
-</tr>
-<tr>
-<td>:focus</td>
-<td>input:focus</td>
-<td>选择获得焦点的 input 节点</td>
-</tr>
-<tr>
-<td>:first-letter</td>
-<td>p:first-letter</td>
-<td>选择每个 p 节点的首字母</td>
-</tr>
-<tr>
-<td>:first-line</td>
-<td>p:first-line</td>
-<td>选择每个 p 节点的首行</td>
-</tr>
-<tr>
-<td>:first-child</td>
-<td>p:first-child</td>
-<td>选择属于父节点的第一个子节点的所有 p 节点</td>
-</tr>
-<tr>
-<td>:before</td>
-<td>p:before</td>
-<td>在每个 p 节点的内容之前插入内容</td>
-</tr>
-<tr>
-<td>:after</td>
-<td>p:after</td>
-<td>在每个 p 节点的内容之后插入内容</td>
-</tr>
-<tr>
-<td>:lang(language)</td>
-<td>p:lang</td>
-<td>选择带有以 it 开头的 lang 属性值的所有 p 节点</td>
-</tr>
-<tr>
-<td>element1~element2</td>
-<td>p~ul</td>
-<td>选择前面有 p 节点的所有 ul 节点</td>
-</tr>
-<tr>
-<td>[attribute^=value]</td>
-<td>a[src^=”https”]</td>
-<td>选择其 src 属性值以 https 开头的所有 a 节点</td>
-</tr>
-<tr>
-<td>[attribute$=value]</td>
-<td>a[src$=”.pdf”]</td>
-<td>选择其 src 属性以.pdf 结尾的所有 a 节点</td>
-</tr>
-<tr>
-<td>[attribute*=value]</td>
-<td>a[src*=”abc”]</td>
-<td>选择其 src 属性中包含 abc 子串的所有 a 节点</td>
-</tr>
-<tr>
-<td>:first-of-type</td>
-<td>p:first-of-type</td>
-<td>选择属于其父节点的首个 p 节点的所有 p 节点</td>
-</tr>
-<tr>
-<td>:last-of-type</td>
-<td>p:last-of-type</td>
-<td>选择属于其父节点的最后 p 节点的所有 p 节点</td>
-</tr>
-<tr>
-<td>:only-of-type</td>
-<td>p:only-of-type</td>
-<td>选择属于其父节点唯一的 p 节点的所有 p 节点</td>
-</tr>
-<tr>
-<td>:only-child</td>
-<td>p:only-child</td>
-<td>选择属于其父节点的唯一子节点的所有 p 节点</td>
-</tr>
-<tr>
-<td>:nth-child(n)</td>
-<td>p:nth-child</td>
-<td>选择属于其父节点的第二个子节点的所有 p 节点</td>
-</tr>
-<tr>
-<td>:nth-last-child(n)</td>
-<td>p:nth-last-child</td>
-<td>同上，从最后一个子节点开始计数</td>
-</tr>
-<tr>
-<td>:nth-of-type(n)</td>
-<td>p:nth-of-type</td>
-<td>选择属于其父节点第二个 p 节点的所有 p 节点</td>
-</tr>
-<tr>
-<td>:nth-last-of-type(n)</td>
-<td>p:nth-last-of-type</td>
-<td>同上，但是从最后一个子节点开始计数</td>
-</tr>
-<tr>
-<td>:last-child</td>
-<td>p:last-child</td>
-<td>选择属于其父节点最后一个子节点的所有 p 节点</td>
-</tr>
-<tr>
-<td>:root</td>
-<td>:root</td>
-<td>选择文档的根节点</td>
-</tr>
-<tr>
-<td>:empty</td>
-<td>p:empty</td>
-<td>选择没有子节点的所有 p 节点（包括文本节点）</td>
-</tr>
-<tr>
-<td>:target</td>
-<td>#news:target</td>
-<td>选择当前活动的 #news 节点</td>
-</tr>
-<tr>
-<td>:enabled</td>
-<td>input:enabled</td>
-<td>选择每个启用的 input 节点</td>
-</tr>
-<tr>
-<td>:disabled</td>
-<td>input:disabled</td>
-<td>选择每个禁用的 input 节点</td>
-</tr>
-<tr>
-<td>:checked</td>
-<td>input:checked</td>
-<td>选择每个被选中的 input 节点</td>
-</tr>
-<tr>
-<td>:not(selector)</td>
-<td>:not</td>
-<td>选择非 p 节点的所有节点</td>
-</tr>
-<tr>
-<td>::selection</td>
-<td>::selection</td>
-<td>选择被用户选取的节点部分</td>
-</tr>
-</tbody></table>
-<p>另外，还有一种比较常用的选择器是 XPath，这种选择方式后面会详细介绍。</p>
-<p>本节介绍了网页的基本结构和节点间的关系，了解了这些内容，我们才有更加清晰的思路去解析和提取网页内容。</p>
-<h2 id="HTML-图"><a href="#HTML-图" class="headerlink" title="HTML 图"></a>HTML 图</h2><p>下面这张思维导图几乎涵盖了所有HTML内容，祝你早日精通HTML！ /斜眼笑<br><img src="https://article-shaw.oss-cn-beijing.aliyuncs.com/img/2020/64/5.png" alt=""></p>
-<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p>[1] <a href="https://python3webspider.cuiqingcai.com/2.1http-ji-ben-yuan-li" target="_blank" rel="noopener">Python3网络爬虫开发实战</a></p>
-]]></content>
-      <categories>
-        <category>爬虫</category>
-        <category>前端</category>
-      </categories>
-      <tags>
-        <tag>爬虫</tag>
-        <tag>前端</tag>
       </tags>
   </entry>
 </search>
